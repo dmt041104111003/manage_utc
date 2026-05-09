@@ -197,10 +197,19 @@ function cloudinarySigningEnv(): { cloud_name: string; api_key: string; api_secr
  * Tải file raw/image từ Cloudinary (proxy API).
  * Thứ tự: URL ký (SDK) → raw delivery công khai → image delivery (fallback public_id nhầm loại).
  */
+function encodedPublicIdPath(pid: string): string {
+  return String(pid || "")
+    .trim()
+    .replace(/^\/+/, "")
+    .split("/")
+    .filter(Boolean)
+    .map((seg) => encodeURIComponent(seg))
+    .join("/");
+}
+
 function pushUnsignedRawDeliveryVariants(pid: string, push: (u: string | null | undefined) => void) {
   const base = buildCloudinaryRawDeliveryUrl(pid);
   if (!base) return;
-  // Public_id có thư mục: CDN thường cần segment `v1` (trùng hành vi SDK khi force_version).
   if (pid.includes("/")) {
     const parts = base.split("/raw/upload/");
     if (parts.length === 2) {
@@ -210,8 +219,65 @@ function pushUnsignedRawDeliveryVariants(pid: string, push: (u: string | null | 
   push(base);
 }
 
+/** Thử mọi cloud name trong env + đường `files` (SDK map raw/upload → files). */
+function pushResCloudinaryDeliveryMatrix(pid: string, push: (u: string | null | undefined) => void) {
+  const enc = encodedPublicIdPath(pid);
+  if (!enc) return;
+  const clouds = new Set<string>();
+  const a = String(process.env.CLOUDINARY_CLOUD_NAME || "").trim();
+  const b = String(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "").trim();
+  if (a) clouds.add(a);
+  if (b) clouds.add(b);
+  for (const cloud of clouds) {
+    const c = encodeURIComponent(cloud);
+    const host = `https://res.cloudinary.com/${c}`;
+    push(`${host}/raw/upload/v1/${enc}`);
+    push(`${host}/raw/upload/${enc}`);
+    push(`${host}/files/v1/${enc}`);
+    push(`${host}/files/${enc}`);
+  }
+}
+
+async function collectDeliveryUrlsFromAdminApi(
+  cred: { cloud_name: string; api_key: string; api_secret: string },
+  pid: string
+): Promise<string[]> {
+  const auth = Buffer.from(`${cred.api_key}:${cred.api_secret}`).toString("base64");
+  const headers = { Authorization: `Basic ${auth}`, Accept: "application/json" };
+  const cloud = encodeURIComponent(cred.cloud_name);
+  const encOne = encodeURIComponent(pid.replace(/^\/+/, ""));
+  const encPath = encodedPublicIdPath(pid);
+  const tryMeta: string[] = [];
+  for (const rt of ["raw", "image"] as const) {
+    tryMeta.push(`https://api.cloudinary.com/v1_1/${cloud}/resources/${rt}/upload/${encOne}`);
+    if (encPath !== encOne) {
+      tryMeta.push(`https://api.cloudinary.com/v1_1/${cloud}/resources/${rt}/upload/${encPath}`);
+    }
+  }
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const url of tryMeta) {
+    try {
+      const res = await fetch(url, { cache: "no-store", headers });
+      if (!res.ok) continue;
+      const j = (await res.json()) as { secure_url?: string; url?: string };
+      for (const k of [j.secure_url, j.url] as const) {
+        const s = typeof k === "string" ? k.trim() : "";
+        if (s && !seen.has(s)) {
+          seen.add(s);
+          out.push(s);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  return out;
+}
+
 function isLikelyCloudinaryErrorBody(contentType: string, bytes: Buffer): boolean {
-  const ct = contentType.split(";")[0].trim();
+  const ct = contentType.split(";")[0].trim().toLowerCase();
+  if (ct === "application/pdf" || ct === "application/octet-stream") return false;
   if (ct === "application/json" || ct === "text/html" || ct === "text/plain") return true;
   if (bytes.length > 0 && bytes.length < 512) {
     const head = bytes.subarray(0, 1).toString("ascii");
@@ -258,28 +324,52 @@ export async function fetchCloudinaryBytesByPublicId(publicId: string): Promise<
     } catch {
       /* ignore */
     }
+    try {
+      push(
+        cloudinary.url(pid, {
+          ...signedBase,
+          resource_type: "raw",
+          type: "upload"
+        })
+      );
+    } catch {
+      /* ignore */
+    }
   }
 
   pushUnsignedRawDeliveryVariants(pid, push);
+  pushResCloudinaryDeliveryMatrix(pid, push);
   push(buildCloudinaryImageDeliveryUrl(pid));
 
-  const headers: Record<string, string> = {
-    Accept: "*/*",
-    "User-Agent": "UTC-Manage-FileProxy/1.0"
+  const tryFetch = async (candidates: string[]): Promise<{ bytes: Buffer; contentType: string } | null> => {
+    const headers: Record<string, string> = {
+      Accept: "*/*",
+      "User-Agent": "Mozilla/5.0 (compatible; UTC-Manage-FileProxy/1.0)"
+    };
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: "no-store", headers, redirect: "follow" });
+        if (!res.ok) continue;
+        const bytes = Buffer.from(await res.arrayBuffer());
+        if (bytes.length === 0) continue;
+        const contentType = String(res.headers.get("content-type") || "").trim().toLowerCase();
+        if (isLikelyCloudinaryErrorBody(contentType, bytes)) continue;
+        return { bytes, contentType };
+      } catch {
+        continue;
+      }
+    }
+    return null;
   };
 
-  for (const url of urls) {
-    try {
-      const res = await fetch(url, { cache: "no-store", headers });
-      if (!res.ok) continue;
-      const bytes = Buffer.from(await res.arrayBuffer());
-      if (bytes.length === 0) continue;
-      const contentType = String(res.headers.get("content-type") || "").trim().toLowerCase();
-      if (isLikelyCloudinaryErrorBody(contentType, bytes)) continue;
-      return { bytes, contentType };
-    } catch {
-      continue;
-    }
+  const first = await tryFetch(urls);
+  if (first) return first;
+
+  if (cred) {
+    const fromAdmin = await collectDeliveryUrlsFromAdminApi(cred, pid);
+    const second = await tryFetch(fromAdmin);
+    if (second) return second;
   }
+
   return null;
 }

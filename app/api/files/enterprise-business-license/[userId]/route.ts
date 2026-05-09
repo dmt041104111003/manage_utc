@@ -66,16 +66,25 @@ export async function GET(request: Request, ctx: { params: Promise<{ userId: str
 
   if (cloudPublicId) {
     const fetched = await fetchCloudinaryBytesByPublicId(cloudPublicId);
-    if (!fetched) {
+    if (fetched) {
+      bytes = fetched.bytes;
+      const upstreamType = fetched.contentType;
+      if (!upstreamType || upstreamType === "application/octet-stream") {
+        mime = metaMime || "application/pdf";
+      } else {
+        mime = upstreamType;
+      }
+    } else if (base64) {
+      try {
+        bytes = Buffer.from(base64, "base64");
+        mime = metaMime || "application/pdf";
+        console.warn("enterprise-business-license: Cloudinary lỗi, dùng base64 trong meta userId=", userId);
+      } catch {
+        return NextResponse.json({ success: false, message: "File giấy phép không hợp lệ." }, { status: 500 });
+      }
+    } else {
       console.error("enterprise-business-license cloudinary fetch failed publicId=", cloudPublicId);
       return NextResponse.json({ success: false, message: "Không thể tải file giấy phép." }, { status: 502 });
-    }
-    bytes = fetched.bytes;
-    const upstreamType = fetched.contentType;
-    if (!upstreamType || upstreamType === "application/octet-stream") {
-      mime = metaMime || "application/pdf";
-    } else {
-      mime = upstreamType;
     }
   } else if (base64) {
     try {
