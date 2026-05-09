@@ -3,6 +3,8 @@
 import type { AdminEnterpriseListItem } from "@/lib/types/admin";
 import { ADMIN_QUAN_LY_DOANH_NGHIEP_PAGE_SIZE } from "@/lib/constants/admin-quan-ly-doanh-nghiep";
 import { EnterpriseStatusCell } from "../../components/EnterpriseStatusCell";
+import TableIconButton from "../../../components/TableIconButton";
+import { FiEye, FiRefreshCw, FiTrash2 } from "react-icons/fi";
 
 import styles from "../../styles/dashboard.module.css";
 
@@ -52,16 +54,16 @@ export default function AdminEnterpriseTable(props: Props) {
                   <EnterpriseStatusCell status={row.enterpriseStatus} isLocked={row.isLocked} />
                 </td>
                 <td data-label="Thao tác">
-                  <div className={styles.rowActions} style={{ gap: 10 }}>
-                    <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onView(row)}>
-                      Xem
-                    </button>
-                    <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onDelete(row)}>
-                      Xóa
-                    </button>
-                    <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onOpenStatus(row)}>
-                      Cập nhật trạng thái phê duyệt
-                    </button>
+                  <div className={styles.rowActions} style={{ gap: 6 }}>
+                    <TableIconButton label="Xem chi tiết" disabled={busyId !== null} onClick={() => onView(row)}>
+                      <FiEye size={18} />
+                    </TableIconButton>
+                    <TableIconButton label="Cập nhật trạng thái phê duyệt" disabled={busyId !== null} onClick={() => onOpenStatus(row)}>
+                      <FiRefreshCw size={18} />
+                    </TableIconButton>
+                    <TableIconButton label="Xóa doanh nghiệp" variant="danger" disabled={busyId !== null} onClick={() => onDelete(row)}>
+                      <FiTrash2 size={18} />
+                    </TableIconButton>
                   </div>
                 </td>
               </tr>

@@ -9,6 +9,8 @@ import {
 import { formatDateVi } from "@/lib/utils/admin-quan-ly-dot-thuc-tap-dates";
 
 import Pagination from "../../../components/Pagination";
+import TableIconButton from "../../../components/TableIconButton";
+import { FiEdit2, FiEye, FiRefreshCw, FiTrash2 } from "react-icons/fi";
 import styles from "../../styles/dashboard.module.css";
 
 type Props = {
@@ -69,24 +71,19 @@ export default function AdminInternshipBatchTableSection(props: Props) {
                   </td>
                   <td data-label="Trạng thái">{ADMIN_QUAN_LY_DOT_THUC_TAP_STATUS_LABEL[row.status]}</td>
                   <td data-label="Thao tác">
-                    <div className={styles.rowActions} style={{ gap: 10 }}>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onView(row)}>
-                        Xem
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onEdit(row)}>
-                        Sửa
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onDelete(row)}>
-                        Xóa
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.textLinkBtn}
-                        disabled={busyId !== null || !canClose(row)}
-                        onClick={() => onOpenStatus(row)}
-                      >
-                        Cập nhật trạng thái
-                      </button>
+                    <div className={styles.rowActions} style={{ gap: 6 }}>
+                      <TableIconButton label="Xem chi tiết đợt" disabled={busyId !== null} onClick={() => onView(row)}>
+                        <FiEye size={18} />
+                      </TableIconButton>
+                      <TableIconButton label="Sửa đợt thực tập" disabled={busyId !== null} onClick={() => onEdit(row)}>
+                        <FiEdit2 size={18} />
+                      </TableIconButton>
+                      <TableIconButton label="Cập nhật trạng thái đợt" disabled={busyId !== null || !canClose(row)} onClick={() => onOpenStatus(row)}>
+                        <FiRefreshCw size={18} />
+                      </TableIconButton>
+                      <TableIconButton label="Xóa đợt thực tập" variant="danger" disabled={busyId !== null} onClick={() => onDelete(row)}>
+                        <FiTrash2 size={18} />
+                      </TableIconButton>
                     </div>
                   </td>
                 </tr>

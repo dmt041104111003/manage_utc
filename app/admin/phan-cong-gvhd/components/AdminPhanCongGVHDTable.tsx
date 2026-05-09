@@ -9,6 +9,8 @@ import {
 
 import { studentDisplay, supervisorDisplay } from "@/lib/utils/admin-phan-cong-gvhd-display";
 
+import TableIconButton from "../../../components/TableIconButton";
+import { FiChevronDown, FiChevronUp, FiEye, FiTrash2 } from "react-icons/fi";
 import styles from "../../styles/dashboard.module.css";
 
 export type Props = {
@@ -61,9 +63,8 @@ export default function AdminPhanCongGVHDTable(props: Props) {
                           <span key={String(s.id || `${s.msv}-${s.fullName}`)}>{studentDisplay(s as any)}</span>
                         ))}
                         {students.length > 1 ? (
-                          <button
-                            type="button"
-                            className={styles.textLinkBtn}
+                          <TableIconButton
+                            label={isOpen ? "Thu gọn danh sách sinh viên" : `Xem thêm ${students.length - 1} sinh viên`}
                             onClick={() =>
                               setExpanded((prev) => ({
                                 ...prev,
@@ -71,8 +72,8 @@ export default function AdminPhanCongGVHDTable(props: Props) {
                               }))
                             }
                           >
-                            {isOpen ? "Thu gọn" : `Xem thêm (${students.length - 1})`}
-                          </button>
+                            {isOpen ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
+                          </TableIconButton>
                         ) : null}
                       </div>
                     );
@@ -82,23 +83,13 @@ export default function AdminPhanCongGVHDTable(props: Props) {
                 <td data-label="Khoa">{it.faculty}</td>
                 <td data-label="Trạng thái">{ADMIN_PHAN_CONG_GVHD_STATUS_LABEL[it.status]}</td>
                 <td data-label="Thao tác">
-                  <div className={styles.rowActions} style={{ gap: 10 }}>
-                    <button
-                      type="button"
-                      className={styles.textLinkBtn}
-                      onClick={() => onView(it)}
-                      disabled={busyId !== null}
-                    >
-                      Xem phân công
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.textLinkBtn}
-                      onClick={() => onDelete(it)}
-                      disabled={busyId === it.id}
-                    >
-                      Xóa phân công
-                    </button>
+                  <div className={styles.rowActions} style={{ gap: 6 }}>
+                    <TableIconButton label="Xem phân công" onClick={() => onView(it)} disabled={busyId !== null}>
+                      <FiEye size={18} />
+                    </TableIconButton>
+                    <TableIconButton label="Xóa phân công" variant="danger" onClick={() => onDelete(it)} disabled={busyId === it.id}>
+                      <FiTrash2 size={18} />
+                    </TableIconButton>
                   </div>
                 </td>
               </tr>

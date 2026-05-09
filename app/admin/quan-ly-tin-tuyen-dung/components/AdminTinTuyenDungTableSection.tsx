@@ -7,6 +7,8 @@ import {
 } from "@/lib/constants/admin-quan-ly-tin-tuyen-dung";
 import { formatDateVi } from "@/lib/utils/admin-quan-ly-tin-tuyen-dung";
 import Pagination from "../../../components/Pagination";
+import TableIconButton from "../../../components/TableIconButton";
+import { FiCheckCircle, FiEye, FiTrash2 } from "react-icons/fi";
 import styles from "../../styles/dashboard.module.css";
 
 type Props = {
@@ -62,16 +64,16 @@ export default function AdminTinTuyenDungTableSection(props: Props) {
                   <td data-label="Đợt thực tập">{row.batchName || "—"}</td>
                   <td data-label="Trạng thái tin">{statusLabel[row.status]}</td>
                   <td data-label="Thao tác">
-                    <div className={styles.rowActions} style={{ gap: 10 }}>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onView(row)}>
-                        Xem
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onStatus(row)}>
-                        Duyệt tin
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onDelete(row)}>
-                        Xóa
-                      </button>
+                    <div className={styles.rowActions} style={{ gap: 6 }}>
+                      <TableIconButton label="Xem chi tiết tin tuyển dụng" disabled={busyId !== null} onClick={() => onView(row)}>
+                        <FiEye size={18} />
+                      </TableIconButton>
+                      <TableIconButton label="Duyệt tin tuyển dụng" disabled={busyId !== null} onClick={() => onStatus(row)}>
+                        <FiCheckCircle size={18} />
+                      </TableIconButton>
+                      <TableIconButton label="Xóa tin tuyển dụng" variant="danger" disabled={busyId !== null} onClick={() => onDelete(row)}>
+                        <FiTrash2 size={18} />
+                      </TableIconButton>
                     </div>
                   </td>
                 </tr>

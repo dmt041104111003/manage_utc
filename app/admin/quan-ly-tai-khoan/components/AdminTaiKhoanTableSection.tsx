@@ -7,6 +7,8 @@ import {
   statusLabel
 } from "@/lib/constants/admin-quan-ly-tai-khoan";
 import Pagination from "../../../components/Pagination";
+import TableIconButton from "../../../components/TableIconButton";
+import { FiEye, FiSliders, FiTrash2 } from "react-icons/fi";
 import styles from "../../styles/dashboard.module.css";
 
 type Props = {
@@ -58,16 +60,16 @@ export default function AdminTaiKhoanTableSection(props: Props) {
                   <td data-label="Phân quyền">{roleLabel[row.role]}</td>
                   <td data-label="Trạng thái">{statusLabel[row.status]}</td>
                   <td data-label="Thao tác">
-                    <div className={styles.rowActions} style={{ gap: 10 }}>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onView(row)}>
-                        Xem
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onStatus(row)}>
-                        Sửa trạng thái
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onDelete(row)}>
-                        Xóa
-                      </button>
+                    <div className={styles.rowActions} style={{ gap: 6 }}>
+                      <TableIconButton label="Xem chi tiết tài khoản" disabled={busyId !== null} onClick={() => onView(row)}>
+                        <FiEye size={18} />
+                      </TableIconButton>
+                      <TableIconButton label="Sửa trạng thái tài khoản" disabled={busyId !== null} onClick={() => onStatus(row)}>
+                        <FiSliders size={18} />
+                      </TableIconButton>
+                      <TableIconButton label="Xóa tài khoản" variant="danger" disabled={busyId !== null} onClick={() => onDelete(row)}>
+                        <FiTrash2 size={18} />
+                      </TableIconButton>
                     </div>
                   </td>
                 </tr>

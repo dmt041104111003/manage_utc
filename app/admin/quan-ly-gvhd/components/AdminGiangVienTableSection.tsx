@@ -7,6 +7,8 @@ import {
 } from "@/lib/constants/admin-quan-ly-gvhd";
 
 import Pagination from "../../../components/Pagination";
+import TableIconButton from "../../../components/TableIconButton";
+import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 import styles from "../../styles/dashboard.module.css";
 
 type Props = {
@@ -58,16 +60,16 @@ export default function AdminGiangVienTableSection(props: Props) {
                   <td data-label="Khoa">{row.faculty}</td>
                   <td data-label="Bậc">{ADMIN_QUAN_LY_GVHD_DEGREE_LABEL[row.degree]}</td>
                   <td data-label="Thao tác">
-                    <div className={styles.rowActions} style={{ gap: 10 }}>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onView(row)}>
-                        Xem
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onEdit(row)}>
-                        Sửa
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onDelete(row)}>
-                        Xóa
-                      </button>
+                    <div className={styles.rowActions} style={{ gap: 6 }}>
+                      <TableIconButton label="Xem chi tiết" disabled={busyId !== null} onClick={() => onView(row)}>
+                        <FiEye size={18} />
+                      </TableIconButton>
+                      <TableIconButton label="Sửa giảng viên" disabled={busyId !== null} onClick={() => onEdit(row)}>
+                        <FiEdit2 size={18} />
+                      </TableIconButton>
+                      <TableIconButton label="Xóa giảng viên" variant="danger" disabled={busyId !== null} onClick={() => onDelete(row)}>
+                        <FiTrash2 size={18} />
+                      </TableIconButton>
                     </div>
                   </td>
                 </tr>

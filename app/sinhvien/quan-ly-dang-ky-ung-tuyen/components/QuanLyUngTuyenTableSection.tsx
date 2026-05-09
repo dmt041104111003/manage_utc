@@ -17,6 +17,8 @@ import adminStyles from "../../../admin/styles/dashboard.module.css";
 import styles from "../../styles/dashboard.module.css";
 import { useState } from "react";
 import MessagePopup from "../../../components/MessagePopup";
+import TableIconButton from "../../../components/TableIconButton";
+import { FiCheck, FiInfo, FiX } from "react-icons/fi";
 
 type Props = {
   rows: SinhVienQuanLyDangKyUngTuyenRow[];
@@ -51,56 +53,52 @@ function ActionCell({
 
   if (row.status === "INTERVIEW_INVITED") {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
-        <button type="button" className={adminStyles.textLinkBtn} onClick={() => onViewStatus(row)}>
-          Xem phỏng vấn
-        </button>
-        <button
-          type="button"
-          className={adminStyles.textLinkBtn}
+      <div className={adminStyles.rowActions} style={{ gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <TableIconButton label="Xem thông tin phỏng vấn" onClick={() => onViewStatus(row)}>
+          <FiInfo size={18} />
+        </TableIconButton>
+        <TableIconButton
+          label={SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_CONFIRM_INTERVIEW_TEXT}
+          variant="success"
           disabled={isBusy || alreadyResponded}
           onClick={() => !alreadyResponded && confirmAndRespond("CONFIRM_INTERVIEW")}
-          style={alreadyResponded && row.response === "ACCEPTED" ? { color: "#16a34a", fontWeight: 600 } : undefined}
         >
-          {SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_CONFIRM_INTERVIEW_TEXT}
-        </button>
-        <button
-          type="button"
-          className={adminStyles.textLinkBtn}
+          <FiCheck size={18} />
+        </TableIconButton>
+        <TableIconButton
+          label={SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_DECLINE_INTERVIEW_TEXT}
+          variant="danger"
           disabled={isBusy || alreadyResponded}
           onClick={() => !alreadyResponded && confirmAndRespond("DECLINE_INTERVIEW")}
-          style={alreadyResponded && row.response === "DECLINED" ? { color: "#dc2626", fontWeight: 600 } : undefined}
         >
-          {SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_DECLINE_INTERVIEW_TEXT}
-        </button>
+          <FiX size={18} />
+        </TableIconButton>
       </div>
     );
   }
 
   if (row.status === "OFFERED") {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
-        <button type="button" className={adminStyles.textLinkBtn} onClick={() => onViewStatus(row)}>
-          Xem trúng tuyển
-        </button>
-        <button
-          type="button"
-          className={adminStyles.textLinkBtn}
+      <div className={adminStyles.rowActions} style={{ gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <TableIconButton label="Xem thông tin trúng tuyển" onClick={() => onViewStatus(row)}>
+          <FiInfo size={18} />
+        </TableIconButton>
+        <TableIconButton
+          label={SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_CONFIRM_INTERNSHIP_TEXT}
+          variant="success"
           disabled={isBusy || alreadyResponded}
           onClick={() => !alreadyResponded && confirmAndRespond("CONFIRM_INTERNSHIP")}
-          style={alreadyResponded && row.response === "ACCEPTED" ? { color: "#16a34a", fontWeight: 600 } : undefined}
         >
-          {SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_CONFIRM_INTERNSHIP_TEXT}
-        </button>
-        <button
-          type="button"
-          className={adminStyles.textLinkBtn}
+          <FiCheck size={18} />
+        </TableIconButton>
+        <TableIconButton
+          label={SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_DECLINE_INTERNSHIP_TEXT}
+          variant="danger"
           disabled={isBusy || alreadyResponded}
           onClick={() => !alreadyResponded && confirmAndRespond("DECLINE_INTERNSHIP")}
-          style={alreadyResponded && row.response === "DECLINED" ? { color: "#dc2626", fontWeight: 600 } : undefined}
         >
-          {SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_DECLINE_INTERNSHIP_TEXT}
-        </button>
+          <FiX size={18} />
+        </TableIconButton>
       </div>
     );
   }

@@ -1,5 +1,7 @@
 import type { Row } from "@/lib/types/giangvien-bao-cao-thuc-tap";
 import { degreeLabel } from "@/lib/constants/giangvien-bao-cao-thuc-tap";
+import TableIconButton from "../../../components/TableIconButton";
+import { FiBriefcase, FiEye, FiFileText } from "react-icons/fi";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import styles from "../../styles/dashboard.module.css";
 
@@ -48,34 +50,21 @@ export default function BaoCaoTableSection({ loading, rows, busy, onView, onUpda
                 <td data-label="Bậc">{degreeLabel[r.degree]}</td>
                 <td data-label="Trạng thái thực tập">{r.statusText}</td>
                 <td data-label="Thao tác">
-                  <button
-                    type="button"
-                    className={adminStyles.textLinkBtn}
-                    onClick={() => onView(r)}
-                    disabled={busy}
-                  >
-                    Xem chi tiết
-                  </button>
-                  {r.ui.canUpdateInternshipStatus ? (
-                    <button
-                      type="button"
-                      className={adminStyles.textLinkBtn}
-                      disabled={busy}
-                      onClick={() => onUpdate(r)}
-                    >
-                      Xác nhận thực tập tự túc
-                    </button>
-                  ) : null}
-                  {r.ui.canReviewReport && r.report ? (
-                    <button
-                      type="button"
-                      className={adminStyles.textLinkBtn}
-                      disabled={busy}
-                      onClick={() => onReview(r)}
-                    >
-                      Đánh giá BCTT
-                    </button>
-                  ) : null}
+                  <div className={adminStyles.rowActions} style={{ gap: 6, flexWrap: "wrap" }}>
+                    <TableIconButton label="Xem chi tiết" onClick={() => onView(r)} disabled={busy}>
+                      <FiEye size={18} />
+                    </TableIconButton>
+                    {r.ui.canUpdateInternshipStatus ? (
+                      <TableIconButton label="Xác nhận thực tập tự túc" variant="success" disabled={busy} onClick={() => onUpdate(r)}>
+                        <FiBriefcase size={18} />
+                      </TableIconButton>
+                    ) : null}
+                    {r.ui.canReviewReport && r.report ? (
+                      <TableIconButton label="Đánh giá báo cáo thực tập" disabled={busy} onClick={() => onReview(r)}>
+                        <FiFileText size={18} />
+                      </TableIconButton>
+                    ) : null}
+                  </div>
                 </td>
               </tr>
             ))

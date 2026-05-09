@@ -6,6 +6,8 @@ import {
   degreeLabel
 } from "@/lib/constants/admin-quan-ly-tien-do-thuc-tap";
 import Pagination from "../../../components/Pagination";
+import TableIconButton from "../../../components/TableIconButton";
+import { FiEdit3, FiEye } from "react-icons/fi";
 import styles from "../../styles/dashboard.module.css";
 
 type Props = {
@@ -62,18 +64,17 @@ export default function AdminTienDoTableSection(props: Props) {
                   <td data-label="Bậc">{degreeLabel[row.degree]}</td>
                   <td data-label="Trạng thái thực tập">{row.statusLabel}</td>
                   <td data-label="Thao tác">
-                    <div className={styles.rowActions} style={{ gap: 10 }}>
-                      <button type="button" className={styles.textLinkBtn} onClick={() => onView(row)} disabled={busyId !== null}>
-                        Xem
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.textLinkBtn}
+                    <div className={styles.rowActions} style={{ gap: 6 }}>
+                      <TableIconButton label="Xem chi tiết tiến độ" onClick={() => onView(row)} disabled={busyId !== null}>
+                        <FiEye size={18} />
+                      </TableIconButton>
+                      <TableIconButton
+                        label="Cập nhật trạng thái cuối cùng"
                         onClick={() => onEdit(row)}
                         disabled={busyId !== null || !row.canFinalUpdate}
                       >
-                        Cập nhật trạng thái cuối cùng
-                      </button>
+                        <FiEdit3 size={18} />
+                      </TableIconButton>
                     </div>
                   </td>
                 </tr>

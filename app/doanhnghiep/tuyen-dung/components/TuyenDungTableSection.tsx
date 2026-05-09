@@ -1,4 +1,6 @@
 import Pagination from "../../../components/Pagination";
+import TableIconButton from "../../../components/TableIconButton";
+import { FiEdit2, FiEye, FiPauseCircle, FiTrash2 } from "react-icons/fi";
 import type { JobListItem, JobStatus } from "@/lib/types/doanhnghiep-tuyen-dung";
 import { DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE, DOANHNGHIEP_TUYEN_DUNG_STATUS_LABEL, DOANHNGHIEP_TUYEN_DUNG_WORK_TYPE_LABEL } from "@/lib/constants/doanhnghiep-tuyen-dung";
 import { canEditStatus, canStopStatus, formatDateVi } from "@/lib/utils/doanhnghiep-tuyen-dung";
@@ -70,22 +72,24 @@ export default function TuyenDungTableSection({
                   <td data-label="Hình thức làm việc">{DOANHNGHIEP_TUYEN_DUNG_WORK_TYPE_LABEL[row.workType]}</td>
                   <td data-label="Trạng thái tin">{DOANHNGHIEP_TUYEN_DUNG_STATUS_LABEL[row.status as JobStatus]}</td>
                   <td data-label="Thao tác">
-                    <button type="button" className={adminStyles.textLinkBtn} onClick={() => onView(row)}>
-                      Xem
-                    </button>
-                    {canEditStatus(row.status) ? (
-                      <button type="button" className={adminStyles.textLinkBtn} disabled={busyId !== null} onClick={() => onEdit(row)}>
-                        Sửa
-                      </button>
-                    ) : null}
-                    {canStopStatus(row.status) ? (
-                      <button type="button" className={adminStyles.textLinkBtn} disabled={busyId !== null} onClick={() => onStop(row)}>
-                        Dừng hoạt động
-                      </button>
-                    ) : null}
-                    <button type="button" className={adminStyles.textLinkBtn} disabled={busyId !== null} onClick={() => onDelete(row)}>
-                      Xóa
-                    </button>
+                    <div className={adminStyles.rowActions} style={{ gap: 6 }}>
+                      <TableIconButton label="Xem chi tiết tin tuyển dụng" onClick={() => onView(row)}>
+                        <FiEye size={18} />
+                      </TableIconButton>
+                      {canEditStatus(row.status) ? (
+                        <TableIconButton label="Sửa tin tuyển dụng" disabled={busyId !== null} onClick={() => onEdit(row)}>
+                          <FiEdit2 size={18} />
+                        </TableIconButton>
+                      ) : null}
+                      {canStopStatus(row.status) ? (
+                        <TableIconButton label="Dừng hoạt động tin" disabled={busyId !== null} onClick={() => onStop(row)}>
+                          <FiPauseCircle size={18} />
+                        </TableIconButton>
+                      ) : null}
+                      <TableIconButton label="Xóa tin tuyển dụng" variant="danger" disabled={busyId !== null} onClick={() => onDelete(row)}>
+                        <FiTrash2 size={18} />
+                      </TableIconButton>
+                    </div>
                   </td>
                 </tr>
               ))

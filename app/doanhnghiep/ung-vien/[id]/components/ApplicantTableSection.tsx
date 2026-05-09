@@ -1,4 +1,6 @@
 import Pagination from "../../../../components/Pagination";
+import TableIconButton from "../../../../components/TableIconButton";
+import { FiEye } from "react-icons/fi";
 import type { Applicant, JobApplicationStatus } from "@/lib/types/doanhnghiep-ung-vien-detail";
 import {
   applicationStatusLabel,
@@ -77,9 +79,9 @@ export default function ApplicantTableSection({ applicants, totalItems, page, bu
                       ) : null}
                     </td>
                     <td data-label="Thao tác">
-                      <button type="button" className={adminStyles.textLinkBtn} onClick={() => onView(a)} disabled={busy}>
-                        Xem chi tiết
-                      </button>
+                      <TableIconButton label="Xem chi tiết ứng viên" onClick={() => onView(a)} disabled={busy}>
+                        <FiEye size={18} />
+                      </TableIconButton>
                     </td>
                   </tr>
                 );

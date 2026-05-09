@@ -1,5 +1,7 @@
 import type { Row } from "@/lib/types/giangvien-sinh-vien";
 import { GIANGVIEN_SINH_VIEN_EMPTY_TEXT, degreeLabel } from "@/lib/constants/giangvien-sinh-vien";
+import TableIconButton from "../../../components/TableIconButton";
+import { FiEye } from "react-icons/fi";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import styles from "../../styles/dashboard.module.css";
 
@@ -43,13 +45,9 @@ export default function SinhVienTableSection({ loading, items, onView }: Props) 
                 <td data-label="Bậc">{degreeLabel[r.degree]}</td>
                 <td data-label="Trạng thái hướng dẫn">{r.guidanceStatusLabel}</td>
                 <td data-label="Thao tác">
-                  <button
-                    type="button"
-                    className={adminStyles.textLinkBtn}
-                    onClick={() => onView(r)}
-                  >
-                    Xem chi tiết
-                  </button>
+                  <TableIconButton label="Xem chi tiết sinh viên" onClick={() => onView(r)}>
+                    <FiEye size={18} />
+                  </TableIconButton>
                 </td>
               </tr>
             ))

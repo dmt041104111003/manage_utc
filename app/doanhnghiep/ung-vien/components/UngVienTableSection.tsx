@@ -1,4 +1,6 @@
 import Pagination from "../../../components/Pagination";
+import TableIconButton from "../../../components/TableIconButton";
+import { FiExternalLink } from "react-icons/fi";
 import type { JobRow } from "@/lib/types/doanhnghiep-ung-vien";
 import {
   DOANHNGHIEP_UNG_VIEN_PAGE_SIZE,
@@ -58,9 +60,9 @@ export default function UngVienTableSection({ loading, items, totalItems, page, 
                   <td data-label="Số lượng ứng viên">{row.applicantCount}</td>
                   <td data-label="Trạng thái tin">{DOANHNGHIEP_UNG_VIEN_STATUS_LABEL[row.status]}</td>
                   <td data-label="Thao tác">
-                    <a className={adminStyles.detailLink} href={`/doanhnghiep/ung-vien/${row.id}`}>
-                      Xem chi tiết
-                    </a>
+                    <TableIconButton label="Xem chi tiết ứng viên theo tin" href={`/doanhnghiep/ung-vien/${row.id}`}>
+                      <FiExternalLink size={18} />
+                    </TableIconButton>
                   </td>
                 </tr>
               ))
