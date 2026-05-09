@@ -140,6 +140,11 @@ model User {
 
   // Supervisor profile (only used by giangvien role; managed by admin)
   supervisorProfile SupervisorProfile?
+
+  @@index([role, isLocked, createdAt])
+  @@index([enterpriseStatus, createdAt])
+  @@index([fullName])
+  @@index([companyName])
 }
 
 model InternshipBatch {
@@ -160,6 +165,9 @@ model InternshipBatch {
 
   @@unique([semester, schoolYear])
   @@unique([startDate, endDate])
+  @@index([status, startDate])
+  @@index([createdAt])
+  @@index([name])
 }
 
 model JobPost {
@@ -200,6 +208,15 @@ model JobPost {
   internshipBatch InternshipBatch   @relation(fields: [internshipBatchId], references: [id])
 
   jobApplications JobApplication[]
+
+  @@index([enterpriseUserId, createdAt])
+  @@index([enterpriseUserId, status, createdAt])
+  @@index([internshipBatchId, createdAt])
+  @@index([internshipBatchId, status])
+  @@index([status, createdAt])
+  @@index([deadlineAt])
+  @@index([title])
+  @@index([expertise])
 }
 
 model JobApplication {
@@ -228,6 +245,10 @@ model JobApplication {
   studentUser User @relation(fields: [studentUserId], references: [id])
 
   @@unique([jobPostId, studentUserId])
+  @@index([jobPostId, status, createdAt])
+  @@index([jobPostId, response, createdAt])
+  @@index([studentUserId, status, createdAt])
+  @@index([createdAt])
 }
 
 model StudentProfile {
@@ -270,6 +291,14 @@ model StudentProfile {
 
   internshipReport InternshipReport?
   internshipStatusHistory InternshipStatusHistory[]
+
+  @@index([faculty, createdAt])
+  @@index([degree, createdAt])
+  @@index([internshipStatus, createdAt])
+  @@index([faculty, degree, internshipStatus])
+  @@index([className])
+  @@index([cohort])
+  @@index([createdAt])
 }
 
 model SupervisorProfile {
@@ -293,6 +322,11 @@ model SupervisorProfile {
   user User @relation(fields: [userId], references: [id])
 
   assignments SupervisorAssignment[]
+
+  @@index([faculty, createdAt])
+  @@index([degree, createdAt])
+  @@index([faculty, degree])
+  @@index([createdAt])
 }
 
 model SupervisorAssignment {
@@ -315,6 +349,9 @@ model SupervisorAssignment {
   statusHistory SupervisorAssignmentStatusHistory[]
 
   @@unique([internshipBatchId, supervisorProfileId])
+  @@index([faculty, status, createdAt])
+  @@index([internshipBatchId, status])
+  @@index([supervisorProfileId, status])
 }
 
 model SupervisorAssignmentStudent {
@@ -329,6 +366,8 @@ model SupervisorAssignmentStudent {
   studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
 
   @@unique([studentProfileId, supervisorAssignmentId])
+  @@index([supervisorAssignmentId, studentProfileId])
+  @@index([studentProfileId, createdAt])
 }
 
 model InternshipReport {
@@ -359,6 +398,10 @@ model InternshipReport {
   updatedAt DateTime @updatedAt
 
   studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
+
+  @@index([reviewStatus, submittedAt])
+  @@index([submittedAt])
+  @@index([updatedAt])
 }
 
 model InternshipStatusHistory {
