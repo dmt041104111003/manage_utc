@@ -140,10 +140,10 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
       </div>
 
       <div className={formStyles.formGroup}>
-        <label className={formStyles.label}>GVHD</label>
+        <label className={formStyles.label}>Giảng viên hướng dẫn</label>
         <input
           className={formStyles.input}
-          placeholder="Tìm kiếm GVHD theo họ tên"
+          placeholder="Tìm kiếm giảng viên hướng dẫn theo họ tên"
           value={supervisorQ}
           onChange={(e) => setSupervisorQ(e.target.value)}
           disabled={!formFaculty || !formBatchId}
@@ -154,7 +154,7 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
           onChange={(e) => setFormSupervisorId(e.target.value)}
           disabled={!formFaculty || !formBatchId}
         >
-          <option value="">{optionsLoading ? "Đang tải..." : "Chọn GVHD"}</option>
+          <option value="">{optionsLoading ? "Đang tải..." : "Chọn giảng viên hướng dẫn"}</option>
           {supervisorOptions.map((s) => (
             <option key={s.id} value={s.id}>
               {supervisorDisplay({ fullName: s.fullName, degree: s.degree })}

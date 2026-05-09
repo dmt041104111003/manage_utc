@@ -103,7 +103,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
   if (action === "REJECT") {
     const rejectReason = (body.rejectReason || "").trim();
-    if (!rejectReason) return NextResponse.json({ success: false, message: "Lý do GVHD từ chối là bắt buộc." }, { status: 400 });
+    if (!rejectReason) return NextResponse.json({ success: false, message: "Lý do giảng viên hướng dẫn từ chối là bắt buộc." }, { status: 400 });
 
     await prismaAny.$transaction(async (tx: any) => {
       await tx.internshipReport.update({

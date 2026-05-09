@@ -126,7 +126,7 @@ export default function BaoCaoViewPopup({ viewTarget, onClose }: Props) {
                 </td>
               </tr>
               <tr>
-                <th scope="row">Điểm ĐQT (GVHD)</th>
+                <th scope="row">Điểm ĐQT (Giảng viên hướng dẫn)</th>
                 <td>{viewTarget.report?.supervisorPoint != null ? viewTarget.report.supervisorPoint : "—"}</td>
               </tr>
               <tr>
@@ -134,7 +134,7 @@ export default function BaoCaoViewPopup({ viewTarget, onClose }: Props) {
                 <td>{viewTarget.report?.enterprisePoint != null ? viewTarget.report.enterprisePoint : "—"}</td>
               </tr>
               <tr>
-                <th scope="row">Đánh giá của GVHD</th>
+                <th scope="row">Đánh giá của giảng viên hướng dẫn</th>
                 <td style={{ whiteSpace: "pre-wrap" }}>{viewTarget.report?.supervisorEvaluation ?? "—"}</td>
               </tr>
               <tr>

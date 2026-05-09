@@ -29,7 +29,7 @@ export default function AdminGiangVienImportPopup(props: Props) {
   return (
     <MessagePopup
       open
-      title="Thêm danh sách GV"
+      title="Thêm danh sách giảng viên hướng dẫn"
       size="wide"
       onClose={onClose}
       actions={
@@ -59,7 +59,7 @@ export default function AdminGiangVienImportPopup(props: Props) {
           onChange={(e) => onSetImportFile(e.target.files?.[0] || null)}
         />
         <p className={styles.modulePlaceholder} style={{ marginTop: 10 }}>
-          Khi import thành công, hệ thống sẽ cấp tài khoản đăng nhập cho GVHD (mật khẩu = ngày sinh).
+          Khi import thành công, hệ thống sẽ cấp tài khoản đăng nhập cho giảng viên hướng dẫn (mật khẩu = ngày sinh).
         </p>
       </div>
     </MessagePopup>

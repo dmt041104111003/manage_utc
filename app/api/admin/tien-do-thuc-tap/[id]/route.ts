@@ -19,8 +19,8 @@ type ReportReviewStatus = "PENDING" | "REJECTED" | "APPROVED";
 function getStatusLabel(status: InternshipStatus, reportReviewStatus: ReportReviewStatus | null) {
   if (status === "REPORT_SUBMITTED") {
     if (reportReviewStatus === "APPROVED") return "Đã duyệt BCTT";
-    if (reportReviewStatus === "REJECTED") return "BCTT bị GVHD từ chối";
-    return "Chờ GVHD duyệt";
+    if (reportReviewStatus === "REJECTED") return "BCTT bị giảng viên hướng dẫn từ chối";
+    return "Chờ giảng viên hướng dẫn duyệt";
   }
   if (status === "REJECTED") return "Từ chối";
   if (status === "COMPLETED") return "Hoàn thành thực tập";

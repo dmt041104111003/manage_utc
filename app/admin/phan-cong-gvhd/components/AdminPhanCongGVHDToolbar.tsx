@@ -38,7 +38,7 @@ export default function AdminPhanCongGVHDToolbar(props: Props) {
         <label>Tìm kiếm</label>
         <input
           className={styles.textInputSearch}
-          placeholder="Tên GVHD hoặc MSV/Họ tên SV"
+          placeholder="Tên giảng viên hướng dẫn hoặc MSV/Họ tên SV"
           value={searchQ}
           onChange={(e) => onChangeSearchQ(e.target.value)}
         />

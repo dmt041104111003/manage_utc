@@ -116,7 +116,7 @@ export async function POST(request: Request) {
   const errors: Record<string, string> = {};
   if (!faculty) errors.faculty = "Khoa bắt buộc.";
   if (!internshipBatchId) errors.internshipBatchId = "Đợt thực tập bắt buộc.";
-  if (!supervisorProfileId) errors.supervisorProfileId = "GVHD bắt buộc.";
+  if (!supervisorProfileId) errors.supervisorProfileId = "Giảng viên hướng dẫn bắt buộc.";
   if (!studentProfileIds.length) errors.studentProfileIds = "Danh sách sinh viên hướng dẫn bắt buộc.";
   if (Object.keys(errors).length) return NextResponse.json({ success: false, errors }, { status: 400 });
 
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
     }
   });
   if (!supervisor || supervisor.faculty !== faculty) {
-    return NextResponse.json({ success: false, message: "GVHD không hợp lệ hoặc không thuộc khoa đã chọn." }, { status: 400 });
+    return NextResponse.json({ success: false, message: "Giảng viên hướng dẫn không hợp lệ hoặc không thuộc khoa đã chọn." }, { status: 400 });
   }
 
   const existingSupervisorInBatch = await prismaAny.supervisorAssignment.findFirst({
@@ -145,7 +145,7 @@ export async function POST(request: Request) {
     select: { id: true }
   });
   if (existingSupervisorInBatch) {
-    return NextResponse.json({ success: false, message: "GVHD đã được phân công trong đợt thực tập này." }, { status: 400 });
+    return NextResponse.json({ success: false, message: "Giảng viên hướng dẫn đã được phân công trong đợt thực tập này." }, { status: 400 });
   }
 
   const students = await prismaAny.studentProfile.findMany({
@@ -262,7 +262,7 @@ export async function POST(request: Request) {
       await sendMail(
         svEmail,
         `[UTC] Thông tin Giảng viên hướng dẫn thực tập – ${batchLabel}`,
-        `Kính gửi ${svFullName},\n\nBạn đã được phân công Giảng viên hướng dẫn (GVHD) cho ${batchLabel}.${facultyLabel}\n\nThông tin GVHD:\n  Họ tên: ${gvDegree} ${gvFullName}\n  Email: ${gvEmail ?? "—"}\n  Số điện thoại: ${gvPhone}\n\nVui lòng liên hệ GVHD để được hướng dẫn trong quá trình thực tập.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${svFullName},\n\nBạn đã được phân công Giảng viên hướng dẫn cho ${batchLabel}.${facultyLabel}\n\nThông tin giảng viên hướng dẫn:\n  Họ tên: ${gvDegree} ${gvFullName}\n  Email: ${gvEmail ?? "—"}\n  Số điện thoại: ${gvPhone}\n\nVui lòng liên hệ giảng viên hướng dẫn để được hướng dẫn trong quá trình thực tập.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
   } catch {

@@ -175,7 +175,7 @@ function validateCreate(body: CreateSupervisorBody) {
   else {
     const birth = parseDateOnly(birthDateStr);
     if (Number.isNaN(birth.getTime())) errors.birthDate = "Ngày sinh không hợp lệ.";
-    else if (calcAge(birth) < 18) errors.birthDate = "GVHD phải đủ 18 tuổi trở lên.";
+    else if (calcAge(birth) < 18) errors.birthDate = "Giảng viên hướng dẫn phải đủ 18 tuổi trở lên.";
   }
 
   if (!body.gender || !["MALE", "FEMALE", "OTHER"].includes(String(body.gender))) errors.gender = "Giới tính không hợp lệ.";

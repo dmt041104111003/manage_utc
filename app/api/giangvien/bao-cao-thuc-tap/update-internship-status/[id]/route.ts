@@ -61,7 +61,7 @@ export async function PATCH(_request: Request, ctx: { params: Promise<{ id: stri
         fromStatus: "NOT_STARTED",
         toStatus: "SELF_FINANCED",
         byRole: "giangvien",
-        message: "GVHD cập nhật Thực tập tự túc",
+        message: "Giảng viên hướng dẫn cập nhật Thực tập tự túc",
         meta: { action: "SELF_FINANCED" }
       }
     });
@@ -75,7 +75,7 @@ export async function PATCH(_request: Request, ctx: { params: Promise<{ id: stri
       await sendMail(
         svEmail,
         "[UTC] Cập nhật trạng thái thực tập",
-        `Kính gửi ${svFullName},\n\nTrạng thái thực tập của bạn vừa được GVHD cập nhật thành: Thực tập tự túc.\n\nVui lòng đăng nhập hệ thống để theo dõi tiến độ thực tập.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${svFullName},\n\nTrạng thái thực tập của bạn vừa được giảng viên hướng dẫn cập nhật thành: Thực tập tự túc.\n\nVui lòng đăng nhập hệ thống để theo dõi tiến độ thực tập.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
   } catch {

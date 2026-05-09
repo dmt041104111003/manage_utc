@@ -29,7 +29,7 @@ export default function AdminPhanCongGVHDTable(props: Props) {
           <tr>
             <th>STT</th>
             <th>MSV-Họ tên-Bậc</th>
-            <th>Bậc-Họ tên GVHD</th>
+            <th>Bậc-Họ tên giảng viên hướng dẫn</th>
             <th>Khoa</th>
             <th>Trạng thái</th>
             <th>Thao tác</th>

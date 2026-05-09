@@ -120,7 +120,7 @@ export default function AdminQuanLyGVHDPage() {
       if (filterDegree !== "all") params.set("degree", filterDegree);
       const res = await fetch(`/api/admin/supervisors?${params.toString()}`);
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách GVHD.");
+      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách giảng viên hướng dẫn.");
       setItems(data.items || []);
       setFaculties(data.faculties || []);
       setLatestBatchSupervisorStats(data.latestBatchSupervisorStats ?? null);
@@ -183,7 +183,7 @@ export default function AdminQuanLyGVHDPage() {
     else {
       const age = calcAgeFromBirthDate(draft.birthDate);
       if (age == null) next.birthDate = "Ngày sinh không hợp lệ.";
-      else if (age < 18) next.birthDate = "GVHD phải đủ 18 tuổi trở lên.";
+      else if (age < 18) next.birthDate = "Giảng viên hướng dẫn phải đủ 18 tuổi trở lên.";
     }
 
     if (!draft.gender || !["MALE", "FEMALE", "OTHER"].includes(draft.gender)) next.gender = "Giới tính không hợp lệ.";
@@ -230,15 +230,15 @@ export default function AdminQuanLyGVHDPage() {
       const data = await res.json();
       if (!res.ok) {
         if (data.errors) setFieldErrors(data.errors);
-        showPopup(data.message || "Tạo GVHD thất bại.");
+        showPopup(data.message || "Tạo giảng viên hướng dẫn thất bại.");
         return;
       }
-      showPopup(data.message || "Tạo GVHD thành công.");
+      showPopup(data.message || "Tạo giảng viên hướng dẫn thành công.");
       setAddOpen(false);
       resetForm();
       await load();
     } catch (e) {
-      showPopup(e instanceof Error ? e.message : "Tạo GVHD thất bại.");
+      showPopup(e instanceof Error ? e.message : "Tạo giảng viên hướng dẫn thất bại.");
     } finally {
       setBusyId(null);
     }
@@ -272,15 +272,15 @@ export default function AdminQuanLyGVHDPage() {
       const data = await res.json();
       if (!res.ok) {
         if (data.errors) setFieldErrors(data.errors);
-        showPopup(data.message || "Cập nhật GVHD thất bại.");
+        showPopup(data.message || "Cập nhật giảng viên hướng dẫn thất bại.");
         return;
       }
-      showPopup(data.message || "Cập nhật GVHD thành công.");
+      showPopup(data.message || "Cập nhật giảng viên hướng dẫn thành công.");
       setEditTarget(null);
       resetForm();
       await load();
     } catch (e) {
-      showPopup(e instanceof Error ? e.message : "Cập nhật GVHD thất bại.");
+      showPopup(e instanceof Error ? e.message : "Cập nhật giảng viên hướng dẫn thất bại.");
     } finally {
       setBusyId(null);
     }
@@ -290,11 +290,11 @@ export default function AdminQuanLyGVHDPage() {
     try {
       const res = await fetch(`/api/admin/supervisors/${row.id}`);
       const data = await res.json();
-      if (!res.ok || !data.success || !data.item) throw new Error(data.message || "Không tải được thông tin GVHD.");
+      if (!res.ok || !data.success || !data.item) throw new Error(data.message || "Không tải được thông tin giảng viên hướng dẫn.");
       setViewItem(data.item as SupervisorListItem);
       setViewOpen(true);
     } catch (e) {
-      showPopup(e instanceof Error ? e.message : "Không tải được thông tin GVHD.");
+      showPopup(e instanceof Error ? e.message : "Không tải được thông tin giảng viên hướng dẫn.");
     }
   };
 
@@ -308,7 +308,7 @@ export default function AdminQuanLyGVHDPage() {
         showPopup(data.message || "Xóa thất bại.");
         return;
       }
-      showPopup(data.message || "Xóa GVHD thành công.");
+      showPopup(data.message || "Xóa giảng viên hướng dẫn thành công.");
       setDeleteTarget(null);
       await load();
     } catch (e) {
@@ -360,7 +360,7 @@ export default function AdminQuanLyGVHDPage() {
     ];
 
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "GVHD");
+    XLSX.utils.book_append_sheet(wb, ws, "Giảng viên hướng dẫn");
     const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" });
     const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     const url = URL.createObjectURL(blob);
@@ -439,15 +439,15 @@ export default function AdminQuanLyGVHDPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        showPopup(data.message || "Tạo danh sách GVHD thất bại.");
+        showPopup(data.message || "Tạo danh sách giảng viên hướng dẫn thất bại.");
         return;
       }
-      showPopup(data.message || "Tạo danh sách GVHD thành công.");
+      showPopup(data.message || "Tạo danh sách giảng viên hướng dẫn thành công.");
       setImportOpen(false);
       setImportFile(null);
       await load();
     } catch (e) {
-      showPopup(e instanceof Error ? e.message : "Tạo danh sách GVHD thất bại.");
+      showPopup(e instanceof Error ? e.message : "Tạo danh sách giảng viên hướng dẫn thất bại.");
     } finally {
       setImportBusy(false);
     }
@@ -456,23 +456,23 @@ export default function AdminQuanLyGVHDPage() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Quản lý GVHD</h1>
+        <h1 className={styles.title}>Quản lý giảng viên hướng dẫn</h1>
       </header>
 
       {error ? <p className={styles.error}>{error}</p> : null}
 
       {!loading && latestBatchSupervisorStats?.batchId ? (
-        <section aria-label="Thống kê phân công GVHD đợt mới nhất">
+        <section aria-label="Thống kê phân công giảng viên hướng dẫn đợt mới nhất">
           <div className={styles.statusNote} style={{ marginBottom: 10 }}>
             Đợt thực tập mới nhất: <strong>{latestBatchSupervisorStats.batchName ?? "—"}</strong>
           </div>
           <div className={styles.statsGrid2}>
             <div className={styles.statCard}>
-              <p className={styles.statLabel}>GVHD đã được phân công</p>
+              <p className={styles.statLabel}>Giảng viên hướng dẫn đã được phân công</p>
               <p className={styles.statValue}>{latestBatchSupervisorStats.assigned}</p>
             </div>
             <div className={styles.statCard}>
-              <p className={styles.statLabel}>GVHD chưa được phân công</p>
+              <p className={styles.statLabel}>Giảng viên hướng dẫn chưa được phân công</p>
               <p className={styles.statValue}>{latestBatchSupervisorStats.unassigned}</p>
             </div>
           </div>

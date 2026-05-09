@@ -21,7 +21,7 @@ export default function AdminGiangVienViewPopup(props: Props) {
   if (!open || !item) return null;
 
   return (
-    <MessagePopup open title="Xem thông tin GVHD" size="extraWide" onClose={onClose}>
+    <MessagePopup open title="Xem thông tin giảng viên hướng dẫn" size="extraWide" onClose={onClose}>
       <table className={styles.viewModalDetailTable}>
         <tbody>
           <tr>

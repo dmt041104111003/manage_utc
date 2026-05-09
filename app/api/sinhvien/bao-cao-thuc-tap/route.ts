@@ -264,7 +264,7 @@ export async function POST(request: Request) {
       await sendMail(
         svEmail,
         `[UTC] Nộp Báo cáo thực tập thành công`,
-        `Kính gửi ${svFullName},\n\nBạn đã nộp Báo cáo thực tập thành công. Vui lòng chờ GVHD xem xét và phê duyệt.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${svFullName},\n\nBạn đã nộp Báo cáo thực tập thành công. Vui lòng chờ giảng viên hướng dẫn xem xét và phê duyệt.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
   } catch {
@@ -275,7 +275,6 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  // Sửa BCTT chỉ cho phép khi GVHD từ chối duyệt (reviewStatus = REJECTED)
   const auth = await getStudentUserId();
   if (auth.error) return auth.error;
   const userId = auth.userId as string;

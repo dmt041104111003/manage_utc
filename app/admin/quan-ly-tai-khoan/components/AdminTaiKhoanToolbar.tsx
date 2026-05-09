@@ -32,7 +32,7 @@ export default function AdminTaiKhoanToolbar(props: Props) {
         <select className={styles.selectInput} value={filterRole} onChange={(e) => onChangeFilterRole(e.target.value as Role | "all")}>
           <option value="all">Tất cả</option>
           <option value="sinhvien">SV</option>
-          <option value="giangvien">GVHD</option>
+          <option value="giangvien">Giảng viên hướng dẫn</option>
           <option value="doanhnghiep">DN</option>
         </select>
       </div>

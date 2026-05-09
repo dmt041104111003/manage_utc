@@ -9,7 +9,7 @@ type Props = {
 
 export default function SinhVienSupervisorInfo({ supervisor }: Props) {
   if (!supervisor) {
-    return <p className={styles.modulePlaceholder}>Chưa được phân công GVHD.</p>;
+    return <p className={styles.modulePlaceholder}>Chưa được phân công giảng viên hướng dẫn.</p>;
   }
 
   return (

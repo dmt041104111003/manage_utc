@@ -237,7 +237,7 @@ export default function AdminPhanCongGVHDPage() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Phân công GVHD</h1>
+        <h1 className={styles.title}>Phân công giảng viên hướng dẫn</h1>
       </header>
 
       {error ? <p className={styles.error}>{error}</p> : null}

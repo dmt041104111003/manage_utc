@@ -162,13 +162,13 @@ export default function SinhVienViewPopup({ viewTarget, onClose }: Props) {
               <table className={adminStyles.viewModalDetailTable} style={{ marginTop: 8 }}>
                 <tbody>
                   <tr>
-                    <th scope="row">Đánh giá của GVHD</th>
+                    <th scope="row">Đánh giá của giảng viên hướng dẫn</th>
                     <td style={{ whiteSpace: "pre-wrap" }}>
                       {viewTarget.report?.supervisorEvaluation ?? "—"}
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row">Điểm QT (GVHD)</th>
+                    <th scope="row">Điểm QT (Giảng viên hướng dẫn)</th>
                     <td>{viewTarget.report?.supervisorPoint != null ? viewTarget.report.supervisorPoint : "—"}</td>
                   </tr>
                   <tr>

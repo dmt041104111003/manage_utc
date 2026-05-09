@@ -20,7 +20,7 @@ export default function AdminGiangVienDeletePopup(props: Props) {
   return (
     <MessagePopup
       open
-      title="Xóa GVHD"
+      title="Xóa giảng viên hướng dẫn"
       size="wide"
       onClose={onClose}
       actions={
@@ -35,7 +35,7 @@ export default function AdminGiangVienDeletePopup(props: Props) {
       }
     >
       <p>
-        Bạn có chắc chắn muốn xóa GVHD <strong>[{ADMIN_QUAN_LY_GVHD_DEGREE_LABEL[target.degree]}]</strong>-
+        Bạn có chắc chắn muốn xóa giảng viên hướng dẫn <strong>[{ADMIN_QUAN_LY_GVHD_DEGREE_LABEL[target.degree]}]</strong>-
         <strong>[{target.fullName}]</strong>-<strong>[{target.faculty}]</strong> không?
       </p>
     </MessagePopup>

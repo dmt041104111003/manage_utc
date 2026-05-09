@@ -41,7 +41,7 @@ export default function AdminPhanCongGVHDViewPopup(props: Props) {
             <td>{viewTarget.batch?.name || "—"}</td>
           </tr>
           <tr>
-            <th scope="row">GVHD</th>
+            <th scope="row">Giảng viên hướng dẫn</th>
             <td>{supervisorDisplay(viewTarget.supervisor as any) || "—"}</td>
           </tr>
           <tr>

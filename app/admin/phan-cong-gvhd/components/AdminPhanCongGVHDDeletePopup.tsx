@@ -47,7 +47,7 @@ export default function AdminPhanCongGVHDDeletePopup(props: Props) {
     >
       <div style={{ display: "grid", gap: 10 }}>
         <p style={{ margin: 0 }}>
-          Bạn có chắc chắn muốn xóa Phân công: <b>[SV hướng dẫn]</b> - GVHD: <b>[GVHD]</b> không?
+          Bạn có chắc chắn muốn xóa Phân công: <b>[SV hướng dẫn]</b> - Giảng viên hướng dẫn: <b>[Giảng viên hướng dẫn]</b> không?
         </p>
 
         <table className={styles.viewModalDetailTable}>
@@ -70,7 +70,7 @@ export default function AdminPhanCongGVHDDeletePopup(props: Props) {
               </td>
             </tr>
             <tr>
-              <th scope="row">GVHD</th>
+              <th scope="row">Giảng viên hướng dẫn</th>
               <td>{supervisorDisplay(deleteTarget.supervisor as any) || "—"}</td>
             </tr>
             <tr>
