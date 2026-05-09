@@ -37,6 +37,20 @@ enum JobStatus {
   STOPPED
 }
 
+enum JobApplicationStatus {
+  PENDING_REVIEW
+  INTERVIEW_INVITED
+  OFFERED
+  REJECTED
+  STUDENT_DECLINED
+}
+
+enum JobApplicationResponse {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 enum StudentInternshipStatus {
   NOT_STARTED
   DOING
@@ -167,11 +181,24 @@ model JobApplication {
   jobPostId String
   studentUserId String
 
+  status JobApplicationStatus @default(PENDING_REVIEW)
+  coverLetter String?
+  cvUrl String?
+
+  interviewAt DateTime?
+
+  response JobApplicationResponse @default(PENDING)
+  responseAt DateTime?
+
+  history Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   jobPost JobPost @relation(fields: [jobPostId], references: [id])
   studentUser User @relation(fields: [studentUserId], references: [id])
+
+  @@unique([jobPostId, studentUserId])
 }
 
 model StudentProfile {
