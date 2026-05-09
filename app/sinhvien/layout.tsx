@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
+import { getDashboardSidebarDisplayName } from "@/lib/auth/dashboard-display-name";
 import { DashboardShell } from "../components/DashboardShell";
 
-export default function SinhvienLayout({ children }: { children: ReactNode }) {
-  return <DashboardShell role="sinhvien">{children}</DashboardShell>;
+export default async function SinhvienLayout({ children }: { children: ReactNode }) {
+  const brandName = await getDashboardSidebarDisplayName();
+  return (
+    <DashboardShell role="sinhvien" brandName={brandName}>
+      {children}
+    </DashboardShell>
+  );
 }

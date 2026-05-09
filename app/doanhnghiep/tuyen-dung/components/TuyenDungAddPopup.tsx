@@ -26,6 +26,7 @@ export default function TuyenDungAddPopup({ open, form, facultyOptions, fieldErr
           fieldErrors={fieldErrors}
           disabled={busyId !== null}
           onChange={onChange}
+          showCompanyIntroAndWebsite={false}
         />
         <div className={adminStyles.modalActions}>
           <button type="button" className={adminStyles.btn} onClick={onCancel}>

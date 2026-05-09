@@ -60,9 +60,11 @@ export type { DashboardRole };
 type DashboardShellProps = {
   role: DashboardRole;
   children: ReactNode;
+  /** Ten DN / GV / SV / admin — tu server layout */
+  brandName?: string | null;
 };
 
-export function DashboardShell({ role, children }: DashboardShellProps) {
+export function DashboardShell({ role, children, brandName }: DashboardShellProps) {
   const pathname = usePathname();
   const { menuOpen, closeMenu, toggleMenu, logoutBusy, handleLogout } = useDashboardSidebar();
   const { count: pendingEnterpriseCount } = useAdminPendingEnterpriseCount(role === "admin");
@@ -88,7 +90,9 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
         <div className={styles.brand}>
           <p className={styles.brandTitle}>Hệ thống quản lý thực tập</p>
           <p className={styles.brandSub}>Trường Đại học Giao thông Vận tải</p>
-          <p className={styles.brandRole}>Trang: {ROLE_LABEL[role]}</p>
+          <p className={styles.brandRole}>
+            {(brandName?.trim() && brandName.trim().length > 0 ? brandName.trim() : null) ?? ROLE_LABEL[role]}
+          </p>
         </div>
         <nav className={styles.nav}>
           {navItems.map((item) => {

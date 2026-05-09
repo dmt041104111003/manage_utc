@@ -8,6 +8,8 @@ type Props = {
   disabled: boolean;
   onChange: (updates: Partial<JobFormState>) => void;
   facultyOptions: string[];
+  /** Mac dinh true. false = popup them tin (an gioi thieu + website, server van lay website tu ho so DN neu trong). */
+  showCompanyIntroAndWebsite?: boolean;
 };
 
 function tomorrowDateInputValue(): string {
@@ -19,10 +21,28 @@ function tomorrowDateInputValue(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export default function TuyenDungJobFormFields({ form, fieldErrors, disabled, onChange, facultyOptions }: Props) {
+/** Giong BusinessFieldsCombobox — tim kiem khong phan biet dau */
+function normalizeSearch(s: string) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+export default function TuyenDungJobFormFields({
+  form,
+  fieldErrors,
+  disabled,
+  onChange,
+  facultyOptions,
+  showCompanyIntroAndWebsite = true
+}: Props) {
   const minDeadlineAt = tomorrowDateInputValue();
   const [facultyOpen, setFacultyOpen] = useState(false);
+  const [facultyQuery, setFacultyQuery] = useState("");
   const facultyRootRef = useRef<HTMLDivElement | null>(null);
+  const facultySearchRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!facultyOpen) return;
@@ -35,32 +55,50 @@ export default function TuyenDungJobFormFields({ form, fieldErrors, disabled, on
     return () => document.removeEventListener("mousedown", onDocMouseDown);
   }, [facultyOpen]);
 
+  useEffect(() => {
+    if (!facultyOpen) {
+      setFacultyQuery("");
+      return;
+    }
+    const t = window.setTimeout(() => facultySearchRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, [facultyOpen]);
+
   const selectedFaculties = useMemo(() => {
     const set = new Set(form.allowedFaculties.map((x) => String(x || "").trim()).filter(Boolean));
     return Array.from(set.values());
   }, [form.allowedFaculties]);
 
+  const facultyFiltered = useMemo(() => {
+    const base = facultyOptions.filter(Boolean);
+    if (!facultyQuery.trim()) return base;
+    const nq = normalizeSearch(facultyQuery);
+    return base.filter((o) => normalizeSearch(o).includes(nq));
+  }, [facultyOptions, facultyQuery]);
+
   const facultySummary = selectedFaculties.length ? selectedFaculties.join(", ") : "Chọn ngành/khoa";
 
   return (
     <fieldset disabled={disabled} style={{ border: 0, padding: 0, marginTop: 10 }}>
-      <div className={formStyles.field}>
-        <label className={formStyles.label}>Giới thiệu về công ty</label>
-        <textarea
-          className={formStyles.input as string}
-          value={form.companyIntro}
-          onChange={(e) => onChange({ companyIntro: e.target.value })}
-          placeholder="Giới thiệu về công ty"
-        />
-        {fieldErrors.companyIntro ? <p className={formStyles.error}>{fieldErrors.companyIntro}</p> : null}
-        <input
-          className={formStyles.input}
-          value={form.companyWebsite}
-          onChange={(e) => onChange({ companyWebsite: e.target.value })}
-          placeholder="Website (nếu có)"
-        />
-        {fieldErrors.companyWebsite ? <p className={formStyles.error}>{fieldErrors.companyWebsite}</p> : null}
-      </div>
+      {showCompanyIntroAndWebsite ? (
+        <div className={formStyles.field}>
+          <label className={formStyles.label}>Giới thiệu về công ty</label>
+          <textarea
+            className={formStyles.input as string}
+            value={form.companyIntro}
+            onChange={(e) => onChange({ companyIntro: e.target.value })}
+            placeholder="Giới thiệu về công ty"
+          />
+          {fieldErrors.companyIntro ? <p className={formStyles.error}>{fieldErrors.companyIntro}</p> : null}
+          <input
+            className={formStyles.input}
+            value={form.companyWebsite}
+            onChange={(e) => onChange({ companyWebsite: e.target.value })}
+            placeholder="Website (nếu có)"
+          />
+          {fieldErrors.companyWebsite ? <p className={formStyles.error}>{fieldErrors.companyWebsite}</p> : null}
+        </div>
+      ) : null}
 
       <div className={formStyles.field}>
         <label className={formStyles.label}>
@@ -125,9 +163,22 @@ export default function TuyenDungJobFormFields({ form, fieldErrors, disabled, on
 
           {facultyOpen ? (
             <div className={formStyles.comboDropdown} role="dialog" aria-label="Chọn ngành/khoa">
+              <div className={formStyles.comboSearchRow}>
+                <input
+                  ref={facultySearchRef}
+                  className={formStyles.comboSearch}
+                  value={facultyQuery}
+                  onChange={(e) => setFacultyQuery(e.target.value)}
+                  placeholder="Tìm kiếm ngành/khoa…"
+                  disabled={!facultyOptions.length}
+                  onMouseDown={(e) => e.stopPropagation()}
+                />
+              </div>
               <div className={formStyles.comboList} role="listbox" aria-multiselectable="true">
-                {facultyOptions.length ? (
-                  facultyOptions.map((f) => {
+                {!facultyOptions.length ? (
+                  <div className={formStyles.comboEmpty}>Không có dữ liệu khoa.</div>
+                ) : facultyFiltered.length ? (
+                  facultyFiltered.map((f) => {
                     const checked = selectedFaculties.includes(f);
                     return (
                       <label
@@ -150,7 +201,7 @@ export default function TuyenDungJobFormFields({ form, fieldErrors, disabled, on
                     );
                   })
                 ) : (
-                  <div className={formStyles.comboEmpty}>Không có dữ liệu khoa.</div>
+                  <div className={formStyles.comboEmpty}>Không có kết quả.</div>
                 )}
               </div>
             </div>

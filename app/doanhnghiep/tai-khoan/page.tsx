@@ -115,8 +115,13 @@ export default function EnterpriseAccountPage() {
           ...buildEnterpriseAccountPatchPayload(form)
         })
       });
-      const data = (await res.json()) as ApiResponse<unknown>;
-      if (!res.ok || !data.success) throw new Error(data.message || ENTERPRISE_ACCOUNT_SUBMIT_ERROR_DEFAULT);
+      const data = (await res.json()) as ApiResponse<unknown> & { field?: string };
+      if (!res.ok || !data.success) {
+        if (data.field && typeof data.field === "string" && data.message) {
+          setFieldErrors({ [data.field]: data.message });
+        }
+        throw new Error(data.message || ENTERPRISE_ACCOUNT_SUBMIT_ERROR_DEFAULT);
+      }
       setToast(data.message || ENTERPRISE_ACCOUNT_SUBMIT_SUCCESS_DEFAULT);
       await reloadMe();
       setIsEditing(false);
@@ -211,6 +216,7 @@ export default function EnterpriseAccountPage() {
             licHref={licHref}
             logoSrc={logoSrc}
             statusText={statusText}
+            hideContactFields={isEditing}
           />
 
           <div style={{ marginTop: 20 }}>

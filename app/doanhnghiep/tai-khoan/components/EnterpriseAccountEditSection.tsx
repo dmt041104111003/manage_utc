@@ -27,13 +27,41 @@ export default function EnterpriseAccountEditSection({
     return (
       <>
         <div className={formStyles.field}>
+          <label className={formStyles.label}>Email</label>
+          <input
+            type="email"
+            className={formStyles.input}
+            disabled={saving}
+            autoComplete="email"
+            value={form.email}
+            onChange={(e) => onSetField("email", e.target.value)}
+            placeholder="email@example.com"
+          />
+          {fieldErrors.email ? <p className={formStyles.error}>{fieldErrors.email}</p> : null}
+        </div>
+
+        <div className={formStyles.field}>
+          <label className={formStyles.label}>So dien thoai</label>
+          <input
+            className={formStyles.input}
+            disabled={saving}
+            autoComplete="tel"
+            inputMode="numeric"
+            value={form.phone}
+            onChange={(e) => onSetField("phone", e.target.value)}
+            placeholder="Vi du: 0912345678"
+          />
+          {fieldErrors.phone ? <p className={formStyles.error}>{fieldErrors.phone}</p> : null}
+        </div>
+
+        <div className={formStyles.field}>
           <label className={formStyles.label}>Tên người đại diện</label>
           <input
             className={formStyles.input}
             disabled={saving}
             value={form.representativeName}
             onChange={(e) => onSetField("representativeName", e.target.value)}
-            placeholder="Nhập họ và tên"
+            placeholder="Nhap ho va ten"
           />
           {fieldErrors.representativeName ? <p className={formStyles.error}>{fieldErrors.representativeName}</p> : null}
         </div>

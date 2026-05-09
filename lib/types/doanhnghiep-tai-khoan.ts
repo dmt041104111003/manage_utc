@@ -5,6 +5,8 @@ export type ApiResponse<T> = {
 };
 
 export type EnterpriseAccountFormState = {
+  email: string;
+  phone: string;
   representativeName: string;
   representativeTitle: string;
   companyIntro: string;

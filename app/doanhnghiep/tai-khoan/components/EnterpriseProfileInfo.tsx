@@ -11,9 +11,19 @@ type Props = {
   licHref: string | null;
   logoSrc: string | null;
   statusText: string;
+  /** When true, email/phone rows are omitted (shown in edit form). */
+  hideContactFields?: boolean;
 };
 
-export default function EnterpriseProfileInfo({ me, address, licName, licHref, logoSrc, statusText }: Props) {
+export default function EnterpriseProfileInfo({
+  me,
+  address,
+  licName,
+  licHref,
+  logoSrc,
+  statusText,
+  hideContactFields = false
+}: Props) {
   return (
     <table className={adminStyles.viewModalDetailTable} style={{ marginTop: 12 }}>
       <tbody>
@@ -55,14 +65,18 @@ export default function EnterpriseProfileInfo({ me, address, licName, licHref, l
           <th scope="row">Logo công ty</th>
           <td>{logoSrc ? <img src={logoSrc} alt="Logo công ty" className={adminStyles.previewLogo} /> : "—"}</td>
         </tr>
-        <tr>
-          <th scope="row">Email</th>
-          <td>{me.email}</td>
-        </tr>
-        <tr>
-          <th scope="row">Số điện thoại</th>
-          <td>{me.phone || "—"}</td>
-        </tr>
+        {hideContactFields ? null : (
+          <>
+            <tr>
+              <th scope="row">Email</th>
+              <td>{me.email}</td>
+            </tr>
+            <tr>
+              <th scope="row">Số điện thoại</th>
+              <td>{me.phone || "—"}</td>
+            </tr>
+          </>
+        )}
         <tr>
           <th scope="row">Trạng thái phê duyệt</th>
           <td>{statusText}</td>
