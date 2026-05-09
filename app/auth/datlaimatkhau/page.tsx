@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 import { AuthShell } from "../components/AuthShell";
 import styles from "../styles/forgot-password.module.css";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = useMemo(() => searchParams.get("email") || "", [searchParams]);
@@ -129,5 +129,20 @@ export default function ResetPasswordPage() {
       {submitError ? <p className={styles.errorGlobal}>{submitError}</p> : null}
       {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
     </AuthShell>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthShell>
+          <h2 className={styles.title}>Đặt lại mật khẩu</h2>
+          <p className={styles.desc}>Đang tải…</p>
+        </AuthShell>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
