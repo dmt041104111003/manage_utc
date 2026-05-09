@@ -14,7 +14,11 @@ export async function GET() {
     select: { id: true, name: true, semester: true, schoolYear: true, startDate: true, endDate: true }
   });
 
-  const facultiesRaw = await prismaAny.supervisorProfile.findMany({ distinct: ["faculty"], select: { faculty: true } });
+  const facultiesRaw = await prismaAny.supervisorProfile.findMany({
+    where: { user: { isLocked: false } },
+    distinct: ["faculty"],
+    select: { faculty: true }
+  });
   const faculties = facultiesRaw.map((r: any) => String(r.faculty)).filter(Boolean).sort((a: string, b: string) => a.localeCompare(b, "vi"));
 
   return NextResponse.json({

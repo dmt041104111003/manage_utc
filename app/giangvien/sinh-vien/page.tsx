@@ -71,7 +71,7 @@ export default function GiangvienSinhVienPage() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Quản lý sinh viên được phân công</h1>
+        <h1 className={styles.title}>Sinh viên được phân công</h1>
       </header>
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}

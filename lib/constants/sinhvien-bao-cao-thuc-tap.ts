@@ -17,7 +17,7 @@ export const BCTT_ALLOWED_MIMES = [
 
 export const BCTT_ERROR_INVALID_MIME = "File BCTT chỉ chấp nhận PDF hoặc DOCX.";
 export const BCTT_ERROR_REQUIRED_FILE_BEFORE_SUBMIT = "Vui lòng chọn file BCTT trước khi nộp.";
-export const BCTT_ERROR_REQUIRED_FILE_BEFORE_EDIT = "Vui lòng chọn file BCTT mới để sửa.";
+export const BCTT_ERROR_REQUIRED_FILE_BEFORE_EDIT = "Vui lòng upload file BCTT mới theo đề xuất chỉnh sửa của GVHD.";
 
 export const internshipStatusLabel: Record<InternshipStatus, string> = {
   NOT_STARTED: "Chưa thực tập",

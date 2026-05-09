@@ -63,7 +63,7 @@ export default function BaoCaoTableSection({ loading, rows, busy, onView, onUpda
                       disabled={busy}
                       onClick={() => onUpdate(r)}
                     >
-                      Cập nhật trạng thái thực tập
+                      Xác nhận thực tập tự túc
                     </button>
                   ) : null}
                   {r.ui.canReviewReport && r.report ? (

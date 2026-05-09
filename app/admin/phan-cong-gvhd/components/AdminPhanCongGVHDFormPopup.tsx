@@ -364,7 +364,9 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
           >
             <span className={formStyles.comboValue}>
               {selectedStudents.length ? (
-                studentDisplay(selectedStudents[0])
+                selectedStudents.length === 1
+                  ? studentDisplay(selectedStudents[0])
+                  : `Đã chọn ${selectedStudents.length} sinh viên`
               ) : (
                 <span className={formStyles.comboPlaceholder}>
                   {optionsLoading ? "Đang tải..." : "Chọn sinh viên hướng dẫn"}
@@ -401,7 +403,7 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
                       disabled={!formFaculty || !formBatchId}
                     />
                   </div>
-                  <div className={formStyles.comboList} role="listbox" aria-multiselectable="false">
+                  <div className={formStyles.comboList} role="listbox" aria-multiselectable="true">
                     {filteredStudents.length ? (
                       filteredStudents.map((s) => {
                         const selected = formStudentIds.includes(s.id);
@@ -415,8 +417,9 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
                             role="option"
                             aria-selected={selected}
                             onClick={() => {
-                              setFormStudentIds([s.id]);
-                              setStudentOpen(false);
+                              setFormStudentIds((prev) =>
+                                prev.includes(s.id) ? prev.filter((id) => id !== s.id) : [...prev, s.id]
+                              );
                             }}
                           >
                             <span

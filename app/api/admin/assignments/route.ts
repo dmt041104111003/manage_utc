@@ -171,9 +171,13 @@ export async function POST(request: Request) {
     if (s.faculty !== faculty) {
       return NextResponse.json({ success: false, message: "Có sinh viên không thuộc khoa đã chọn." }, { status: 400 });
     }
-    if (s.internshipStatus !== "NOT_STARTED" && s.internshipStatus !== "DOING") {
+    if (
+      s.internshipStatus !== "NOT_STARTED" &&
+      s.internshipStatus !== "DOING" &&
+      s.internshipStatus !== "REPORT_SUBMITTED"
+    ) {
       return NextResponse.json(
-        { success: false, message: "Chỉ được chọn sinh viên có trạng thái Chưa thực tập hoặc Đang thực tập." },
+        { success: false, message: "Chỉ được chọn sinh viên có trạng thái Chưa thực tập, Đang thực tập hoặc Đã nộp BCTT." },
         { status: 400 }
       );
     }

@@ -32,7 +32,7 @@ export function getSinhVienBaoCaoStatusHintText(args: {
   if (internshipStatus === "REJECTED")
     return "Bạn đã bị từ chối theo quyết định cuối cùng.";
   if (report?.reviewStatus === "APPROVED")
-    return "GVHD đã duyệt BCTT. Chờ admin chốt trạng thái thực tập cuối cùng.";
+    return "GVHD đã phê duyệt BCTT. Vui lòng chờ phòng đào tạo xác nhận lần cuối cùng.";
   return "Chờ xử lý từ GVHD.";
 }
 

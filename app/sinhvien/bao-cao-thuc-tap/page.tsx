@@ -201,13 +201,13 @@ export default function SinhvienBaoCaoThucTapPage() {
             onOpenEdit={() => { resetUploadState(); setEditOpen(true); }}
           />
 
-          <BaoCaoThucTapSupervisorSection supervisor={supervisor} />
-
-          <BaoCaoThucTapStatusHistorySection statusHistory={statusHistory} />
-
           {canShowResults ? (
             <BaoCaoThucTapResultSection report={report} reportFileLink={reportFileLink} />
           ) : null}
+
+          <BaoCaoThucTapSupervisorSection supervisor={supervisor} />
+
+          <BaoCaoThucTapStatusHistorySection statusHistory={statusHistory} />
         </>
       )}
 

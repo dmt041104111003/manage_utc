@@ -25,9 +25,13 @@ export async function GET(request: Request) {
   const assignedSet = new Set(assigned.map((x: any) => String(x.supervisorProfileId)));
   if (includeId) assignedSet.delete(includeId);
 
-  const where: any = { faculty, id: { notIn: Array.from(assignedSet) } };
+  const where: any = {
+    faculty: { equals: faculty, mode: "insensitive" },
+    id: { notIn: Array.from(assignedSet) },
+    user: { isLocked: false }
+  };
   if (q) {
-    where.user = { fullName: { contains: q, mode: "insensitive" } };
+    where.AND = [{ user: { fullName: { contains: q, mode: "insensitive" } } }];
   }
 
   const rows = await prismaAny.supervisorProfile.findMany({
