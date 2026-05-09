@@ -4,6 +4,7 @@ import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 import { decodeEnterpriseFilePayload } from "@/lib/enterprise-register-files";
+import { MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX, MAIL_TRANSACTIONAL_SIGN_OFF } from "@/lib/constants/school";
 import { sendMail } from "@/lib/mail";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
 import { toCloudinaryRef, uploadInternshipReportBytesToCloudinary } from "@/lib/storage/cloudinary";
@@ -264,15 +265,15 @@ export async function POST(request: Request) {
     if (gvEmail) {
       await sendMail(
         gvEmail,
-        `[UTC] Sinh viên ${svFullName} đã nộp Báo cáo thực tập`,
-        `Kính gửi ${gvFullName},\n\nSinh viên ${svFullName} vừa nộp Báo cáo thực tập (BCTT).\nVui lòng đăng nhập hệ thống để xem xét và duyệt BCTT.\nĐường dẫn hệ thống: ${appUrl}/giangvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} – Sinh viên ${svFullName} đã nộp Báo cáo thực tập`,
+        `Kính gửi ${gvFullName},\n\nSinh viên ${svFullName} vừa nộp Báo cáo thực tập (BCTT).\nVui lòng đăng nhập hệ thống để xem xét và duyệt BCTT.\nĐường dẫn hệ thống: ${appUrl}/giangvien\n\n${MAIL_TRANSACTIONAL_SIGN_OFF}`
       );
     }
     if (svEmail) {
       await sendMail(
         svEmail,
-        `[UTC] Nộp Báo cáo thực tập thành công`,
-        `Kính gửi ${svFullName},\n\nBạn đã nộp Báo cáo thực tập thành công. Vui lòng chờ giảng viên hướng dẫn xem xét và phê duyệt.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} – Nộp Báo cáo thực tập thành công`,
+        `Kính gửi ${svFullName},\n\nBạn đã nộp Báo cáo thực tập thành công. Vui lòng chờ giảng viên hướng dẫn xem xét và phê duyệt.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\n${MAIL_TRANSACTIONAL_SIGN_OFF}`
       );
     }
   } catch {
@@ -365,8 +366,8 @@ export async function PATCH(request: Request) {
     if (gvEmail) {
       await sendMail(
         gvEmail,
-        `[UTC] Sinh viên ${svFullName} đã nộp lại Báo cáo thực tập`,
-        `Kính gửi ${gvFullName},\n\nSinh viên ${svFullName} vừa nộp lại Báo cáo thực tập (BCTT) sau khi chỉnh sửa.\nVui lòng đăng nhập hệ thống để xem xét và duyệt BCTT.\nĐường dẫn hệ thống: ${appUrl}/giangvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} – Sinh viên ${svFullName} đã nộp lại Báo cáo thực tập`,
+        `Kính gửi ${gvFullName},\n\nSinh viên ${svFullName} vừa nộp lại Báo cáo thực tập (BCTT) sau khi chỉnh sửa.\nVui lòng đăng nhập hệ thống để xem xét và duyệt BCTT.\nĐường dẫn hệ thống: ${appUrl}/giangvien\n\n${MAIL_TRANSACTIONAL_SIGN_OFF}`
       );
     }
   } catch {

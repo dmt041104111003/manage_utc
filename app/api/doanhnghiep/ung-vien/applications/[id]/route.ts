@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
+import { MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX, MAIL_TRANSACTIONAL_SIGN_OFF } from "@/lib/constants/school";
 import { sendMail } from "@/lib/mail";
 import { signRespondToken } from "@/lib/utils/respond-token";
 
@@ -234,8 +235,8 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
       await sendMail(
         svEmail,
-        `[UTC] ${companyName} mời bạn tham gia phỏng vấn – ${jobTitle}`,
-        `Kính gửi ${svFullName},\n\nDoanh nghiệp ${companyName} mời bạn tham gia phỏng vấn cho vị trí "${jobTitle}".${expertiseLine}\n\nThời gian phỏng vấn: ${interviewDateStr}\nĐịa điểm: ${interviewLocationRaw}\nThời hạn phản hồi: ${deadlineStr}\n\nTruy cập hệ thống để xem thông tin chi tiết.\n${baseUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`,
+        `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} – ${companyName} mời bạn tham gia phỏng vấn – ${jobTitle}`,
+        `Kính gửi ${svFullName},\n\nDoanh nghiệp ${companyName} mời bạn tham gia phỏng vấn cho vị trí "${jobTitle}".${expertiseLine}\n\nThời gian phỏng vấn: ${interviewDateStr}\nĐịa điểm: ${interviewLocationRaw}\nThời hạn phản hồi: ${deadlineStr}\n\nTruy cập hệ thống để xem thông tin chi tiết.\n${baseUrl}/sinhvien\n\n${MAIL_TRANSACTIONAL_SIGN_OFF}`,
         `
         <p>Kính gửi <strong>${svFullName}</strong>,</p>
         <p>Doanh nghiệp <strong>${companyName}</strong> mời bạn tham gia phỏng vấn cho vị trí <strong>"${jobTitle}"</strong>.</p>
@@ -258,8 +259,8 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
       await sendMail(
         svEmail,
-        `[UTC] ${companyName} thông báo Trúng tuyển – ${jobTitle}`,
-        `Kính gửi ${svFullName},\n\nChúc mừng! Doanh nghiệp ${companyName} thông báo bạn đã TRÚNG TUYỂN vị trí "${jobTitle}".${expertiseLine}\n\nThời hạn phản hồi: ${deadlineStr}\n\nTruy cập hệ thống để xem thông tin chi tiết.\n${baseUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`,
+        `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} – ${companyName} thông báo Trúng tuyển – ${jobTitle}`,
+        `Kính gửi ${svFullName},\n\nChúc mừng! Doanh nghiệp ${companyName} thông báo bạn đã TRÚNG TUYỂN vị trí "${jobTitle}".${expertiseLine}\n\nThời hạn phản hồi: ${deadlineStr}\n\nTruy cập hệ thống để xem thông tin chi tiết.\n${baseUrl}/sinhvien\n\n${MAIL_TRANSACTIONAL_SIGN_OFF}`,
         `
         <p>Kính gửi <strong>${svFullName}</strong>,</p>
         <p>Chúc mừng! Doanh nghiệp <strong>${companyName}</strong> thông báo bạn đã <strong>TRÚNG TUYỂN</strong> vị trí <strong>"${jobTitle}"</strong>.</p>
@@ -276,8 +277,8 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     if (nextStatus === "REJECTED" && svEmail) {
       await sendMail(
         svEmail,
-        `[UTC] Thông báo kết quả ứng tuyển – ${jobTitle}`,
-        `Kính gửi ${svFullName},\n\nCảm ơn bạn đã ứng tuyển vào vị trí "${jobTitle}" tại ${companyName}.${expertiseLine}\n\nRất tiếc, sau khi xem xét, doanh nghiệp không thể tiếp tục tiến trình tuyển dụng với bạn.\n\nChúc bạn thành công trong việc tìm kiếm nơi thực tập phù hợp.\nĐường dẫn hệ thống: ${baseUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} – Thông báo kết quả ứng tuyển – ${jobTitle}`,
+        `Kính gửi ${svFullName},\n\nCảm ơn bạn đã ứng tuyển vào vị trí "${jobTitle}" tại ${companyName}.${expertiseLine}\n\nRất tiếc, sau khi xem xét, doanh nghiệp không thể tiếp tục tiến trình tuyển dụng với bạn.\n\nChúc bạn thành công trong việc tìm kiếm nơi thực tập phù hợp.\nĐường dẫn hệ thống: ${baseUrl}/sinhvien\n\n${MAIL_TRANSACTIONAL_SIGN_OFF}`
       );
     }
   } catch {

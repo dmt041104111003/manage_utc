@@ -13,6 +13,14 @@ function requiredEnv(name: string): string {
   return v;
 }
 
+/** Public delivery URLs; client bundles only inline NEXT_PUBLIC_* — prefer that, else server-only name. */
+function deliveryCloudName(): string | null {
+  const pub = String(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "").trim();
+  if (pub) return pub;
+  const srv = String(process.env.CLOUDINARY_CLOUD_NAME || "").trim();
+  return srv || null;
+}
+
 function sanitizeSegment(s: string): string {
   return String(s || "")
     .replace(/[^\w.\-() ]+/g, "")
@@ -164,8 +172,9 @@ async function uploadBytesToCloudinary(input: {
   return { publicId: outPublicId };
 }
 
-export function buildCloudinaryRawDeliveryUrl(publicId: string): string {
-  const cloudName = requiredEnv("CLOUDINARY_CLOUD_NAME");
+export function buildCloudinaryRawDeliveryUrl(publicId: string): string | null {
+  const cloudName = deliveryCloudName();
+  if (!cloudName) return null;
   const pid = String(publicId || "").replace(/^\/+/, "");
   const encodedPid = pid
     .split("/")
@@ -175,8 +184,9 @@ export function buildCloudinaryRawDeliveryUrl(publicId: string): string {
   return `https://res.cloudinary.com/${encodeURIComponent(cloudName)}/raw/upload/${encodedPid}`;
 }
 
-export function buildCloudinaryImageDeliveryUrl(publicId: string): string {
-  const cloudName = requiredEnv("CLOUDINARY_CLOUD_NAME");
+export function buildCloudinaryImageDeliveryUrl(publicId: string): string | null {
+  const cloudName = deliveryCloudName();
+  if (!cloudName) return null;
   const pid = String(publicId || "").replace(/^\/+/, "");
   const encodedPid = pid
     .split("/")

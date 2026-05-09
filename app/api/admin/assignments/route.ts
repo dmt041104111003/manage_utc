@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth/admin-session";
+import { MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX, MAIL_TRANSACTIONAL_SIGN_OFF } from "@/lib/constants/school";
 import { sendMail } from "@/lib/mail";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
 
@@ -257,8 +258,8 @@ export async function POST(request: Request) {
 
       await sendMail(
         gvEmail,
-        `[UTC] Phân công hướng dẫn thực tập – ${batchLabel}`,
-        `Kính gửi ${gvDegree} ${gvFullName},\n\nBạn đã được phân công hướng dẫn thực tập cho ${students.length} sinh viên trong ${batchLabel}.${facultyLabel}\n\nDanh sách sinh viên hướng dẫn:\n${svListLines}\n\nVui lòng đăng nhập hệ thống để xem thông tin chi tiết và theo dõi tiến độ thực tập của sinh viên.\nTruy cập hệ thống để xem thông tin chi tiết: ${appUrl}/giangvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} – Phân công hướng dẫn thực tập – ${batchLabel}`,
+        `Kính gửi ${gvDegree} ${gvFullName},\n\nBạn đã được phân công hướng dẫn thực tập cho ${students.length} sinh viên trong ${batchLabel}.${facultyLabel}\n\nDanh sách sinh viên hướng dẫn:\n${svListLines}\n\nVui lòng đăng nhập hệ thống để xem thông tin chi tiết và theo dõi tiến độ thực tập của sinh viên.\nTruy cập hệ thống để xem thông tin chi tiết: ${appUrl}/giangvien\n\n${MAIL_TRANSACTIONAL_SIGN_OFF}`
       );
     }
 
@@ -269,8 +270,8 @@ export async function POST(request: Request) {
 
       await sendMail(
         svEmail,
-        `[UTC] Thông tin Giảng viên hướng dẫn thực tập – ${batchLabel}`,
-        `Kính gửi ${svFullName},\n\nBạn đã được phân công Giảng viên hướng dẫn cho ${batchLabel}.${facultyLabel}\n\nThông tin giảng viên hướng dẫn:\n  Họ tên: ${gvDegree} ${gvFullName}\n  Email: ${gvEmail ?? "—"}\n  Số điện thoại: ${gvPhone}\n\nVui lòng liên hệ giảng viên hướng dẫn để được hướng dẫn trong quá trình thực tập.\nTruy cập hệ thống để xem thông tin chi tiết: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} – Thông tin Giảng viên hướng dẫn thực tập – ${batchLabel}`,
+        `Kính gửi ${svFullName},\n\nBạn đã được phân công Giảng viên hướng dẫn cho ${batchLabel}.${facultyLabel}\n\nThông tin giảng viên hướng dẫn:\n  Họ tên: ${gvDegree} ${gvFullName}\n  Email: ${gvEmail ?? "—"}\n  Số điện thoại: ${gvPhone}\n\nVui lòng liên hệ giảng viên hướng dẫn để được hướng dẫn trong quá trình thực tập.\nTruy cập hệ thống để xem thông tin chi tiết: ${appUrl}/sinhvien\n\n${MAIL_TRANSACTIONAL_SIGN_OFF}`
       );
     }
   } catch {

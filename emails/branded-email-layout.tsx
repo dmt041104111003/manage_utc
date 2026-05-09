@@ -16,24 +16,12 @@ import type { ReactNode } from "react";
 import {
   DEFAULT_SUPPORT_EMAIL,
   ENTERPRISE_MAIL_SIGN_OFF_ADDRESS,
-  SCHOOL_EMAIL_LOGO_URL,
+  MAIL_PRODUCT_NAME,
   SCHOOL_FULL_NAME,
   SCHOOL_HOTLINE,
   SCHOOL_WEBSITE
 } from "@/lib/constants/school";
-
-/** Nền header xanh đậm + vàng đặc trưng nhận diện UTC (logo vòng ngoài vàng) */
-const C = {
-  headerTop: "#c9a227",
-  headerBg: "#121c4a",
-  headerBgMid: "#1a2a6e",
-  pageBg: "#eef2f8",
-  border: "#c5ced9",
-  text: "#1f2937",
-  muted: "#5b6470",
-  footerBg: "#121c4a",
-  footerDeep: "#0b1029"
-} as const;
+import { getSchoolEmailLogoUrl, MAIL_BRAND as C } from "@/lib/mail-brand";
 
 const font =
   'ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",Arial,sans-serif';
@@ -44,6 +32,7 @@ type Props = {
 };
 
 export function BrandedEmailLayout({ preview, children }: Props) {
+  const logoUrl = getSchoolEmailLogoUrl();
   return (
     <Html lang="vi">
       <Head />
@@ -72,15 +61,17 @@ export function BrandedEmailLayout({ preview, children }: Props) {
               }}
             >
               <Row>
-                <Column style={{ width: 84, verticalAlign: "middle", paddingRight: 4 }}>
-                  <Img
-                    src={SCHOOL_EMAIL_LOGO_URL}
-                    width="72"
-                    height="72"
-                    alt="Logo Trường Đại học Giao thông Vận tải - UTC"
-                    style={{ display: "block", borderRadius: 8 }}
-                  />
-                </Column>
+                {logoUrl ? (
+                  <Column style={{ width: 84, verticalAlign: "middle", paddingRight: 4 }}>
+                    <Img
+                      src={logoUrl}
+                      width="72"
+                      height="72"
+                      alt="Logo Trường Đại học Giao thông Vận tải - UTC"
+                      style={{ display: "block", borderRadius: 8 }}
+                    />
+                  </Column>
+                ) : null}
                 <Column style={{ verticalAlign: "middle" }}>
                   <Text
                     style={{
@@ -98,7 +89,7 @@ export function BrandedEmailLayout({ preview, children }: Props) {
                     {SCHOOL_FULL_NAME}
                   </Text>
                   <Text style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.88)" }}>
-                    Phòng Đào tạo · Hệ thống Quản lý thực tập
+                    Phòng Đào tạo · {MAIL_PRODUCT_NAME}
                   </Text>
                 </Column>
               </Row>
@@ -133,7 +124,7 @@ export function BrandedEmailLayout({ preview, children }: Props) {
             </Section>
             <Section style={{ backgroundColor: C.footerDeep, padding: "12px 28px 14px" }}>
               <Text style={{ margin: 0, fontSize: 11, color: "rgba(255,255,255,0.42)", lineHeight: 1.55 }}>
-                Email tự động từ Hệ thống Quản lý thực tập — {SCHOOL_FULL_NAME}. Vui lòng không trả lời trực tiếp email này.
+                Email tự động từ {MAIL_PRODUCT_NAME} — {SCHOOL_FULL_NAME}. Vui lòng không trả lời trực tiếp email này.
               </Text>
             </Section>
           </Container>

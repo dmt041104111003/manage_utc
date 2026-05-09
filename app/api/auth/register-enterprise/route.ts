@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/lib/mail";
 import { validateEnterpriseRegisterPayload, type EnterpriseRegisterPayload } from "@/lib/enterprise-register-validate";
-import { SCHOOL_NAME } from "@/lib/constants/school";
+import { MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX, MAIL_TRANSACTIONAL_SIGN_OFF } from "@/lib/constants/school";
+import { buildMailShell, escapeHtml } from "@/lib/mail-layout";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
 import { toCloudinaryRef, uploadEnterpriseLicenseBytesToCloudinary, uploadEnterpriseLogoBytesToCloudinary } from "@/lib/storage/cloudinary";
 import type { Prisma } from "@prisma/client";
@@ -76,20 +77,34 @@ export async function POST(request: Request) {
 
   const appUrl = getPublicAppUrl();
   const name = (userCreate.fullName as string) || email;
-  const subject = `${SCHOOL_NAME} - Tiếp nhận đăng ký doanh nghiệp`;
+  const subject = `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} - Tiếp nhận đăng ký doanh nghiệp`;
+  const loginUrl = `${appUrl}/auth/dangnhap`;
   const text = [
     `Kính gửi ${name},`,
     "",
-    "Hệ thống đã tiếp nhận hồ sơ đăng ký doanh nghiệp của bạn.",
-    "Bạn sẽ nhận thông báo khi hồ sơ được phê duyệt.",
+    "Hệ thống đã tiếp nhận hồ sơ đăng ký doanh nghiệp của Quý đơn vị.",
+    "Quý đơn vị sẽ nhận thông báo khi hồ sơ được phê duyệt.",
     "",
-    `Đường dẫn hệ thống: ${appUrl}/auth/dangnhap`,
+    `Đường dẫn hệ thống: ${loginUrl}`,
     "",
-    "Nếu không phải bạn thực hiện, vui lòng liên hệ quản trị hệ thống."
+    "Nếu không phải Quý đơn vị thực hiện, vui lòng liên hệ quản trị hệ thống.",
+    "",
+    MAIL_TRANSACTIONAL_SIGN_OFF
   ].join("\n");
 
+  const html = buildMailShell({
+    bodyHtml: `
+      <p style="margin:0 0 14px;">Kính gửi <strong>${escapeHtml(name)}</strong>,</p>
+      <p style="margin:0 0 14px;">Hệ thống đã <strong>tiếp nhận</strong> hồ sơ đăng ký doanh nghiệp. Quý đơn vị sẽ nhận thông báo khi hồ sơ được phê duyệt.</p>
+      <p style="margin:0 0 14px;">Đường dẫn hệ thống:
+        <a href="${escapeHtml(loginUrl)}" style="color:#005bac;font-weight:600;text-decoration:none;">${escapeHtml(loginUrl)}</a>
+      </p>
+      <p style="margin:0;font-size:13px;color:#5b6470;">Nếu không phải Quý đơn vị thực hiện, vui lòng bỏ qua hoặc liên hệ quản trị.</p>
+    `.trim()
+  });
+
   try {
-    await sendMail(email, subject, text);
+    await sendMail(email, subject, text, html);
   } catch (e) {
     console.error("register-enterprise notification mail", e);
   }

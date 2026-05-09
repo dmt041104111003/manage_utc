@@ -29,16 +29,12 @@ export function EnterpriseViewDetailTable({ item }: Props) {
 
   const licPublicId = fromCloudinaryRef(typeof m.businessLicensePublicId === "string" ? m.businessLicensePublicId : null);
   const logoPublicId = fromCloudinaryRef(typeof m.companyLogoPublicId === "string" ? m.companyLogoPublicId : null);
-  const licHref = licPublicId
-    ? buildCloudinaryRawDeliveryUrl(licPublicId)
-    : licB64
-      ? dataUrlFromBase64(licMime, licB64)
-      : null;
-  const logoSrc = logoPublicId
-    ? buildCloudinaryImageDeliveryUrl(logoPublicId)
-    : logoB64 && logoMime.startsWith("image/")
-      ? dataUrlFromBase64(logoMime, logoB64)
-      : null;
+  const licFromCloud = licPublicId ? buildCloudinaryRawDeliveryUrl(licPublicId) : null;
+  const licHref = licFromCloud ?? (licB64 ? dataUrlFromBase64(licMime, licB64) : null);
+  const logoFromCloud = logoPublicId ? buildCloudinaryImageDeliveryUrl(logoPublicId) : null;
+  const logoSrc =
+    logoFromCloud ??
+    (logoB64 && logoMime.startsWith("image/") ? dataUrlFromBase64(logoMime, logoB64) : null);
 
   const statusLine = formatAdminEnterpriseStatusLine(item.enterpriseStatus);
 

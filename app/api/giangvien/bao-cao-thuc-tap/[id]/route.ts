@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
+import { MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX, MAIL_TRANSACTIONAL_SIGN_OFF } from "@/lib/constants/school";
 import { sendMail } from "@/lib/mail";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
 
@@ -144,8 +145,8 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       if (svEmail) {
         await sendMail(
           svEmail,
-          "[UTC] GVHD từ chối duyệt Báo cáo thực tập",
-          `Kính gửi ${svFullName},\n\nGiảng viên hướng dẫn đã TỪ CHỐI duyệt Báo cáo thực tập (BCTT) của bạn.\n\nLý do: ${rejectReason}\n\nVui lòng chỉnh sửa và nộp lại BCTT theo hướng dẫn của GVHD.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+          `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} – GVHD từ chối duyệt Báo cáo thực tập`,
+          `Kính gửi ${svFullName},\n\nGiảng viên hướng dẫn đã TỪ CHỐI duyệt Báo cáo thực tập (BCTT) của bạn.\n\nLý do: ${rejectReason}\n\nVui lòng chỉnh sửa và nộp lại BCTT theo hướng dẫn của GVHD.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\n${MAIL_TRANSACTIONAL_SIGN_OFF}`
         );
       }
     } catch {
@@ -241,8 +242,8 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
       await sendMail(
         svEmail,
-        "[UTC] GVHD đã duyệt Báo cáo thực tập",
-        `Kính gửi ${svFullName},\n\nGiảng viên hướng dẫn ${supervisorName} đã DUYỆT Báo cáo thực tập (BCTT) của bạn.\n\n${scoreLines}\n\nKết quả đã được ghi nhận và gửi về Ngành/Khoa. Vui lòng đăng nhập hệ thống để xem chi tiết.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} – GVHD đã duyệt Báo cáo thực tập`,
+        `Kính gửi ${svFullName},\n\nGiảng viên hướng dẫn ${supervisorName} đã DUYỆT Báo cáo thực tập (BCTT) của bạn.\n\n${scoreLines}\n\nKết quả đã được ghi nhận và gửi về Ngành/Khoa. Vui lòng đăng nhập hệ thống để xem chi tiết.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\n${MAIL_TRANSACTIONAL_SIGN_OFF}`
       );
     }
   } catch {

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
+import { MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX, MAIL_TRANSACTIONAL_SIGN_OFF } from "@/lib/constants/school";
 import { sendMail } from "@/lib/mail";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
 
@@ -74,8 +75,8 @@ export async function PATCH(_request: Request, ctx: { params: Promise<{ id: stri
     if (svEmail) {
       await sendMail(
         svEmail,
-        "[UTC] Cập nhật trạng thái thực tập",
-        `Kính gửi ${svFullName},\n\nTrạng thái thực tập của bạn vừa được giảng viên hướng dẫn cập nhật thành: Thực tập tự túc.\n\nVui lòng đăng nhập hệ thống để theo dõi tiến độ thực tập.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} – Cập nhật trạng thái thực tập`,
+        `Kính gửi ${svFullName},\n\nTrạng thái thực tập của bạn vừa được giảng viên hướng dẫn cập nhật thành: Thực tập tự túc.\n\nVui lòng đăng nhập hệ thống để theo dõi tiến độ thực tập.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\n${MAIL_TRANSACTIONAL_SIGN_OFF}`
       );
     }
   } catch {

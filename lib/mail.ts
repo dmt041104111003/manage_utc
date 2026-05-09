@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { MAIL_PRODUCT_NAME } from "@/lib/constants/school";
 import { buildMailShell, escapeHtml } from "@/lib/mail-layout";
 
 function createTransport() {
@@ -15,7 +16,7 @@ function createTransport() {
 
 export async function sendMail(to: string, subject: string, text: string, htmlOverride?: string) {
   const transport = createTransport();
-  const from = `"${process.env.EMAIL_FROM_NAME || "Hệ thống thực tập UTC"}" <${process.env.EMAIL_FROM}>`;
+  const from = `"${process.env.EMAIL_FROM_NAME || MAIL_PRODUCT_NAME}" <${process.env.EMAIL_FROM}>`;
 
   const isFullDocument = (s: string) => /^\s*<!DOCTYPE|^\s*<html/i.test(s);
 

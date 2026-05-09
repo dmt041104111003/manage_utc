@@ -68,7 +68,14 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   const cloudPublicId = fromCloudinaryRef(stored);
   if (cloudPublicId) {
     try {
-      const upstream = await fetch(buildCloudinaryRawDeliveryUrl(cloudPublicId));
+      const deliveryUrl = buildCloudinaryRawDeliveryUrl(cloudPublicId);
+      if (!deliveryUrl) {
+        return NextResponse.json(
+          { success: false, message: "Cấu hình lưu trữ file chưa sẵn sàng (thiếu tên cloud)." },
+          { status: 503 }
+        );
+      }
+      const upstream = await fetch(deliveryUrl);
       if (!upstream.ok) return NextResponse.json({ success: false, message: "Không thể tải file BCTT." }, { status: 502 });
       const ab = await upstream.arrayBuffer();
       bytes = Buffer.from(ab);

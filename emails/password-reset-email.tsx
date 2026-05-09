@@ -1,6 +1,6 @@
 import { Button, Section, Text } from "@react-email/components";
 import { BrandedEmailLayout } from "@/emails/branded-email-layout";
-import { SCHOOL_FULL_NAME, SCHOOL_HOTLINE } from "@/lib/constants/school";
+import { MAIL_PRODUCT_NAME, SCHOOL_FULL_NAME, SCHOOL_HOTLINE } from "@/lib/constants/school";
 
 const primary = "#005bac";
 const danger = "#b42318";
@@ -35,7 +35,7 @@ export function PasswordResetEmail(props: Props) {
         Kính gửi <strong>{fullName}</strong>,
       </Text>
       <Text style={{ margin: "0 0 14px" }}>
-        Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với địa chỉ email này trên hệ thống <strong>Quản lý thực tập {SCHOOL_FULL_NAME}</strong>.
+        Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với địa chỉ email này trên <strong>{MAIL_PRODUCT_NAME}</strong> — <strong>{SCHOOL_FULL_NAME}</strong>.
       </Text>
       <Text style={{ margin: "0 0 22px" }}>
         Để tiếp tục, <strong>{youLabel}</strong> vui lòng nhấn nút bên dưới (liên kết hết hạn sau <strong>15 phút</strong>).

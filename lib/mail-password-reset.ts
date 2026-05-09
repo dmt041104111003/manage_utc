@@ -3,7 +3,14 @@ import { createElement } from "react";
 import { render } from "@react-email/render";
 import { PasswordResetEmail } from "@/emails/password-reset-email";
 import { sendMail } from "@/lib/mail";
-import { SCHOOL_FULL_NAME, SCHOOL_HOTLINE, SCHOOL_WEBSITE } from "@/lib/constants/school";
+import {
+  MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX,
+  MAIL_PRODUCT_NAME,
+  MAIL_TRANSACTIONAL_SIGN_OFF,
+  SCHOOL_FULL_NAME,
+  SCHOOL_HOTLINE,
+  SCHOOL_WEBSITE
+} from "@/lib/constants/school";
 
 function politeYou(role: Role): string {
   return role === "doanhnghiep" ? "Quý doanh nghiệp" : "Quý vị";
@@ -12,12 +19,12 @@ function politeYou(role: Role): string {
 export function buildPasswordResetMail(fullName: string, role: Role, resetUrl: string) {
   const school = SCHOOL_FULL_NAME;
   const you = politeYou(role);
-  const subject = `${school} - Yêu cầu đặt lại mật khẩu tài khoản`;
+  const subject = `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} - Yêu cầu đặt lại mật khẩu tài khoản`;
 
   const text = [
     `Kính gửi ${fullName},`,
     "",
-    `Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với địa chỉ email này trên hệ thống Quản lý thực tập ${school}.`,
+    `Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản liên kết với địa chỉ email này trên ${MAIL_PRODUCT_NAME} của ${school}.`,
     "",
     `Để tiếp tục quá trình thay đổi mật khẩu, ${you} vui lòng mở liên kết sau:`,
     resetUrl,
@@ -28,8 +35,7 @@ export function buildPasswordResetMail(fullName: string, role: Role, resetUrl: s
     "- Tuyệt đối không chia sẻ nội dung email này hoặc đường dẫn phía trên cho bất kỳ ai.",
     `Nếu gặp khó khăn trong quá trình khôi phục mật khẩu, bạn có thể liên hệ với bộ phận kỹ thuật của nhà trường qua số hotline: ${SCHOOL_HOTLINE}.`,
     "",
-    "Trân trọng,",
-    `Ban Quản trị Hệ thống ${school}`,
+    MAIL_TRANSACTIONAL_SIGN_OFF,
     SCHOOL_WEBSITE
   ].join("\n");
 

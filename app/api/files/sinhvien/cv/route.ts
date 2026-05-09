@@ -45,6 +45,12 @@ export async function GET(request: Request) {
   let mime: string;
   try {
     const deliveryUrl = buildCloudinaryRawDeliveryUrl(publicId);
+    if (!deliveryUrl) {
+      return NextResponse.json(
+        { success: false, message: "Cấu hình lưu trữ file chưa sẵn sàng (thiếu tên cloud)." },
+        { status: 503 }
+      );
+    }
     const upstream = await fetch(deliveryUrl);
     if (!upstream.ok) return NextResponse.json({ success: false, message: "Không thể tải file CV." }, { status: 502 });
     const ab = await upstream.arrayBuffer();
