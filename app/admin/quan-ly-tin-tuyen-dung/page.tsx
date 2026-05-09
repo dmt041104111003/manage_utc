@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
+import Pagination from "../../components/Pagination";
 
 type JobStatus = "PENDING" | "REJECTED" | "ACTIVE" | "STOPPED";
 type WorkType = "PART_TIME" | "FULL_TIME";
@@ -104,6 +105,8 @@ export default function AdminQuanLyTinTuyenDungPage() {
   const [searchStatus, setSearchStatus] = useState<string>("all");
 
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const [viewTarget, setViewTarget] = useState<JobListItem | null>(null);
   const [viewDetail, setViewDetail] = useState<JobDetailResponse | null>(null);
@@ -133,6 +136,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
   const load = async () => {
     setLoading(true);
     setError("");
+    setPage(1);
     try {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
@@ -236,8 +240,11 @@ export default function AdminQuanLyTinTuyenDungPage() {
   };
 
   const search = async () => {
+    setPage(1);
     await load();
   };
+
+  const pagedItems = items.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE);
 
   const viewOrLoading = viewTarget || viewLoading;
 
@@ -307,9 +314,9 @@ export default function AdminQuanLyTinTuyenDungPage() {
                   </td>
                 </tr>
               ) : (
-                items.map((row, idx) => (
+                pagedItems.map((row, idx) => (
                   <tr key={row.id}>
-                    <td data-label="STT">{idx + 1}</td>
+                    <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                     <td data-label="Tiêu đề">{row.title}</td>
                     <td data-label="Tên doanh nghiệp">{row.enterpriseName || "—"}</td>
                     <td data-label="Ngày đăng tin">{formatDateVi(row.createdAt)}</td>
@@ -333,6 +340,17 @@ export default function AdminQuanLyTinTuyenDungPage() {
           </table>
         </div>
       )}
+
+      {!loading ? (
+        <Pagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          totalItems={items.length}
+          onPageChange={setPage}
+          buttonClassName={styles.btn}
+          activeButtonClassName={`${styles.btn} ${styles.btnPrimary}`}
+        />
+      ) : null}
 
       {/* Popup: Xem chi tiết tin tuyển dụng */}
       {viewOrLoading ? (

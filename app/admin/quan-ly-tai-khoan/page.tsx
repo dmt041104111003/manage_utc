@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
+import Pagination from "../../components/Pagination";
 
 type Role = "sinhvien" | "doanhnghiep" | "giangvien";
 type AccountStatus = "ACTIVE" | "STOPPED";
@@ -54,10 +55,13 @@ export default function AdminQuanLyTaiKhoanPage() {
   const [statusDraft, setStatusDraft] = useState<AccountStatus>("ACTIVE");
 
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const load = async () => {
     setLoading(true);
     setError("");
+    setPage(1);
     try {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
@@ -74,6 +78,7 @@ export default function AdminQuanLyTaiKhoanPage() {
       setLoading(false);
     }
   };
+  const pagedItems = items.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE);
 
   useEffect(() => {
     void load();
@@ -355,9 +360,9 @@ export default function AdminQuanLyTaiKhoanPage() {
                   </td>
                 </tr>
               ) : (
-                items.map((row, idx) => (
+                pagedItems.map((row, idx) => (
                   <tr key={row.id}>
-                    <td data-label="STT">{idx + 1}</td>
+                    <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                     <td data-label="Họ tên">{row.fullName}</td>
                     <td data-label="Email">{row.email}</td>
                     <td data-label="SĐT">{row.phone ?? "—"}</td>
@@ -381,6 +386,17 @@ export default function AdminQuanLyTaiKhoanPage() {
           </table>
         </div>
       )}
+
+      {!loading ? (
+        <Pagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          totalItems={items.length}
+          onPageChange={setPage}
+          buttonClassName={styles.btn}
+          activeButtonClassName={`${styles.btn} ${styles.btnPrimary}`}
+        />
+      ) : null}
 
       {viewTarget ? (
         <MessagePopup open title={viewTitle} size="extraWide" onClose={() => setViewTarget(null)}>

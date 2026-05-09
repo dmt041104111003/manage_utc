@@ -5,6 +5,7 @@ import styles from "../styles/dashboard.module.css";
 import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import FormPopup from "../../components/FormPopup";
+import Pagination from "../../components/Pagination";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { ADMIN_SUPERVISOR_EXCEL_HEADER, ADMIN_SUPERVISOR_EXCEL_SAMPLE_ROWS } from "@/lib/constants/admin-supervisors-excel";
 
@@ -114,6 +115,8 @@ export default function AdminQuanLyGVHDPage() {
   const [form, setForm] = useState<SupervisorFormState>(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
@@ -164,6 +167,7 @@ export default function AdminQuanLyGVHDPage() {
   const load = async () => {
     setLoading(true);
     setError("");
+    setPage(1);
     try {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
@@ -182,6 +186,8 @@ export default function AdminQuanLyGVHDPage() {
       setLoading(false);
     }
   };
+
+  const pagedItems = items.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE);
 
   useEffect(() => {
     void load();
@@ -579,9 +585,9 @@ export default function AdminQuanLyGVHDPage() {
                   </td>
                 </tr>
               ) : (
-                items.map((row, idx) => (
+                pagedItems.map((row, idx) => (
                   <tr key={row.id}>
-                    <td data-label="STT">{idx + 1}</td>
+                    <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                     <td data-label="Họ tên">{row.fullName}</td>
                     <td data-label="Số điện thoại">{row.phone ?? "—"}</td>
                     <td data-label="Email">{row.email}</td>
@@ -605,6 +611,17 @@ export default function AdminQuanLyGVHDPage() {
           </table>
         </div>
       )}
+
+      {!loading ? (
+        <Pagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          totalItems={items.length}
+          onPageChange={setPage}
+          buttonClassName={styles.btn}
+          activeButtonClassName={`${styles.btn} ${styles.btnPrimary}`}
+        />
+      ) : null}
 
       {viewOpen && viewItem ? (
         <MessagePopup open title="Xem thông tin GVHD" size="extraWide" onClose={() => (setViewOpen(false), setViewItem(null))}>

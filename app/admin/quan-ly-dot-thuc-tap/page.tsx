@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
+import Pagination from "../../components/Pagination";
 import FormPopup from "../../components/FormPopup";
 
 type InternshipBatchStatus = "OPEN" | "CLOSED";
@@ -91,6 +92,8 @@ export default function AdminQuanLyDotThucTapPage() {
   const [searchStatus, setSearchStatus] = useState<"all" | InternshipBatchStatus>("all");
 
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const [viewTarget, setViewTarget] = useState<InternshipBatchRow | null>(null);
 
@@ -116,6 +119,7 @@ export default function AdminQuanLyDotThucTapPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
+    setPage(1);
     try {
       const params = new URLSearchParams();
       if (searchName.trim()) params.set("q", searchName.trim());
@@ -382,6 +386,10 @@ export default function AdminQuanLyDotThucTapPage() {
       {loading ? (
         <p className={styles.modulePlaceholder}>Đang tải…</p>
       ) : (
+        <>
+        {(() => {
+          const pagedItems = items.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE);
+          return (
         <div className={`${styles.tableWrap} data-table-responsive-wrap`}>
           <table className={`${styles.dataTable} data-table-responsive`}>
             <thead>
@@ -403,9 +411,9 @@ export default function AdminQuanLyDotThucTapPage() {
                   </td>
                 </tr>
               ) : (
-                items.map((row, idx) => (
+                pagedItems.map((row, idx) => (
                   <tr key={row.id}>
-                    <td data-label="STT">{idx + 1}</td>
+                    <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                     <td data-label="Tên đợt thực tập">{row.name}</td>
                     <td data-label="Học kỳ">{semesterOptions.find((s) => s.value === row.semester)?.label ?? row.semester}</td>
                     <td data-label="Năm học">{row.schoolYear}</td>
@@ -446,6 +454,10 @@ export default function AdminQuanLyDotThucTapPage() {
             </tbody>
           </table>
         </div>
+          );
+        })()}
+        <Pagination page={page} pageSize={PAGE_SIZE} totalItems={items.length} onPageChange={setPage} buttonClassName={styles.btn} />
+        </>
       )}
 
       {/* Popup xem */}

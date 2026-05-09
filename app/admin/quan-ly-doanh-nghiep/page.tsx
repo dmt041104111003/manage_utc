@@ -15,6 +15,7 @@ import { companyTaxLabel } from "@/lib/utils/admin-enterprise-display";
 import { EnterpriseStatusCell } from "../components/EnterpriseStatusCell";
 import { EnterpriseViewDetailTable } from "../components/EnterpriseViewDetailTable";
 import MessagePopup from "../../components/MessagePopup";
+import Pagination from "../../components/Pagination";
 import styles from "../styles/dashboard.module.css";
 
 export default function AdminQuanLyDoanhNghiepPage() {
@@ -30,6 +31,8 @@ export default function AdminQuanLyDoanhNghiepPage() {
   const urlSynced = useRef(false);
 
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const [viewDetail, setViewDetail] = useState<AdminEnterpriseDetail | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
@@ -116,7 +119,10 @@ export default function AdminQuanLyDoanhNghiepPage() {
   const applySearch = () => {
     setAppliedQ(searchQ);
     setAppliedStatus(searchStatus);
+    setPage(1);
   };
+
+  const pagedItems = items.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE);
 
   const dismissToast = () => setToast("");
 
@@ -281,9 +287,9 @@ export default function AdminQuanLyDoanhNghiepPage() {
                   </td>
                 </tr>
               ) : (
-                items.map((row, idx) => (
+                pagedItems.map((row, idx) => (
                   <tr key={row.id}>
-                    <td data-label="STT">{idx + 1}</td>
+                    <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                     <td data-label="Tên doanh nghiệp">{row.companyName || "—"}</td>
                     <td data-label="MST">{row.taxCode || "—"}</td>
                     <td data-label="Trạng thái">
@@ -321,6 +327,10 @@ export default function AdminQuanLyDoanhNghiepPage() {
             </tbody>
           </table>
         </div>
+      ) : null}
+
+      {!loading && !error ? (
+        <Pagination page={page} pageSize={PAGE_SIZE} totalItems={items.length} onPageChange={setPage} buttonClassName={styles.btn} />
       ) : null}
 
       {viewDetail || viewLoading ? (

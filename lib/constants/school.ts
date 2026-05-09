@@ -5,7 +5,6 @@ export const SCHOOL_HOTLINE = "1900 xxx xxx";
 
 export const MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX = "Phòng đào tạo Trường Đại học GTVT";
 
-/** Email hiển thị trong mẫu thư phê duyệt (ưu tiên SUPPORT_EMAIL env). */
 export const DEFAULT_SUPPORT_EMAIL = "phongdaotao@utc.edu.vn";
 
 export const ENTERPRISE_MAIL_SIGN_OFF_NAME = "Phòng đào tạo";

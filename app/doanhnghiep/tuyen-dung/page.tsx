@@ -5,6 +5,7 @@ import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
+import Pagination from "../../components/Pagination";
 import { DOANHNGHIEP_REGISTER_WEBSITE_PATTERN } from "@/lib/constants/doanhnghiep";
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
 import { metaRecord } from "@/lib/utils/enterprise-meta";
@@ -116,6 +117,8 @@ export default function DoanhNghiepTuyenDungPage() {
   const [searchStatus, setSearchStatus] = useState<"all" | JobStatus>("all");
 
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const [viewJob, setViewJob] = useState<JobDetailResponse | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
@@ -147,6 +150,7 @@ export default function DoanhNghiepTuyenDungPage() {
   const load = async (params?: { q?: string; date?: string; status?: string }) => {
     setLoading(true);
     setError("");
+    setPage(1);
     try {
       const url = new URL("/api/doanhnghiep/tuyen-dung", window.location.origin);
       if (params?.q !== undefined) url.searchParams.set("q", params.q || "");
@@ -163,6 +167,8 @@ export default function DoanhNghiepTuyenDungPage() {
       setLoading(false);
     }
   };
+
+  const pagedItems = items.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE);
 
   const refresh = async () => {
     await load({ q: searchQ, date: searchDate, status: searchStatus });
@@ -507,12 +513,12 @@ export default function DoanhNghiepTuyenDungPage() {
                   </td>
                 </tr>
               ) : (
-                items.map((row, idx) => {
+                pagedItems.map((row, idx) => {
                   const editingAllowed = canEdit(row.status);
                   const stoppingAllowed = canStop(row.status);
                   return (
                     <tr key={row.id}>
-                      <td data-label="STT">{idx + 1}</td>
+                      <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                       <td data-label="Tiêu đề">{row.title}</td>
                       <td data-label="Ngày đăng tin">{formatDateVi(row.createdAt)}</td>
                       <td data-label="Số lượng tuyển dụng">{row.recruitmentCount}</td>
@@ -559,6 +565,17 @@ export default function DoanhNghiepTuyenDungPage() {
           </table>
         </div>
       )}
+
+      {!loading ? (
+        <Pagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          totalItems={items.length}
+          onPageChange={setPage}
+          buttonClassName={adminStyles.btn}
+          activeButtonClassName={`${adminStyles.btn} ${adminStyles.btnPrimary}`}
+        />
+      ) : null}
 
       {/* Popup: Xem chi tiết */}
       {viewJob || viewLoading ? (

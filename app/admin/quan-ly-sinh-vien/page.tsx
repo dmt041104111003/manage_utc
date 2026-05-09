@@ -5,6 +5,7 @@ import styles from "../styles/dashboard.module.css";
 import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import FormPopup from "../../components/FormPopup";
+import Pagination from "../../components/Pagination";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { ADMIN_STUDENT_EXCEL_HEADER, ADMIN_STUDENT_EXCEL_SAMPLE_ROWS } from "@/lib/constants/admin-students-excel";
 
@@ -145,6 +146,8 @@ export default function AdminQuanLySinhVienPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   // address dropdowns
   const [provinces, setProvinces] = useState<Province[]>([]);
@@ -196,6 +199,7 @@ export default function AdminQuanLySinhVienPage() {
   const load = async () => {
     setLoading(true);
     setError("");
+    setPage(1);
     try {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
@@ -463,6 +467,8 @@ export default function AdminQuanLySinhVienPage() {
 
   const handleSearch = () => void load();
 
+  const pagedItems = items.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE);
+
   // Excel import (bulk): parse in client and send rows to API.
   const [importBusy, setImportBusy] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -714,9 +720,9 @@ export default function AdminQuanLySinhVienPage() {
                   </td>
                 </tr>
               ) : (
-                items.map((row, idx) => (
+                pagedItems.map((row, idx) => (
                   <tr key={row.id}>
-                    <td data-label="STT">{idx + 1}</td>
+                    <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                     <td data-label="MSV">{row.msv}</td>
                     <td data-label="Họ tên">{row.fullName}</td>
                     <td data-label="Lớp">{row.className}</td>
@@ -754,6 +760,17 @@ export default function AdminQuanLySinhVienPage() {
           </table>
         </div>
       )}
+
+      {!loading ? (
+        <Pagination
+          page={page}
+          pageSize={PAGE_SIZE}
+          totalItems={items.length}
+          onPageChange={setPage}
+          buttonClassName={styles.btn}
+          activeButtonClassName={`${styles.btn} ${styles.btnPrimary}`}
+        />
+      ) : null}
 
       {/* Popup xem */}
       {viewOpen && viewStudent ? (
