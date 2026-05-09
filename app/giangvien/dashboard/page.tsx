@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
+import { ChartCardShell } from "@/app/components/ChartCardShell";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 type Batch = { id: string; name: string; status: string };
@@ -24,6 +25,8 @@ const GUIDANCE_COLORS = ["#2563eb", "#16a34a"];
 const INTERNSHIP_COLORS = [
   "#6b7280", "#2563eb", "#0ea5e9", "#f59e0b", "#16a34a", "#ef4444"
 ];
+
+const shellChartMin = { minHeight: 300 } as const;
 
 function gvDashboardOverviewCacheKey(batchId: string) {
   const qs = new URLSearchParams();
@@ -136,32 +139,42 @@ export default function LecturerDashboardPage() {
           >
             {batches.length === 0 && <option value="all">Chưa có đợt thực tập</option>}
             {batches.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
             ))}
           </select>
         </div>
       </section>
 
-      {error ? <div className={styles.modulePlaceholder}>Lỗi: {error}</div> : null}
+      {error ? <div className={styles.statusNote}>Lỗi: {error}</div> : null}
       {loading && !payload ? (
         <ChartStyleLoading variant="block" message="Đang tải dữ liệu…" />
       ) : null}
 
       {payload ? (
         <section className={styles.overviewGrid}>
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái hướng dẫn</h2>
-            <SimpleBarBlock labels={guidanceStatus.labels} values={guidanceStatus.values} colors={GUIDANCE_COLORS} />
-          </article>
+          <ChartCardShell style={shellChartMin}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái hướng dẫn</h2>
+              <div className={styles.chartPadding}>
+                <SimpleBarBlock labels={guidanceStatus.labels} values={guidanceStatus.values} colors={GUIDANCE_COLORS} />
+              </div>
+            </article>
+          </ChartCardShell>
 
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái thực tập</h2>
-            <SimpleBarBlock
-              labels={internshipStatus.labels}
-              values={internshipStatus.values}
-              colors={INTERNSHIP_COLORS}
-            />
-          </article>
+          <ChartCardShell style={shellChartMin}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái thực tập</h2>
+              <div className={styles.chartPadding}>
+                <SimpleBarBlock
+                  labels={internshipStatus.labels}
+                  values={internshipStatus.values}
+                  colors={INTERNSHIP_COLORS}
+                />
+              </div>
+            </article>
+          </ChartCardShell>
         </section>
       ) : null}
     </main>

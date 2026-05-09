@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
+import { ChartCardShell } from "@/app/components/ChartCardShell";
 
 type SimpleChartSeries = { name: string; data: number[]; color: string };
 
@@ -17,6 +18,8 @@ type OverviewPayload = {
 
 const APP_STATUS_COLORS = ["#2563eb", "#f59e0b", "#16a34a", "#ef4444"];
 const JOB_STATUS_COLORS = ["#f59e0b", "#ef4444", "#16a34a", "#6b7280"];
+
+const shellChartMin = { minHeight: 300 } as const;
 
 function enterpriseDashboardOverviewCacheKey(dateFrom: string, dateTo: string) {
   const qs = new URLSearchParams();
@@ -122,33 +125,13 @@ function LineDataTable({
     return <div className={styles.muted}>Chưa có dữ liệu.</div>;
   }
   return (
-    <div className={styles.lineWrap} style={{ overflowX: "auto", marginTop: 8 }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+    <div className={styles.tableWrap}>
+      <table className={styles.dataTable}>
         <thead>
           <tr>
-            <th
-              style={{
-                textAlign: "left",
-                padding: "8px 10px",
-                border: "1px solid #cbd5e1",
-                background: "#e2e8f0",
-                fontWeight: 700
-              }}
-            >
-              Tháng
-            </th>
+            <th scope="col">Tháng</th>
             {series.map((s) => (
-              <th
-                key={s.name}
-                style={{
-                  textAlign: "right",
-                  padding: "8px 10px",
-                  border: "1px solid #cbd5e1",
-                  background: "#e2e8f0",
-                  fontWeight: 700,
-                  whiteSpace: "nowrap"
-                }}
-              >
+              <th key={s.name} scope="col" className={styles.numCell}>
                 {s.name}
               </th>
             ))}
@@ -157,17 +140,9 @@ function LineDataTable({
         <tbody>
           {labels.map((label, rowIdx) => (
             <tr key={label}>
-              <td style={{ padding: "8px 10px", border: "1px solid #cbd5e1", fontWeight: 600 }}>{label}</td>
+              <td>{label}</td>
               {series.map((s) => (
-                <td
-                  key={s.name}
-                  style={{
-                    textAlign: "right",
-                    padding: "8px 10px",
-                    border: "1px solid #cbd5e1",
-                    color: "#374151"
-                  }}
-                >
+                <td key={s.name} className={styles.numCell}>
                   {s.data[rowIdx] ?? 0}
                 </td>
               ))}
@@ -259,58 +234,70 @@ export default function EnterpriseDashboardPage() {
         </div>
       </section>
 
-      {error ? <div className={styles.modulePlaceholder}>Lỗi: {error}</div> : null}
+      {error ? <div className={styles.statusNote}>Lỗi: {error}</div> : null}
       {loading && !payload ? (
         <ChartStyleLoading variant="block" message="Đang tải dữ liệu…" />
       ) : null}
 
       {payload ? (
         <section className={styles.overviewGrid}>
-          <article className={styles.card} style={{ gridColumn: "1 / -1" }}>
-            <h2 className={styles.panelTitle}>
-              Số SV chấp nhận &amp; từ chối thực tập theo ngành/khoa
-            </h2>
-            <DoubleBarBlock
-              labels={doubleBar.labels}
-              accepted={doubleBar.accepted}
-              declined={doubleBar.declined}
-            />
-          </article>
+          <ChartCardShell wide style={{ ...shellChartMin, gridColumn: "1 / -1" }}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Số SV chấp nhận &amp; từ chối thực tập theo ngành/khoa</h2>
+              <div className={styles.chartPadding}>
+                <DoubleBarBlock
+                  labels={doubleBar.labels}
+                  accepted={doubleBar.accepted}
+                  declined={doubleBar.declined}
+                />
+              </div>
+            </article>
+          </ChartCardShell>
 
-          <article className={styles.card} style={{ gridColumn: "1 / -1" }}>
-            <h2 className={styles.panelTitle}>
-              Số lượng SV ứng tuyển theo ngành/khoa (theo tháng)
-            </h2>
-            <LineDataTable labels={lineChart.labels} series={lineChart.series} />
-          </article>
+          <ChartCardShell style={shellChartMin}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Số lượng hồ sơ theo trạng thái</h2>
+              <div className={styles.chartPadding}>
+                {applicationStatus.values.every((v) => v === 0) ? (
+                  <div className={styles.muted}>Chưa có dữ liệu.</div>
+                ) : (
+                  <SimpleBarBlock
+                    labels={applicationStatus.labels}
+                    values={applicationStatus.values}
+                    colors={APP_STATUS_COLORS}
+                    unit="hồ sơ"
+                  />
+                )}
+              </div>
+            </article>
+          </ChartCardShell>
 
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Số lượng hồ sơ theo trạng thái</h2>
-            {applicationStatus.values.every((v) => v === 0) ? (
-              <div className={styles.muted}>Chưa có dữ liệu.</div>
-            ) : (
-              <SimpleBarBlock
-                labels={applicationStatus.labels}
-                values={applicationStatus.values}
-                colors={APP_STATUS_COLORS}
-                unit="hồ sơ"
-              />
-            )}
-          </article>
+          <ChartCardShell style={shellChartMin}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Số lượng tin tuyển dụng theo trạng thái</h2>
+              <div className={styles.chartPadding}>
+                {jobStatus.values.every((v) => v === 0) ? (
+                  <div className={styles.muted}>Chưa có dữ liệu.</div>
+                ) : (
+                  <SimpleBarBlock
+                    labels={jobStatus.labels}
+                    values={jobStatus.values}
+                    colors={JOB_STATUS_COLORS}
+                    unit="tin"
+                  />
+                )}
+              </div>
+            </article>
+          </ChartCardShell>
 
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Số lượng tin tuyển dụng theo trạng thái</h2>
-            {jobStatus.values.every((v) => v === 0) ? (
-              <div className={styles.muted}>Chưa có dữ liệu.</div>
-            ) : (
-              <SimpleBarBlock
-                labels={jobStatus.labels}
-                values={jobStatus.values}
-                colors={JOB_STATUS_COLORS}
-                unit="tin"
-              />
-            )}
-          </article>
+          <ChartCardShell wide style={{ ...shellChartMin, gridColumn: "1 / -1" }}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Số lượng SV ứng tuyển theo ngành/khoa (theo tháng)</h2>
+              <div className={styles.chartPadding}>
+                <LineDataTable labels={lineChart.labels} series={lineChart.series} />
+              </div>
+            </article>
+          </ChartCardShell>
         </section>
       ) : null}
     </main>
