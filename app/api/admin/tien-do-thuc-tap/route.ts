@@ -98,7 +98,7 @@ export async function GET(request: Request) {
     items: rows.map((r: any) => {
       const internshipStatus = r.internshipStatus as InternshipStatus;
       const reportReviewStatus = r.internshipReport?.reviewStatus ?? null;
-      const canFinalUpdate = internshipStatus === "REPORT_SUBMITTED" && reportReviewStatus === "APPROVED";
+      const canFinalUpdate = internshipStatus !== "COMPLETED" && internshipStatus !== "REJECTED";
       return {
         id: r.id,
         msv: r.msv,

@@ -40,31 +40,32 @@ export default function BaoCaoThucTapStatusSection({
       </table>
 
       <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-        {internshipStatus === "DOING" || internshipStatus === "SELF_FINANCED" ? (
-          <button
-            type="button"
-            className={`${adminStyles.btn} ${adminStyles.btnPrimary}`}
-            disabled={!canSubmitReport || busy}
-            onClick={onOpenUpload}
-          >
-            Nộp BCTT
-          </button>
-        ) : (
-          <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} disabled>
-            Nộp BCTT
-          </button>
-        )}
+        <button
+          type="button"
+          className={`${adminStyles.btn} ${canSubmitReport ? adminStyles.btnPrimary : ""}`}
+          disabled={!canSubmitReport || busy}
+          onClick={canSubmitReport ? onOpenUpload : undefined}
+          title={
+            !canSubmitReport && !hasReport
+              ? "Chỉ nộp được khi đang thực tập"
+              : hasReport
+              ? "Đã nộp BCTT"
+              : undefined
+          }
+        >
+          Nộp BCTT
+        </button>
 
         {hasReport ? (
-          canEditReport ? (
-            <button type="button" className={adminStyles.btn} disabled={busy} onClick={onOpenEdit}>
-              Sửa BCTT
-            </button>
-          ) : (
-            <button type="button" className={adminStyles.btn} disabled>
-              Sửa BCTT
-            </button>
-          )
+          <button
+            type="button"
+            className={adminStyles.btn}
+            disabled={!canEditReport || busy}
+            onClick={canEditReport ? onOpenEdit : undefined}
+            title={!canEditReport ? "Chỉ sửa được khi GVHD từ chối duyệt" : undefined}
+          >
+            Sửa BCTT
+          </button>
         ) : null}
       </div>
     </section>

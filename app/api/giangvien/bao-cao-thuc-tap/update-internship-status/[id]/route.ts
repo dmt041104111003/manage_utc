@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
+import { sendMail } from "@/lib/mail";
 
 async function getGiangVienProfileId() {
   const cookieStore = await cookies();
@@ -29,7 +30,12 @@ export async function PATCH(_request: Request, ctx: { params: Promise<{ id: stri
 
   const student = await prismaAny.studentProfile.findFirst({
     where: { id },
-    select: { id: true, internshipStatus: true, userId: true }
+    select: {
+      id: true,
+      internshipStatus: true,
+      userId: true,
+      user: { select: { fullName: true, email: true } }
+    }
   });
   if (!student) return NextResponse.json({ success: false, message: "Không tìm thấy sinh viên." }, { status: 404 });
 
@@ -60,6 +66,19 @@ export async function PATCH(_request: Request, ctx: { params: Promise<{ id: stri
     });
   });
 
+  try {
+    const svFullName: string = student.user?.fullName ?? "Sinh viên";
+    const svEmail: string | null = student.user?.email ?? null;
+    if (svEmail) {
+      await sendMail(
+        svEmail,
+        "[UTC] Cập nhật trạng thái thực tập",
+        `Kính gửi ${svFullName},\n\nTrạng thái thực tập của bạn vừa được GVHD cập nhật thành: Thực tập tự túc.\n\nVui lòng đăng nhập hệ thống để theo dõi tiến độ thực tập.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+      );
+    }
+  } catch {
+    // Email failure should not block the main response
+  }
+
   return NextResponse.json({ success: true, message: "Đã cập nhật trạng thái thực tập thành Thực tập tự túc." });
 }
-

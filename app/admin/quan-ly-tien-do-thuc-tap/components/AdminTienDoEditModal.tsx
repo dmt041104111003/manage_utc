@@ -5,7 +5,6 @@ import { degreeLabel } from "@/lib/constants/admin-quan-ly-tien-do-thuc-tap";
 import { supervisorLine } from "@/lib/utils/admin-quan-ly-tien-do-thuc-tap";
 import FormPopup from "../../../components/FormPopup";
 import styles from "../../styles/dashboard.module.css";
-import formStyles from "../../../auth/styles/register.module.css";
 
 type Props = {
   open: boolean;
@@ -108,11 +107,8 @@ export default function AdminTienDoEditModal(props: Props) {
             disabled={busy}
           >
             <option value="COMPLETED">Hoàn thành thực tập</option>
-            <option value="REJECTED">Từ chối</option>
+            <option value="REJECTED">Chưa hoàn thành thực tập</option>
           </select>
-          <p className={formStyles.hint}>
-            Chỉ cho phép cập nhật khi sinh viên ở trạng thái <b>Đã duyệt BCTT</b>.
-          </p>
         </div>
       </div>
     </FormPopup>

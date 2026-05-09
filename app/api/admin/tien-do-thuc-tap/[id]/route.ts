@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth/admin-session";
 import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
+import { sendMail } from "@/lib/mail";
 
 type Degree = "BACHELOR" | "ENGINEER";
 type InternshipStatus =
@@ -92,7 +93,7 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
 
   const internshipStatus = profile.internshipStatus as InternshipStatus;
   const reportReviewStatus = (profile.internshipReport?.reviewStatus ?? null) as ReportReviewStatus | null;
-  const canFinalUpdate = internshipStatus === "REPORT_SUBMITTED" && reportReviewStatus === "APPROVED";
+  const canFinalUpdate = internshipStatus !== "COMPLETED" && internshipStatus !== "REJECTED";
 
   const assignment = profile.assignmentLinks?.[0]?.supervisorAssignment ?? null;
   const supervisor = assignment?.supervisorProfile
@@ -188,58 +189,87 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     select: {
       id: true,
       userId: true,
+      msv: true,
       internshipStatus: true,
-      internshipReport: { select: { id: true, reviewStatus: true } }
+      user: { select: { fullName: true, email: true } },
+      assignmentLinks: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          supervisorAssignment: {
+            select: {
+              id: true,
+              status: true,
+              supervisorProfile: {
+                select: {
+                  user: { select: { fullName: true, email: true } }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   });
   if (!profile) return NextResponse.json({ success: false, message: "Không tìm thấy sinh viên." }, { status: 404 });
 
   const internshipStatus = profile.internshipStatus as InternshipStatus;
-  const reportReviewStatus = (profile.internshipReport?.reviewStatus ?? null) as ReportReviewStatus | null;
 
-  if (internshipStatus !== "REPORT_SUBMITTED" || reportReviewStatus !== "APPROVED") {
-    return NextResponse.json({ success: false, message: "Chỉ được cập nhật khi SV đã duyệt BCTT." }, { status: 400 });
+  if (internshipStatus === "COMPLETED" || internshipStatus === "REJECTED") {
+    return NextResponse.json({ success: false, message: "Trạng thái thực tập đã ở trạng thái cuối cùng, không thể cập nhật lại." }, { status: 400 });
   }
 
   const prevStatus = internshipStatus;
+  const svFullName: string = profile.user?.fullName ?? "Sinh viên";
+  const svEmail: string | null = profile.user?.email ?? null;
+
+  const supervisorAssignment = profile.assignmentLinks?.[0]?.supervisorAssignment ?? null;
+  const gvFullName: string = supervisorAssignment?.supervisorProfile?.user?.fullName ?? "Giảng viên";
+  const gvEmail: string | null = supervisorAssignment?.supervisorProfile?.user?.email ?? null;
 
   await prismaAny.$transaction(async (tx: any) => {
     if (finalStatus === "COMPLETED") {
-      const assignmentLink = await tx.supervisorAssignmentStudent.findFirst({
-        where: { studentProfileId: id },
-        select: { supervisorAssignmentId: true },
-        orderBy: { createdAt: "desc" }
-      });
-      if (!assignmentLink) throw new Error("Không có GVHD để cập nhật trạng thái hoàn thành.");
+      await tx.studentProfile.update({ where: { id }, data: { internshipStatus: "COMPLETED" } });
 
-      await tx.studentProfile.update({
-        where: { id },
-        data: { internshipStatus: "COMPLETED" }
-      });
-
-      const prevAssign = await tx.supervisorAssignment.findFirst({
-        where: { id: assignmentLink.supervisorAssignmentId },
-        select: { status: true }
-      });
-
-      await tx.supervisorAssignment.update({
-        where: { id: assignmentLink.supervisorAssignmentId },
-        data: { status: "COMPLETED" }
-      });
-
-      await tx.supervisorAssignmentStatusHistory.create({
-        data: {
-          supervisorAssignmentId: assignmentLink.supervisorAssignmentId,
-          fromStatus: (prevAssign?.status ?? "GUIDING") as any,
-          toStatus: "COMPLETED",
-          byRole: "admin",
-          message: "Admin hoàn thành hướng dẫn"
-        }
-      });
+      if (supervisorAssignment?.id) {
+        await tx.supervisorAssignment.update({
+          where: { id: supervisorAssignment.id },
+          data: { status: "COMPLETED" }
+        });
+        await tx.supervisorAssignmentStatusHistory.create({
+          data: {
+            supervisorAssignmentId: supervisorAssignment.id,
+            fromStatus: (supervisorAssignment.status ?? "GUIDING") as any,
+            toStatus: "COMPLETED",
+            byRole: "admin",
+            message: "Admin hoàn thành hướng dẫn thực tập"
+          }
+        });
+      }
     } else {
-      await tx.studentProfile.update({
-        where: { id },
-        data: { internshipStatus: "REJECTED" }
+      // REJECTED = "Chưa hoàn thành thực tập"
+      await tx.studentProfile.update({ where: { id }, data: { internshipStatus: "REJECTED" } });
+
+      if (supervisorAssignment?.id) {
+        await tx.supervisorAssignment.update({
+          where: { id: supervisorAssignment.id },
+          data: { status: "COMPLETED" }
+        });
+        await tx.supervisorAssignmentStatusHistory.create({
+          data: {
+            supervisorAssignmentId: supervisorAssignment.id,
+            fromStatus: (supervisorAssignment.status ?? "GUIDING") as any,
+            toStatus: "COMPLETED",
+            byRole: "admin",
+            message: "Admin hoàn thành hướng dẫn (SV chưa hoàn thành thực tập)"
+          }
+        });
+      }
+
+      // Lock student account
+      await tx.user.update({
+        where: { id: profile.userId },
+        data: { isLocked: true }
       });
     }
 
@@ -249,11 +279,49 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
         fromStatus: prevStatus,
         toStatus: finalStatus,
         byRole: "admin",
-        message: finalStatus === "COMPLETED" ? "Admin hoàn thành thực tập" : "Admin từ chối"
+        message:
+          finalStatus === "COMPLETED"
+            ? "Admin xác nhận hoàn thành thực tập"
+            : "Admin xác nhận chưa hoàn thành thực tập – tài khoản bị tạm dừng"
       }
     });
   });
 
-  return NextResponse.json({ success: true, message: "Cập nhật trạng thái thực tập thành công." });
+  // Send email notifications
+  try {
+    if (finalStatus === "COMPLETED") {
+      if (svEmail) {
+        await sendMail(
+          svEmail,
+          "[UTC] Kết quả thực tập của bạn đã có",
+          `Kính gửi ${svFullName},\n\nKết quả thực tập của bạn đã được Admin xác nhận: Hoàn thành thực tập.\n\nVui lòng đăng nhập hệ thống để xem chi tiết kết quả.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        );
+      }
+      if (gvEmail) {
+        await sendMail(
+          gvEmail,
+          `[UTC] Hoàn thành hướng dẫn thực tập – Sinh viên ${svFullName}`,
+          `Kính gửi ${gvFullName},\n\nAdmin đã xác nhận sinh viên ${svFullName} hoàn thành thực tập.\nPhân công hướng dẫn của bạn đối với sinh viên này đã được cập nhật thành "Hoàn thành hướng dẫn".\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        );
+      }
+    } else {
+      if (svEmail) {
+        await sendMail(
+          svEmail,
+          "[UTC] Thông báo kết quả thực tập",
+          `Kính gửi ${svFullName},\n\nAdmin thông báo: Kết quả thực tập của bạn là Chưa hoàn thành thực tập.\n\nTài khoản của bạn hiện đã bị tạm dừng hoạt động. Vui lòng liên hệ với bộ phận quản lý để được hỗ trợ.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        );
+      }
+    }
+  } catch {
+    // Email failure must not block the main response
+  }
+
+  const msg =
+    finalStatus === "COMPLETED"
+      ? "Xác nhận hoàn thành thực tập thành công. Email đã gửi cho SV và GVHD."
+      : "Xác nhận chưa hoàn thành thực tập. Tài khoản SV đã bị tạm dừng.";
+
+  return NextResponse.json({ success: true, message: msg });
 }
 

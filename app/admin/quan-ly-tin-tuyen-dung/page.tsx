@@ -21,10 +21,12 @@ export default function AdminQuanLyTinTuyenDungPage() {
   const [items, setItems] = useState<JobListItem[]>([]);
 
   const [batches, setBatches] = useState<InternshipBatchRow[]>([]);
+  const [expertises, setExpertises] = useState<string[]>([]);
   const [loadingBatches, setLoadingBatches] = useState(false);
 
   const [searchQ, setSearchQ] = useState("");
   const [searchBatchId, setSearchBatchId] = useState<string>("all");
+  const [searchExpertise, setSearchExpertise] = useState<string>("all");
   const [searchStatus, setSearchStatus] = useState<string>("all");
 
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -63,11 +65,13 @@ export default function AdminQuanLyTinTuyenDungPage() {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
       if (searchBatchId !== "all") params.set("batchId", searchBatchId);
+      if (searchExpertise !== "all") params.set("expertise", searchExpertise);
       if (searchStatus !== "all") params.set("status", searchStatus);
       const res = await fetch(`/api/admin/job-posts?${params.toString()}`);
-      const data = (await res.json()) as ApiResponse<JobListItem>;
+      const data = (await res.json()) as ApiResponse<JobListItem> & { expertises?: string[] };
       if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách tin.");
       setItems((data.items || []) as any);
+      if (Array.isArray(data.expertises)) setExpertises(data.expertises);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Lỗi.");
       setItems([]);
@@ -180,10 +184,14 @@ export default function AdminQuanLyTinTuyenDungPage() {
       <AdminTinTuyenDungToolbar
         searchQ={searchQ}
         searchBatchId={searchBatchId}
+        searchExpertise={searchExpertise}
         searchStatus={searchStatus}
         batches={batches}
+        expertises={expertises}
+        loadingBatches={loadingBatches}
         onChangeSearchQ={setSearchQ}
         onChangeSearchBatchId={setSearchBatchId}
+        onChangeSearchExpertise={setSearchExpertise}
         onChangeSearchStatus={setSearchStatus}
         onSearch={() => void search()}
       />
@@ -226,4 +234,3 @@ export default function AdminQuanLyTinTuyenDungPage() {
     </main>
   );
 }
-

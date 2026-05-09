@@ -9,15 +9,6 @@ function enterpriseMetaAsRecord(meta: unknown): Record<string, unknown> {
   return meta as Record<string, unknown>;
 }
 
-function parseDateOnly(input: string | null | undefined) {
-  if (!input) return null;
-  const trimmed = String(input).trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
-  const start = new Date(`${trimmed}T00:00:00.000Z`);
-  const end = new Date(`${trimmed}T23:59:59.999Z`);
-  return { start, end };
-}
-
 export async function GET(request: Request) {
   const admin = await getAdminSession();
   if (!admin) return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
@@ -26,6 +17,7 @@ export async function GET(request: Request) {
   const q = searchParams.get("q")?.trim() || "";
   const batchId = searchParams.get("batchId")?.trim() || "";
   const status = searchParams.get("status")?.trim() || "all";
+  const expertise = searchParams.get("expertise")?.trim() || "";
 
   const now = new Date();
   // Auto-stop khi quá hạn.
@@ -46,6 +38,7 @@ export async function GET(request: Request) {
   }
   if (batchId && batchId !== "all") where.internshipBatchId = batchId;
   if (status && status !== "all") where.status = status;
+  if (expertise && expertise !== "all") where.expertise = { contains: expertise, mode: "insensitive" };
 
   const rows = await (prisma as any).jobPost.findMany({
     where,
@@ -55,6 +48,17 @@ export async function GET(request: Request) {
       internshipBatch: { select: { id: true, name: true } }
     }
   });
+
+  // Distinct expertise values for the filter dropdown
+  const expertiseRows = await (prisma as any).jobPost.findMany({
+    distinct: ["expertise"],
+    select: { expertise: true },
+    orderBy: { expertise: "asc" },
+    where: { expertise: { not: null } }
+  });
+  const expertises: string[] = expertiseRows
+    .map((r: any) => r.expertise as string)
+    .filter(Boolean);
 
   return NextResponse.json({
     success: true,
@@ -71,7 +75,7 @@ export async function GET(request: Request) {
       batchName: r.internshipBatch?.name ?? null,
       enterpriseTaxCode: r.enterpriseUser?.taxCode ?? null,
       rejectionReason: r.rejectionReason ?? null
-    }))
+    })),
+    expertises
   });
 }
-

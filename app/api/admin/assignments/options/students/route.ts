@@ -10,7 +10,6 @@ export async function GET(request: Request) {
   const faculty = (searchParams.get("faculty") || "").trim();
   const internshipBatchId = (searchParams.get("internshipBatchId") || "").trim();
   const q = (searchParams.get("q") || "").trim();
-  const includeIds = (searchParams.get("includeIds") || "").trim();
 
   if (!faculty || !internshipBatchId) {
     return NextResponse.json({ success: false, message: "Thiếu khoa hoặc đợt thực tập." }, { status: 400 });
@@ -24,13 +23,9 @@ export async function GET(request: Request) {
   });
   const assignedSet = new Set(existingLinks.map((x: any) => String(x.studentProfileId)));
 
-  if (includeIds) {
-    for (const id of includeIds.split(",").map((s) => s.trim()).filter(Boolean)) assignedSet.delete(id);
-  }
-
   const where: any = {
     faculty,
-    internshipStatus: "NOT_STARTED",
+    internshipStatus: { in: ["NOT_STARTED", "DOING"] },
     id: { notIn: Array.from(assignedSet) }
   };
 
@@ -57,4 +52,3 @@ export async function GET(request: Request) {
     }))
   });
 }
-

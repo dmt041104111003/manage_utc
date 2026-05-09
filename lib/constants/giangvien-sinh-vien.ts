@@ -1,4 +1,4 @@
-import type { Degree, GuidanceStatus, InternshipStatus } from "@/lib/types/giangvien-sinh-vien";
+import type { Degree, Gender, GuidanceStatus, InternshipStatus } from "@/lib/types/giangvien-sinh-vien";
 
 export const GIANGVIEN_SINH_VIEN_ENDPOINT = "/api/giangvien/sinh-vien-phan-cong";
 export const GIANGVIEN_SINH_VIEN_LOAD_ERROR_DEFAULT =
@@ -8,6 +8,8 @@ export const GIANGVIEN_SINH_VIEN_EMPTY_TEXT =
   "Không có sinh viên nào phù hợp với điều kiện.";
 
 export const degreeLabel: Record<Degree, string> = { BACHELOR: "Cử nhân", ENGINEER: "Kỹ sư" };
+
+export const genderLabel: Record<Gender, string> = { MALE: "Nam", FEMALE: "Nữ", OTHER: "Khác" };
 
 export const internshipStatusLabel: Record<InternshipStatus, string> = {
   NOT_STARTED: "Chưa thực tập",

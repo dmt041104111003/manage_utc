@@ -1,4 +1,4 @@
-import type { JobApplicationResponse, JobApplicationStatus, JobStatus, WorkType } from "@/lib/types/doanhnghiep-ung-vien-detail";
+import type { JobApplicationResponse, JobApplicationStatus, JobStatus, StudentDegree, WorkType } from "@/lib/types/doanhnghiep-ung-vien-detail";
 
 export const DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE = 10;
 
@@ -10,10 +10,23 @@ export const applicationStatusLabel: Record<JobApplicationStatus, string> = {
   STUDENT_DECLINED: "Ứng viên từ chối"
 };
 
+export const applicationStatusColor: Record<JobApplicationStatus, { bg: string; color: string }> = {
+  PENDING_REVIEW: { bg: "#f3f4f6", color: "#374151" },
+  INTERVIEW_INVITED: { bg: "#eff6ff", color: "#1d4ed8" },
+  OFFERED: { bg: "#f0fdf4", color: "#16a34a" },
+  REJECTED: { bg: "#fef2f2", color: "#dc2626" },
+  STUDENT_DECLINED: { bg: "#fff7ed", color: "#c2410c" }
+};
+
 export const responseLabel: Record<JobApplicationResponse, string> = {
   PENDING: "Chờ phản hồi",
-  ACCEPTED: "Đồng ý",
-  DECLINED: "Từ chối"
+  ACCEPTED: "Đã chấp nhận",
+  DECLINED: "Đã từ chối"
+};
+
+export const degreeLabel: Record<StudentDegree, string> = {
+  BACHELOR: "Cử nhân",
+  ENGINEER: "Kỹ sư"
 };
 
 export const workTypeLabel: Record<WorkType, string> = {

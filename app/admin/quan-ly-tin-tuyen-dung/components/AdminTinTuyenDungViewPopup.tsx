@@ -70,7 +70,7 @@ export default function AdminTinTuyenDungViewPopup(props: Props) {
                   <td>{viewDetail.job.salary || "—"}</td>
                 </tr>
                 <tr>
-                  <th scope="row">Chuyên môn</th>
+                  <th scope="row">Ngành/Khoa</th>
                   <td>{viewDetail.job.expertise || "—"}</td>
                 </tr>
                 <tr>

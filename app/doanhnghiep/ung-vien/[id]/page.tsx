@@ -5,6 +5,7 @@ import styles from "../../styles/dashboard.module.css";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../../components/MessagePopup";
 import type { Applicant, JobApplicationStatus, JobDetail } from "@/lib/types/doanhnghiep-ung-vien-detail";
+import { getAvailableNextStatuses } from "@/lib/types/doanhnghiep-ung-vien-detail";
 import JobDetailInfo from "./components/JobDetailInfo";
 import ApplicantTableSection from "./components/ApplicantTableSection";
 import ApplicantDetailPopup from "./components/ApplicantDetailPopup";
@@ -20,10 +21,11 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
   const [toast, setToast] = useState("");
 
   const [viewTarget, setViewTarget] = useState<Applicant | null>(null);
-  const [editTarget, setEditTarget] = useState<Applicant | null>(null);
   const [busy, setBusy] = useState(false);
   const [nextStatus, setNextStatus] = useState<JobApplicationStatus>("PENDING_REVIEW");
   const [interviewAt, setInterviewAt] = useState("");
+  const [interviewLocation, setInterviewLocation] = useState("");
+  const [responseDeadline, setResponseDeadline] = useState("");
 
   async function load() {
     setLoading(true);
@@ -49,27 +51,47 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
 
   function openApplicant(app: Applicant) {
     setViewTarget(app);
-    setEditTarget(app);
-    setNextStatus(app.status);
+    const available = getAvailableNextStatuses(app.status, app.response);
+    setNextStatus(available.length ? available[0] : app.status);
     setInterviewAt(app.interviewAt ? new Date(app.interviewAt).toISOString().slice(0, 16) : "");
+    setInterviewLocation(app.interviewLocation ?? "");
+    setResponseDeadline(app.responseDeadline ? new Date(app.responseDeadline).toISOString().slice(0, 16) : "");
   }
 
   const closeApplicant = () => {
     setViewTarget(null);
-    setEditTarget(null);
   };
 
   async function submitUpdateStatus() {
-    if (!editTarget) return;
-    if (nextStatus === "INTERVIEW_INVITED" && !interviewAt) {
-      setToast("Vui lòng nhập thời gian mời phỏng vấn.");
+    if (!viewTarget) return;
+
+    const available = getAvailableNextStatuses(viewTarget.status, viewTarget.response);
+    if (!available.includes(nextStatus)) {
+      setToast("Trạng thái cập nhật không hợp lệ.");
       return;
     }
+
+    if (nextStatus === "INTERVIEW_INVITED") {
+      if (!interviewAt) { setToast("Vui lòng nhập thời gian phỏng vấn."); return; }
+      if (!interviewLocation.trim()) { setToast("Vui lòng nhập địa điểm phỏng vấn."); return; }
+      if (!responseDeadline) { setToast("Vui lòng nhập thời hạn phản hồi."); return; }
+    }
+    if (nextStatus === "OFFERED") {
+      if (!responseDeadline) { setToast("Vui lòng nhập thời hạn phản hồi."); return; }
+    }
+
     setBusy(true);
     try {
       const payload: Record<string, unknown> = { status: nextStatus };
-      if (nextStatus === "INTERVIEW_INVITED") payload.interviewAt = new Date(interviewAt).toISOString();
-      const res = await fetch(`/api/doanhnghiep/ung-vien/applications/${editTarget.id}`, {
+      if (nextStatus === "INTERVIEW_INVITED") {
+        payload.interviewAt = new Date(interviewAt).toISOString();
+        payload.interviewLocation = interviewLocation.trim();
+        payload.responseDeadline = new Date(responseDeadline).toISOString();
+      }
+      if (nextStatus === "OFFERED") {
+        payload.responseDeadline = new Date(responseDeadline).toISOString();
+      }
+      const res = await fetch(`/api/doanhnghiep/ung-vien/applications/${viewTarget.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -119,8 +141,12 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
         busy={busy}
         nextStatus={nextStatus}
         interviewAt={interviewAt}
+        interviewLocation={interviewLocation}
+        responseDeadline={responseDeadline}
         onNextStatusChange={setNextStatus}
         onInterviewAtChange={setInterviewAt}
+        onInterviewLocationChange={setInterviewLocation}
+        onResponseDeadlineChange={setResponseDeadline}
         onClose={closeApplicant}
         onSave={() => void submitUpdateStatus()}
       />

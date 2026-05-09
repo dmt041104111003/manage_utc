@@ -9,11 +9,9 @@ import styles from "../../styles/dashboard.module.css";
 import formStyles from "../../../auth/styles/register.module.css";
 import { studentDisplay, supervisorDisplay } from "@/lib/utils/admin-phan-cong-gvhd-display";
 
-type Props = {
+export type Props = {
   open: boolean;
-  title: string;
   busyId: string | null;
-  isEditing: boolean;
 
   faculties: string[];
   openBatches: OpenBatch[];
@@ -44,9 +42,7 @@ type Props = {
 export default function AdminPhanCongGVHDFormPopup(props: Props) {
   const {
     open,
-    title,
     busyId,
-    isEditing,
 
     faculties,
     openBatches,
@@ -79,7 +75,7 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
   return (
     <FormPopup
       open
-      title={title}
+      title="Thêm phân công"
       size="extraWide"
       onClose={onClose}
       busy={busyId === "submit"}
@@ -94,7 +90,7 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
             onClick={() => void onSubmit()}
             disabled={busyId === "submit"}
           >
-            {isEditing ? "Sửa" : "Tạo"}
+            Tạo
           </button>
         </>
       }
@@ -105,12 +101,10 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
           className={formStyles.input}
           value={formFaculty}
           onChange={(e) => {
-            if (isEditing) return;
             setFormFaculty(e.target.value);
             setFormSupervisorId("");
             setFormStudentIds([]);
           }}
-          disabled={isEditing}
         >
           <option value="">Chọn khoa</option>
           {faculties.map((f) => (
@@ -128,12 +122,10 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
           className={formStyles.input}
           value={formBatchId}
           onChange={(e) => {
-            if (isEditing) return;
             setFormBatchId(e.target.value);
             setFormSupervisorId("");
             setFormStudentIds([]);
           }}
-          disabled={isEditing}
         >
           <option value="">Chọn đợt thực tập (đang mở)</option>
           {openBatches.map((b) => (
@@ -165,7 +157,6 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
           <option value="">{optionsLoading ? "Đang tải..." : "Chọn GVHD"}</option>
           {supervisorOptions.map((s) => (
             <option key={s.id} value={s.id}>
-              {/* keep label format consistent with list */}
               {supervisorDisplay({ fullName: s.fullName, degree: s.degree })}
             </option>
           ))}
@@ -220,4 +211,3 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
     </FormPopup>
   );
 }
-

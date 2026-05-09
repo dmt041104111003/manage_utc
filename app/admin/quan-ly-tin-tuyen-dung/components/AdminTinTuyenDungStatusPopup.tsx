@@ -51,7 +51,7 @@ export default function AdminTinTuyenDungStatusPopup(props: Props) {
           >
             <option value="approve">Duyệt tin</option>
             <option value="reject">Từ chối</option>
-            <option value="stop">Đừng hoạt động</option>
+            <option value="stop">Dừng hoạt động</option>
           </select>
         </div>
 

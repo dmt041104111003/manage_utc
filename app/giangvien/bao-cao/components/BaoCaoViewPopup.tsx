@@ -10,11 +10,27 @@ type Props = {
   onClose: () => void;
 };
 
+const internshipStatusColor: Record<string, { bg: string; color: string }> = {
+  NOT_STARTED: { bg: "#f3f4f6", color: "#374151" },
+  DOING: { bg: "#dbeafe", color: "#1d4ed8" },
+  SELF_FINANCED: { bg: "#dbeafe", color: "#1d4ed8" },
+  REPORT_SUBMITTED: { bg: "#fef9c3", color: "#854d0e" },
+  COMPLETED: { bg: "#dcfce7", color: "#16a34a" },
+  REJECTED: { bg: "#fee2e2", color: "#dc2626" }
+};
+
 export default function BaoCaoViewPopup({ viewTarget, onClose }: Props) {
   if (!viewTarget) return null;
 
+  const statusColors = internshipStatusColor[viewTarget.internshipStatus] ?? { bg: "#f3f4f6", color: "#374151" };
+
+  const reportFileLink =
+    viewTarget.report
+      ? dataUrlFromBase64(viewTarget.report.reportMime, viewTarget.report.reportBase64)
+      : null;
+
   return (
-    <MessagePopup open title="Xem chi tiết" size="extraWide" onClose={onClose}>
+    <MessagePopup open title="Xem chi tiết sinh viên" size="extraWide" onClose={onClose}>
       <table className={adminStyles.viewModalDetailTable}>
         <tbody>
           <tr><th scope="row">MSV</th><td>{viewTarget.msv}</td></tr>
@@ -26,38 +42,107 @@ export default function BaoCaoViewPopup({ viewTarget, onClose }: Props) {
           <tr><th scope="row">SĐT</th><td>{viewTarget.phone ?? "—"}</td></tr>
           <tr><th scope="row">Email</th><td>{viewTarget.email}</td></tr>
           <tr><th scope="row">Ngày sinh</th><td>{formatDateVi(viewTarget.birthDate)}</td></tr>
-          <tr><th scope="row">Trạng thái thực tập</th><td>{viewTarget.statusText}</td></tr>
+          <tr>
+            <th scope="row">Trạng thái thực tập</th>
+            <td>
+              <span
+                style={{
+                  display: "inline-block",
+                  padding: "2px 10px",
+                  borderRadius: 12,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  background: statusColors.bg,
+                  color: statusColors.color
+                }}
+              >
+                {viewTarget.statusText}
+              </span>
+            </td>
+          </tr>
         </tbody>
       </table>
 
+      {/* DOING: enterprise info */}
       {viewTarget.internshipStatus === "DOING" ? (
-        <div style={{ marginTop: 14 }}>
-          <div className={adminStyles.detailSectionTitle} style={{ marginBottom: 8 }}>
-            Thông tin tiếp nhận thực tập
-          </div>
-          <div style={{ display: "grid", gap: 8 }}>
-            <div>
-              <b>Thời gian tiếp nhận thực tập</b>:{" "}
-              {viewTarget.internshipBatch?.startDate ? formatDateVi(viewTarget.internshipBatch.startDate) : "—"} -{" "}
-              {viewTarget.internshipBatch?.endDate ? formatDateVi(viewTarget.internshipBatch.endDate) : "—"}
-            </div>
-            <div><b>Tên doanh nghiệp</b>: {viewTarget.enterprise?.companyName ?? "—"}</div>
-            <div><b>MST</b>: {viewTarget.enterprise?.taxCode ?? "—"}</div>
-            <div><b>Địa chỉ trụ sở chính</b>: {viewTarget.enterprise?.headquartersAddress ?? "—"}</div>
+        <div style={{ marginTop: 16 }}>
+          <div className={adminStyles.detailSectionTitle}>Thông tin tiếp nhận thực tập</div>
+          <table className={adminStyles.viewModalDetailTable} style={{ marginTop: 8 }}>
+            <tbody>
+              <tr>
+                <th scope="row">Thời gian TT</th>
+                <td>
+                  {viewTarget.internshipBatch?.startDate ? formatDateVi(viewTarget.internshipBatch.startDate) : "—"}
+                  {" – "}
+                  {viewTarget.internshipBatch?.endDate ? formatDateVi(viewTarget.internshipBatch.endDate) : "—"}
+                </td>
+              </tr>
+              <tr><th scope="row">Tên doanh nghiệp</th><td>{viewTarget.enterprise?.companyName ?? "—"}</td></tr>
+              <tr><th scope="row">MST</th><td>{viewTarget.enterprise?.taxCode ?? "—"}</td></tr>
+              <tr><th scope="row">Địa chỉ trụ sở chính</th><td>{viewTarget.enterprise?.headquartersAddress ?? "—"}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
+      {/* REPORT_SUBMITTED: file BCTT */}
+      {viewTarget.internshipStatus === "REPORT_SUBMITTED" && viewTarget.report ? (
+        <div style={{ marginTop: 16 }}>
+          <div className={adminStyles.detailSectionTitle}>File BCTT đã nộp</div>
+          <div style={{ marginTop: 8 }}>
+            <a
+              className={adminStyles.detailLink}
+              href={reportFileLink!}
+              download={viewTarget.report.reportFileName}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {viewTarget.report.reportFileName}
+            </a>
           </div>
         </div>
       ) : null}
 
-      {viewTarget.internshipStatus === "REPORT_SUBMITTED" && viewTarget.report ? (
-        <div style={{ marginTop: 14 }}>
-          <div className={adminStyles.detailSectionTitle} style={{ marginBottom: 8 }}>File BCTT</div>
-          <a
-            className={adminStyles.detailLink}
-            href={dataUrlFromBase64(viewTarget.report.reportMime, viewTarget.report.reportBase64)}
-            download={viewTarget.report.reportFileName}
-          >
-            Tải BCTT: {viewTarget.report.reportFileName}
-          </a>
+      {/* COMPLETED: file BCTT + scores + evaluation */}
+      {viewTarget.internshipStatus === "COMPLETED" ? (
+        <div style={{ marginTop: 16 }}>
+          <div className={adminStyles.detailSectionTitle}>Kết quả thực tập</div>
+          <table className={adminStyles.viewModalDetailTable} style={{ marginTop: 8 }}>
+            <tbody>
+              <tr>
+                <th scope="row">File BCTT</th>
+                <td>
+                  {viewTarget.report && reportFileLink ? (
+                    <a
+                      className={adminStyles.detailLink}
+                      href={reportFileLink}
+                      download={viewTarget.report.reportFileName}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {viewTarget.report.reportFileName}
+                    </a>
+                  ) : "—"}
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Điểm ĐQT (GVHD)</th>
+                <td>{viewTarget.report?.supervisorPoint != null ? viewTarget.report.supervisorPoint : "—"}</td>
+              </tr>
+              <tr>
+                <th scope="row">Điểm KTHP (DN)</th>
+                <td>{viewTarget.report?.enterprisePoint != null ? viewTarget.report.enterprisePoint : "—"}</td>
+              </tr>
+              <tr>
+                <th scope="row">Đánh giá của GVHD</th>
+                <td style={{ whiteSpace: "pre-wrap" }}>{viewTarget.report?.supervisorEvaluation ?? "—"}</td>
+              </tr>
+              <tr>
+                <th scope="row">Đánh giá của DN</th>
+                <td style={{ whiteSpace: "pre-wrap" }}>{viewTarget.report?.enterpriseEvaluation ?? "—"}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       ) : null}
     </MessagePopup>

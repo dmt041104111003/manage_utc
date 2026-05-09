@@ -11,17 +11,16 @@ import { studentDisplay, supervisorDisplay } from "@/lib/utils/admin-phan-cong-g
 
 import styles from "../../styles/dashboard.module.css";
 
-type Props = {
+export type Props = {
   paged: AssignmentItem[];
   page: number;
   busyId: string | null;
   onView: (item: AssignmentItem) => void;
-  onEdit: (item: AssignmentItem) => void;
   onDelete: (item: AssignmentItem) => void;
 };
 
 export default function AdminPhanCongGVHDTable(props: Props) {
-  const { paged, page, busyId, onView, onEdit, onDelete } = props;
+  const { paged, page, busyId, onView, onDelete } = props;
 
   return (
     <div className={styles.tableWrap}>
@@ -81,14 +80,6 @@ export default function AdminPhanCongGVHDTable(props: Props) {
                     <button
                       type="button"
                       className={styles.textLinkBtn}
-                      onClick={() => onEdit(it)}
-                      disabled={busyId !== null}
-                    >
-                      Sửa phân công
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.textLinkBtn}
                       onClick={() => onDelete(it)}
                       disabled={busyId === it.id}
                     >
@@ -104,4 +95,3 @@ export default function AdminPhanCongGVHDTable(props: Props) {
     </div>
   );
 }
-

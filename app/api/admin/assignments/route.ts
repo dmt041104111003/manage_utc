@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth/admin-session";
+import { sendMail } from "@/lib/mail";
 
 type AssignmentStatus = "GUIDING" | "COMPLETED";
 
@@ -127,7 +128,12 @@ export async function POST(request: Request) {
 
   const supervisor = await prismaAny.supervisorProfile.findUnique({
     where: { id: supervisorProfileId },
-    select: { id: true, faculty: true }
+    select: {
+      id: true,
+      faculty: true,
+      degree: true,
+      user: { select: { fullName: true, email: true, phone: true } }
+    }
   });
   if (!supervisor || supervisor.faculty !== faculty) {
     return NextResponse.json({ success: false, message: "GVHD không hợp lệ hoặc không thuộc khoa đã chọn." }, { status: 400 });
@@ -143,15 +149,28 @@ export async function POST(request: Request) {
 
   const students = await prismaAny.studentProfile.findMany({
     where: { id: { in: studentProfileIds } },
-    select: { id: true, faculty: true, internshipStatus: true }
+    select: {
+      id: true,
+      faculty: true,
+      msv: true,
+      className: true,
+      degree: true,
+      internshipStatus: true,
+      user: { select: { fullName: true, email: true } }
+    }
   });
   if (students.length !== studentProfileIds.length) {
     return NextResponse.json({ success: false, message: "Danh sách sinh viên không hợp lệ." }, { status: 400 });
   }
   for (const s of students) {
-    if (s.faculty !== faculty) return NextResponse.json({ success: false, message: "Có sinh viên không thuộc khoa đã chọn." }, { status: 400 });
-    if (s.internshipStatus !== "NOT_STARTED") {
-      return NextResponse.json({ success: false, message: "Chỉ được chọn sinh viên có trạng thái chưa thực tập." }, { status: 400 });
+    if (s.faculty !== faculty) {
+      return NextResponse.json({ success: false, message: "Có sinh viên không thuộc khoa đã chọn." }, { status: 400 });
+    }
+    if (s.internshipStatus !== "NOT_STARTED" && s.internshipStatus !== "DOING") {
+      return NextResponse.json(
+        { success: false, message: "Chỉ được chọn sinh viên có trạng thái Chưa thực tập hoặc Đang thực tập." },
+        { status: 400 }
+      );
     }
   }
 
@@ -162,6 +181,11 @@ export async function POST(request: Request) {
   if (existingStudentLinks.length) {
     return NextResponse.json({ success: false, message: "Có sinh viên đã được phân công GVHD trong đợt thực tập đã chọn." }, { status: 400 });
   }
+
+  const batchDetails = await prismaAny.internshipBatch.findUnique({
+    where: { id: internshipBatchId },
+    select: { name: true, semester: true, schoolYear: true }
+  });
 
   await prismaAny.$transaction(
     async (tx: any) => {
@@ -193,6 +217,53 @@ export async function POST(request: Request) {
     },
     { timeout: 30_000 }
   );
+
+  // Send email notifications
+  try {
+    const supervisorDegreeLabelMap: Record<string, string> = {
+      MASTER: "Thạc sĩ",
+      PHD: "Tiến sĩ",
+      ASSOC_PROF: "Phó giáo sư",
+      PROF: "Giáo sư"
+    };
+    const degreeLabelMap: Record<string, string> = { BACHELOR: "Cử nhân", ENGINEER: "Kỹ sư" };
+    const batchLabel = batchDetails
+      ? `${batchDetails.name} (${batchDetails.semester} – ${batchDetails.schoolYear})`
+      : "đợt thực tập";
+
+    const gvFullName: string = supervisor.user?.fullName ?? "Giảng viên";
+    const gvEmail: string | null = supervisor.user?.email ?? null;
+    const gvDegree: string = supervisorDegreeLabelMap[supervisor.degree] ?? supervisor.degree ?? "";
+    const gvPhone: string = supervisor.user?.phone ?? "—";
+
+    if (gvEmail) {
+      const svListLines = students
+        .map(
+          (s: any, i: number) =>
+            `${i + 1}. ${s.msv} – ${s.user?.fullName ?? ""} – ${degreeLabelMap[s.degree] ?? s.degree ?? ""} – Lớp: ${s.className ?? "—"}`
+        )
+        .join("\n");
+
+      await sendMail(
+        gvEmail,
+        `[UTC] Phân công hướng dẫn thực tập – ${batchLabel}`,
+        `Kính gửi ${gvDegree} ${gvFullName},\n\nBạn đã được phân công hướng dẫn thực tập cho ${students.length} sinh viên trong ${batchLabel}.\n\nDanh sách sinh viên hướng dẫn:\n${svListLines}\n\nVui lòng đăng nhập hệ thống để xem thông tin chi tiết và theo dõi tiến độ thực tập của sinh viên.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+      );
+    }
+
+    for (const s of students as any[]) {
+      const svEmail: string | null = s.user?.email ?? null;
+      const svFullName: string = s.user?.fullName ?? "Sinh viên";
+      if (!svEmail) continue;
+
+      await sendMail(
+        svEmail,
+        `[UTC] Thông tin Giảng viên hướng dẫn thực tập – ${batchLabel}`,
+        `Kính gửi ${svFullName},\n\nBạn đã được phân công Giảng viên hướng dẫn (GVHD) cho ${batchLabel}.\n\nThông tin GVHD:\n  Họ tên: ${gvDegree} ${gvFullName}\n  Email: ${gvEmail ?? "—"}\n  Số điện thoại: ${gvPhone}\n\nVui lòng liên hệ GVHD để được hướng dẫn trong quá trình thực tập.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+      );
+    }
+  } catch {
+  }
 
   return NextResponse.json({ success: true, message: "Tạo phân công thành công." });
 }

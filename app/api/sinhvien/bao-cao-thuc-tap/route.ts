@@ -4,6 +4,7 @@ import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 import { decodeEnterpriseFilePayload } from "@/lib/enterprise-register-files";
+import { sendMail } from "@/lib/mail";
 
 const BCTT_ALLOWED_MIMES = [
   "application/pdf",
@@ -11,6 +12,36 @@ const BCTT_ALLOWED_MIMES = [
 ] as const;
 
 type InternshipStatus = "NOT_STARTED" | "DOING" | "SELF_FINANCED" | "REPORT_SUBMITTED" | "COMPLETED" | "REJECTED";
+
+async function fetchMailParticipants(prismaAny: any, userId: string) {
+  const profile = await prismaAny.studentProfile.findFirst({
+    where: { userId },
+    select: {
+      user: { select: { fullName: true, email: true } },
+      assignmentLinks: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          supervisorAssignment: {
+            select: {
+              supervisorProfile: {
+                select: {
+                  user: { select: { fullName: true, email: true } }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+  const svFullName: string = profile?.user?.fullName ?? "Sinh viên";
+  const svEmail: string | null = profile?.user?.email ?? null;
+  const gvSup = profile?.assignmentLinks?.[0]?.supervisorAssignment?.supervisorProfile;
+  const gvFullName: string = gvSup?.user?.fullName ?? "Giảng viên";
+  const gvEmail: string | null = gvSup?.user?.email ?? null;
+  return { svFullName, svEmail, gvFullName, gvEmail };
+}
 
 async function getStudentUserId() {
   const cookieStore = await cookies();
@@ -218,6 +249,26 @@ export async function POST(request: Request) {
     });
   });
 
+  try {
+    const { svFullName, svEmail, gvFullName, gvEmail } = await fetchMailParticipants(prismaAny, userId);
+    if (gvEmail) {
+      await sendMail(
+        gvEmail,
+        `[UTC] Sinh viên ${svFullName} đã nộp Báo cáo thực tập`,
+        `Kính gửi ${gvFullName},\n\nSinh viên ${svFullName} vừa nộp Báo cáo thực tập (BCTT).\nVui lòng đăng nhập hệ thống để xem xét và duyệt BCTT.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+      );
+    }
+    if (svEmail) {
+      await sendMail(
+        svEmail,
+        `[UTC] Nộp Báo cáo thực tập thành công`,
+        `Kính gửi ${svFullName},\n\nBạn đã nộp Báo cáo thực tập thành công. Vui lòng chờ GVHD xem xét và phê duyệt.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+      );
+    }
+  } catch {
+    // Email failure should not block the main response
+  }
+
   return NextResponse.json({ success: true, message: "Nộp BCTT thành công." });
 }
 
@@ -256,6 +307,8 @@ export async function PATCH(request: Request) {
   if (!report) return NextResponse.json({ success: false, message: "Chưa có BCTT để sửa." }, { status: 404 });
   if (report.reviewStatus !== "REJECTED") return NextResponse.json({ success: false, message: "Chỉ được sửa BCTT khi GVHD từ chối." }, { status: 400 });
 
+  const prevInternshipStatus = profile.internshipStatus as InternshipStatus;
+
   await prismaAny.$transaction(async (tx: any) => {
     await tx.internshipReport.update({
       where: { id: report.id },
@@ -279,7 +332,29 @@ export async function PATCH(request: Request) {
       where: { id: profile.id },
       data: { internshipStatus: "REPORT_SUBMITTED" }
     });
+    await tx.internshipStatusHistory.create({
+      data: {
+        studentProfileId: profile.id,
+        fromStatus: prevInternshipStatus,
+        toStatus: "REPORT_SUBMITTED",
+        byRole: "sinhvien",
+        message: "Nộp lại BCTT sau khi sửa"
+      }
+    });
   });
+
+  try {
+    const { svFullName, gvFullName, gvEmail } = await fetchMailParticipants(prismaAny, userId);
+    if (gvEmail) {
+      await sendMail(
+        gvEmail,
+        `[UTC] Sinh viên ${svFullName} đã nộp lại Báo cáo thực tập`,
+        `Kính gửi ${gvFullName},\n\nSinh viên ${svFullName} vừa nộp lại Báo cáo thực tập (BCTT) sau khi chỉnh sửa.\nVui lòng đăng nhập hệ thống để xem xét và duyệt BCTT.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+      );
+    }
+  } catch {
+    // Email failure should not block the main response
+  }
 
   return NextResponse.json({ success: true, message: "Đã cập nhật BCTT, đang chờ GVHD duyệt." });
 }

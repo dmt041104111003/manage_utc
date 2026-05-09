@@ -10,7 +10,7 @@ export const internshipStatusLabel: Record<InternshipStatus, string> = {
   SELF_FINANCED: "Thực tập tự túc",
   REPORT_SUBMITTED: "Đã nộp BCTT",
   COMPLETED: "Hoàn thành thực tập",
-  REJECTED: "Từ chối"
+  REJECTED: "Chưa hoàn thành thực tập"
 };
 
 export const supervisorDegreeLabel: Record<string, string> = {

@@ -4,6 +4,31 @@ import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 
+function extractHistoryMeta(history: any[]): {
+  responseDeadline: string | null;
+  interviewLocation: string | null;
+} {
+  if (!Array.isArray(history) || !history.length) {
+    return { responseDeadline: null, interviewLocation: null };
+  }
+  // Find the last STATUS_UPDATE event that set INTERVIEW_INVITED or OFFERED
+  let responseDeadline: string | null = null;
+  let interviewLocation: string | null = null;
+  for (let i = history.length - 1; i >= 0; i--) {
+    const h = history[i] as Record<string, unknown>;
+    if (h?.action === "STATUS_UPDATE") {
+      if (!responseDeadline && typeof h?.responseDeadline === "string") {
+        responseDeadline = h.responseDeadline;
+      }
+      if (!interviewLocation && typeof h?.interviewLocation === "string") {
+        interviewLocation = h.interviewLocation;
+      }
+      if (responseDeadline && interviewLocation) break;
+    }
+  }
+  return { responseDeadline, interviewLocation };
+}
+
 export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
@@ -59,9 +84,75 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
       responseAt: true,
       history: true,
       createdAt: true,
-      studentUser: { select: { id: true, fullName: true, email: true, phone: true } }
+      studentUser: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          phone: true,
+          studentProfile: {
+            select: {
+              degree: true,
+              internshipStatus: true,
+              currentProvinceName: true,
+              currentWardName: true
+            }
+          }
+        }
+      }
     }
   });
+
+  const now = new Date();
+
+  // Lazy auto-decline: if responseDeadline passed and SV hasn't responded, mark as STUDENT_DECLINED
+  const expiredIds: string[] = [];
+  for (const a of apps) {
+    if (
+      (a.status === "INTERVIEW_INVITED" || a.status === "OFFERED") &&
+      a.response === "PENDING"
+    ) {
+      const history = Array.isArray(a.history) ? a.history : [];
+      const { responseDeadline } = extractHistoryMeta(history);
+      if (responseDeadline) {
+        const dl = new Date(responseDeadline);
+        if (!Number.isNaN(dl.getTime()) && dl < now) {
+          expiredIds.push(a.id);
+        }
+      }
+    }
+  }
+
+  if (expiredIds.length) {
+    const declineHistory = {
+      at: now.toISOString(),
+      by: "SYSTEM",
+      action: "AUTO_DECLINED",
+      reason: "Quá hạn phản hồi"
+    };
+    await Promise.all(
+      expiredIds.map(async (appId: string) => {
+        const app = apps.find((a: any) => a.id === appId);
+        const prevHistory = Array.isArray(app?.history) ? app.history : [];
+        await prismaAny.jobApplication.update({
+          where: { id: appId },
+          data: {
+            status: "STUDENT_DECLINED",
+            response: "DECLINED",
+            responseAt: now,
+            history: [...prevHistory, declineHistory]
+          }
+        });
+        // Update the in-memory object for the response
+        if (app) {
+          app.status = "STUDENT_DECLINED";
+          app.response = "DECLINED";
+          app.responseAt = now;
+          app.history = [...(Array.isArray(app.history) ? app.history : []), declineHistory];
+        }
+      })
+    );
+  }
 
   return NextResponse.json({
     success: true,
@@ -70,23 +161,33 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
       createdAt: job.createdAt?.toISOString?.() ?? null,
       deadlineAt: job.deadlineAt?.toISOString?.() ?? null
     },
-    applicants: apps.map((a: any) => ({
-      id: a.id,
-      appliedAt: a.createdAt?.toISOString?.() ?? null,
-      status: a.status,
-      coverLetter: a.coverLetter ?? null,
-      cvUrl: a.cvUrl ?? null,
-      interviewAt: a.interviewAt?.toISOString?.() ?? null,
-      response: a.response,
-      responseAt: a.responseAt?.toISOString?.() ?? null,
-      history: a.history ?? null,
-      student: {
-        id: a.studentUser.id,
-        fullName: a.studentUser.fullName,
-        email: a.studentUser.email,
-        phone: a.studentUser.phone ?? null
-      }
-    }))
+    applicants: apps.map((a: any) => {
+      const sp = a.studentUser?.studentProfile;
+      const history = Array.isArray(a.history) ? a.history : [];
+      const { responseDeadline, interviewLocation } = extractHistoryMeta(history);
+      const currentParts = [sp?.currentProvinceName, sp?.currentWardName].filter(Boolean);
+      return {
+        id: a.id,
+        appliedAt: a.createdAt?.toISOString?.() ?? null,
+        status: a.status,
+        coverLetter: a.coverLetter ?? null,
+        cvUrl: a.cvUrl ?? null,
+        interviewAt: a.interviewAt?.toISOString?.() ?? null,
+        interviewLocation,
+        responseDeadline,
+        response: a.response,
+        responseAt: a.responseAt?.toISOString?.() ?? null,
+        history: a.history ?? null,
+        internshipStatus: sp?.internshipStatus ?? "NOT_STARTED",
+        student: {
+          id: a.studentUser.id,
+          fullName: a.studentUser.fullName,
+          email: a.studentUser.email,
+          phone: a.studentUser.phone ?? null,
+          degree: sp?.degree ?? null,
+          currentAddress: currentParts.length ? currentParts.join(" - ") : "—"
+        }
+      };
+    })
   });
 }
-

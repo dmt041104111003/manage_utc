@@ -89,6 +89,18 @@ export async function GET(request: Request) {
           internshipStatusHistory: {
             orderBy: { at: "desc" },
             select: { fromStatus: true, toStatus: true, at: true }
+          },
+          internshipReport: {
+            select: {
+              reportFileName: true,
+              reportMime: true,
+              reportBase64: true,
+              reviewStatus: true,
+              supervisorEvaluation: true,
+              supervisorPoint: true,
+              enterpriseEvaluation: true,
+              enterprisePoint: true
+            }
           }
         }
       },
@@ -109,6 +121,7 @@ export async function GET(request: Request) {
   const items = links.map((x: any, idx: number) => {
     const sp = x.studentProfile;
     const assignment = x.supervisorAssignment;
+    const r = sp.internshipReport;
     return {
       id: sp.id,
       stt: idx + 1,
@@ -125,6 +138,7 @@ export async function GET(request: Request) {
       birthDate: sp.birthDate?.toISOString?.() ?? null,
       gender: sp.gender,
       permanentAddress: [sp.permanentProvinceName, sp.permanentWardName].filter(Boolean).join(" - ") || "—",
+      internshipStatus: sp.internshipStatus,
       internshipStatusHistory: (sp.internshipStatusHistory || []).map((h: any) => ({
         fromStatus: h.fromStatus,
         toStatus: h.toStatus,
@@ -134,10 +148,21 @@ export async function GET(request: Request) {
         fromStatus: h.fromStatus,
         toStatus: h.toStatus,
         at: h.at?.toISOString?.() ?? null
-      }))
+      })),
+      report: r
+        ? {
+            reportFileName: r.reportFileName,
+            reportMime: r.reportMime,
+            reportBase64: r.reportBase64,
+            reviewStatus: r.reviewStatus,
+            supervisorEvaluation: r.supervisorEvaluation ?? null,
+            supervisorPoint: r.supervisorPoint ?? null,
+            enterpriseEvaluation: r.enterpriseEvaluation ?? null,
+            enterprisePoint: r.enterprisePoint ?? null
+          }
+        : null
     };
   });
 
   return NextResponse.json({ success: true, items, batches: batchOptions });
 }
-

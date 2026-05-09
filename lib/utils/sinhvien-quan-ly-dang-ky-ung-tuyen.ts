@@ -1,8 +1,7 @@
-import type { AppStatus, RespondAction, StatusFilter } from "@/lib/types/sinhvien-quan-ly-dang-ky-ung-tuyen";
+import type { AppStatus, ResponseStatus, RespondAction, StatusFilter } from "@/lib/types/sinhvien-quan-ly-dang-ky-ung-tuyen";
 import type { SinhVienQuanLyDangKyUngTuyenRow } from "@/lib/types/sinhvien-quan-ly-dang-ky-ung-tuyen";
 import {
-  SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_ENDPOINT,
-  sinhvienQuanLyDangKyUngTuyenResponseLabel
+  SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_ENDPOINT
 } from "@/lib/constants/sinhvien-quan-ly-dang-ky-ung-tuyen";
 
 const APP_STATUS_VALUES: AppStatus[] = [
@@ -41,8 +40,26 @@ export function formatDateVi(iso: string | null): string {
   return d.toLocaleDateString("vi-VN");
 }
 
-export function getSinhVienQuanLyDangKyUngTuyenResponseText(row: Pick<SinhVienQuanLyDangKyUngTuyenRow, "response">): string {
-  return sinhvienQuanLyDangKyUngTuyenResponseLabel[row.response];
+export function getSinhVienQuanLyDangKyUngTuyenResponseText(
+  row: Pick<SinhVienQuanLyDangKyUngTuyenRow, "status" | "response">
+): string {
+  const { status, response } = row;
+  if (status === "INTERVIEW_INVITED") {
+    if (response === "ACCEPTED") return "Đã xác nhận phỏng vấn";
+    if (response === "DECLINED") return "Đã từ chối phỏng vấn";
+    return "Chưa phản hồi";
+  }
+  if (status === "OFFERED") {
+    if (response === "ACCEPTED") return "Đã xác nhận thực tập";
+    if (response === "DECLINED") return "Đã từ chối thực tập";
+    return "Chưa phản hồi";
+  }
+  if (status === "STUDENT_DECLINED") return "Đã từ chối";
+  return "—";
+}
+
+export function canRespond(status: AppStatus, response: ResponseStatus): boolean {
+  return (status === "INTERVIEW_INVITED" || status === "OFFERED") && response === "PENDING";
 }
 
 export function getRespondPayload(action: RespondAction): { action: RespondAction } {

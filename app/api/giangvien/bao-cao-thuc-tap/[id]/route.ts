@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
+import { sendMail } from "@/lib/mail";
 
 type ReportAction = "APPROVE" | "REJECT";
 
@@ -20,19 +21,30 @@ async function getGiangVienContext() {
 
     const sup = await prismaAny.supervisorProfile.findFirst({
       where: { userId: verified.sub },
-      select: { id: true }
+      select: { id: true, user: { select: { fullName: true } } }
     });
     if (!sup) return { error: NextResponse.json({ success: false, message: "Không tìm thấy hồ sơ giảng viên." }, { status: 404 }) };
-    return { supervisorProfileId: sup.id };
+    return { supervisorProfileId: sup.id as string, supervisorName: (sup.user?.fullName ?? "Giảng viên") as string };
   } catch {
     return { error: NextResponse.json({ success: false, message: "Phiên đăng nhập không hợp lệ." }, { status: 401 }) };
   }
 }
 
+async function fetchStudentMailInfo(studentProfileId: string): Promise<{ svFullName: string; svEmail: string | null }> {
+  const sp = await prismaAny.studentProfile.findFirst({
+    where: { id: studentProfileId },
+    select: { user: { select: { fullName: true, email: true } } }
+  });
+  return {
+    svFullName: sp?.user?.fullName ?? "Sinh viên",
+    svEmail: sp?.user?.email ?? null
+  };
+}
+
 export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const giangVien = await getGiangVienContext();
   if ("error" in giangVien) return giangVien.error;
-  const { supervisorProfileId } = giangVien;
+  const { supervisorProfileId, supervisorName } = giangVien;
   const { id } = await ctx.params;
 
   const body = (await request.json()) as {
@@ -78,7 +90,6 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   const now = new Date();
   const historyPrev = Array.isArray(report.history) ? report.history : [];
 
-  // Kiểm tra sinh viên có kèm DN hay không (để quyết định bắt buộc nhập KTHP).
   const enterpriseExists =
     currentStudent?.userId
       ? Boolean(
@@ -126,12 +137,25 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       }
     });
 
+    try {
+      const { svFullName, svEmail } = await fetchStudentMailInfo(report.studentProfileId);
+      if (svEmail) {
+        await sendMail(
+          svEmail,
+          "[UTC] GVHD từ chối duyệt Báo cáo thực tập",
+          `Kính gửi ${svFullName},\n\nGiảng viên hướng dẫn đã TỪ CHỐI duyệt Báo cáo thực tập (BCTT) của bạn.\n\nLý do: ${rejectReason}\n\nVui lòng chỉnh sửa và nộp lại BCTT theo hướng dẫn của GVHD.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        );
+      }
+    } catch {
+      // Email failure should not block the main response
+    }
+
     return NextResponse.json({ success: true, message: "Đã từ chối duyệt BCTT. Sinh viên có thể sửa lại." });
   }
 
   // APPROVE
-  const noSpecialPattern = /^[\p{L}\d\s]*$/u; // Không cho ký tự đặc biệt ngoài chữ/số/khoảng trắng
-  const pointPattern = /^\d+(\.\d+)?$/; // Cho phép số và dấu "."
+  const noSpecialPattern = /^[\p{L}\d\s]*$/u;
+  const pointPattern = /^\d+(\.\d+)?$/;
 
   const supervisorEvaluationRaw = (body.supervisorEvaluation || "").trim();
   const enterpriseEvaluationRaw = (body.enterpriseEvaluation || "").trim();
@@ -181,7 +205,6 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       }
     });
 
-    // "Đã duyệt BCTT": giữ internshipStatus ở REPORT_SUBMITTED (để admin module có thể chốt).
     if (prevStatus !== "REPORT_SUBMITTED") {
       await tx.studentProfile.update({
         where: { id: report.studentProfileId },
@@ -202,6 +225,26 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     }
   });
 
+  try {
+    const { svFullName, svEmail } = await fetchStudentMailInfo(report.studentProfileId);
+    if (svEmail) {
+      const scoreLines = [
+        `- Điểm ĐQT (GVHD): ${supervisorPointNum}`,
+        enterprisePointNum != null ? `- Điểm KTHP (DN): ${enterprisePointNum}` : null,
+        supervisorEvaluation ? `- Đánh giá: ${supervisorEvaluation}` : null
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      await sendMail(
+        svEmail,
+        "[UTC] GVHD đã duyệt Báo cáo thực tập",
+        `Kính gửi ${svFullName},\n\nGiảng viên hướng dẫn ${supervisorName} đã DUYỆT Báo cáo thực tập (BCTT) của bạn.\n\n${scoreLines}\n\nKết quả đã được ghi nhận và gửi về Khoa. Vui lòng đăng nhập hệ thống để xem chi tiết.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+      );
+    }
+  } catch {
+    // Email failure should not block the main response
+  }
+
   return NextResponse.json({ success: true, message: "Đã duyệt BCTT. Chờ admin chốt trạng thái thực tập cuối cùng." });
 }
-

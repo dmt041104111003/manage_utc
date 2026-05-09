@@ -44,7 +44,6 @@ export default function AdminPhanCongGVHDPage() {
   const [deleteTarget, setDeleteTarget] = useState<AssignmentItem | null>(null);
 
   const [addOpen, setAddOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<AssignmentItem | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const [page, setPage] = useState(1);
@@ -101,27 +100,25 @@ export default function AdminPhanCongGVHDPage() {
     }
   }
 
-  async function loadSupervisorOptions(args: { faculty: string; batchId: string; includeId?: string }) {
-    const { faculty, batchId, includeId } = args;
+  async function loadSupervisorOptions(args: { faculty: string; batchId: string }) {
+    const { faculty, batchId } = args;
     if (!faculty || !batchId) return;
     const url = new URL("/api/admin/assignments/options/supervisors", window.location.origin);
     url.searchParams.set("faculty", faculty);
     url.searchParams.set("internshipBatchId", batchId);
     if (supervisorQ.trim()) url.searchParams.set("q", supervisorQ.trim());
-    if (includeId) url.searchParams.set("includeId", includeId);
     const res = await fetch(url.toString());
     const data = await res.json();
     if (res.ok && data?.success && Array.isArray(data.items)) setSupervisorOptions(data.items);
   }
 
-  async function loadStudentOptions(args: { faculty: string; batchId: string; includeIds?: string[] }) {
-    const { faculty, batchId, includeIds } = args;
+  async function loadStudentOptions(args: { faculty: string; batchId: string }) {
+    const { faculty, batchId } = args;
     if (!faculty || !batchId) return;
     const url = new URL("/api/admin/assignments/options/students", window.location.origin);
     url.searchParams.set("faculty", faculty);
     url.searchParams.set("internshipBatchId", batchId);
     if (studentQ.trim()) url.searchParams.set("q", studentQ.trim());
-    if (includeIds?.length) url.searchParams.set("includeIds", includeIds.join(","));
     const res = await fetch(url.toString());
     const data = await res.json();
     if (res.ok && data?.success && Array.isArray(data.items)) setStudentOptions(data.items);
@@ -140,28 +137,9 @@ export default function AdminPhanCongGVHDPage() {
     setAddOpen(true);
   }
 
-  async function openEdit(item: AssignmentItem) {
+  function closeAdd() {
+    setAddOpen(false);
     setFieldErrors({});
-    setSupervisorQ("");
-    setStudentQ("");
-    setSupervisorOptions([]);
-    setStudentOptions([]);
-    setEditTarget(item);
-
-    setFormFaculty(item.faculty);
-    setFormBatchId(item.batch.id || "");
-    setFormSupervisorId(item.supervisor.id || "");
-    setFormStudentIds(item.students.map((s) => s.id || "").filter(Boolean));
-
-    setOptionsLoading(true);
-    try {
-      await Promise.all([
-        loadSupervisorOptions({ faculty: item.faculty, batchId: item.batch.id || "", includeId: item.supervisor.id || undefined }),
-        loadStudentOptions({ faculty: item.faculty, batchId: item.batch.id || "", includeIds: item.students.map((s) => s.id || "").filter(Boolean) })
-      ]);
-    } finally {
-      setOptionsLoading(false);
-    }
   }
 
   useEffect(() => {
@@ -186,19 +164,14 @@ export default function AdminPhanCongGVHDPage() {
   }, [addOpen, formFaculty, formBatchId]);
 
   useEffect(() => {
-    if (!(addOpen || editTarget)) return;
-    if (!formFaculty || !formBatchId) return;
-    const includeId = editTarget?.supervisor?.id || undefined;
-    const includeIds = editTarget?.students?.map((s) => s.id || "").filter(Boolean) || [];
-    loadSupervisorOptions({ faculty: formFaculty, batchId: formBatchId, includeId });
+    if (!addOpen || !formFaculty || !formBatchId) return;
+    loadSupervisorOptions({ faculty: formFaculty, batchId: formBatchId });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supervisorQ]);
 
   useEffect(() => {
-    if (!(addOpen || editTarget)) return;
-    if (!formFaculty || !formBatchId) return;
-    const includeIds = editTarget?.students?.map((s) => s.id || "").filter(Boolean) || [];
-    loadStudentOptions({ faculty: formFaculty, batchId: formBatchId, includeIds });
+    if (!addOpen || !formFaculty || !formBatchId) return;
+    loadStudentOptions({ faculty: formFaculty, batchId: formBatchId });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentQ]);
 
@@ -212,7 +185,7 @@ export default function AdminPhanCongGVHDPage() {
     return Object.keys(next).length === 0;
   }
 
-  async function submitCreateOrEdit() {
+  async function submitCreate() {
     if (!validateForm()) return;
 
     setBusyId("submit");
@@ -224,23 +197,21 @@ export default function AdminPhanCongGVHDPage() {
         supervisorProfileId: formSupervisorId,
         studentProfileIds: formStudentIds
       };
-      const isEdit = Boolean(editTarget?.id);
-      const res = await fetch(isEdit ? `/api/admin/assignments/${editTarget!.id}` : "/api/admin/assignments", {
-        method: isEdit ? "PATCH" : "POST",
+      const res = await fetch("/api/admin/assignments", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isEdit ? { supervisorProfileId: payload.supervisorProfileId, studentProfileIds: payload.studentProfileIds } : payload)
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (!res.ok || !data?.success) {
         if (data?.errors) setFieldErrors(data.errors);
-        throw new Error(data?.message || "Không thể lưu phân công.");
+        throw new Error(data?.message || "Không thể tạo phân công.");
       }
-      showPopup(data?.message || (isEdit ? "Cập nhật phân công thành công." : "Tạo phân công thành công."));
-      setAddOpen(false);
-      setEditTarget(null);
+      showPopup(data?.message || "Tạo phân công thành công.");
+      closeAdd();
       await loadList(1);
     } catch (e: any) {
-      showPopup(e?.message || "Không thể lưu phân công.");
+      showPopup(e?.message || "Không thể tạo phân công.");
     } finally {
       setBusyId(null);
     }
@@ -263,13 +234,10 @@ export default function AdminPhanCongGVHDPage() {
     }
   }
 
-  const formTitle = editTarget ? "Sửa phân công" : "Thêm phân công";
-
   return (
     <main className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Phân công GVHD</h1>
-    
       </header>
 
       {error ? <p className={styles.error}>{error}</p> : null}
@@ -295,7 +263,6 @@ export default function AdminPhanCongGVHDPage() {
           page={page}
           busyId={busyId}
           onView={(it) => setViewTarget(it)}
-          onEdit={(it) => void openEdit(it)}
           onDelete={(it) => setDeleteTarget(it)}
         />
       )}
@@ -308,12 +275,10 @@ export default function AdminPhanCongGVHDPage() {
         buttonClassName={styles.btn}
       />
 
-      {addOpen || editTarget ? (
+      {addOpen ? (
         <AdminPhanCongGVHDFormPopup
           open
-          title={formTitle}
           busyId={busyId}
-          isEditing={Boolean(editTarget)}
           faculties={faculties}
           openBatches={openBatches}
           supervisorOptions={supervisorOptions}
@@ -326,11 +291,8 @@ export default function AdminPhanCongGVHDPage() {
           fieldErrors={fieldErrors}
           supervisorQ={supervisorQ}
           studentQ={studentQ}
-          onClose={() => {
-            setAddOpen(false);
-            setEditTarget(null);
-          }}
-          onSubmit={() => void submitCreateOrEdit()}
+          onClose={closeAdd}
+          onSubmit={() => void submitCreate()}
           setFormFaculty={setFormFaculty}
           setFormBatchId={setFormBatchId}
           setFormSupervisorId={setFormSupervisorId}
@@ -366,4 +328,3 @@ export default function AdminPhanCongGVHDPage() {
     </main>
   );
 }
-

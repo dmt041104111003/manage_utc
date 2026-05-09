@@ -28,6 +28,10 @@ export default function BaoCaoThucTapEditPopup({
   onClose,
   onSubmit
 }: Props) {
+  const hasOldFile = Boolean(report && reportFileLink);
+  const oldFileRemoved = deleteLocalFile || Boolean(selectedFileBase64);
+  const showFileInput = !hasOldFile || oldFileRemoved;
+
   return (
     <FormPopup
       open
@@ -52,32 +56,78 @@ export default function BaoCaoThucTapEditPopup({
       }
     >
       <div className={formStyles.field}>
-        <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 8 }}>
-          Lý do GVHD từ chối:
-          <div style={{ marginTop: 4, whiteSpace: "pre-wrap", color: "#111827", fontWeight: 600 }}>
-            {report?.supervisorRejectReason ?? "—"}
+        {report?.supervisorRejectReason ? (
+          <div
+            style={{
+              background: "#fef2f2",
+              border: "1px solid #fca5a5",
+              borderRadius: 8,
+              padding: "10px 14px",
+              marginBottom: 16
+            }}
+          >
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#dc2626", marginBottom: 4 }}>
+              Lý do GVHD từ chối:
+            </div>
+            <div style={{ fontSize: 13, color: "#111827", whiteSpace: "pre-wrap" }}>
+              {report.supervisorRejectReason}
+            </div>
           </div>
-        </div>
+        ) : null}
 
-        <label className={formStyles.label}>File BCTT mới (PDF hoặc DOCX)</label>
-        <input
-          className={formStyles.input}
-          type="file"
-          accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          disabled={busy}
-          onChange={(e) => onChooseFile(e.target.files?.[0] ?? null)}
-        />
-
-        {report && reportFileLink && !selectedFileBase64 && !deleteLocalFile ? (
-          <div style={{ marginTop: 10 }}>
-            <a className={adminStyles.detailLink} href={reportFileLink} download={report.reportFileName}>
-              Tải file hiện tại
+        <label className={formStyles.label}>File BCTT hiện tại</label>
+        {hasOldFile && !oldFileRemoved ? (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "8px 12px",
+              background: "#f9fafb",
+              border: "1px solid #e5e7eb",
+              borderRadius: 8,
+              marginBottom: 4
+            }}
+          >
+            <a
+              className={adminStyles.detailLink}
+              href={reportFileLink!}
+              download={report!.reportFileName}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {report!.reportFileName}
             </a>
-            <button type="button" className={adminStyles.textLinkBtn} disabled={busy} onClick={onDeleteFile}>
+            <button
+              type="button"
+              className={adminStyles.textLinkBtn}
+              disabled={busy}
+              onClick={onDeleteFile}
+              style={{ color: "#dc2626", marginLeft: "auto", flexShrink: 0 }}
+            >
               Xóa file
             </button>
           </div>
         ) : null}
+
+        {hasOldFile && !oldFileRemoved ? (
+          <p style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
+            Vui lòng xóa file hiện tại trước khi tải lên file mới.
+          </p>
+        ) : (
+          <>
+            <label className={formStyles.label} style={{ marginTop: 12 }}>
+              Tải lên file BCTT mới (PDF hoặc DOCX)
+            </label>
+            <input
+              className={formStyles.input}
+              type="file"
+              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              disabled={busy}
+              onChange={(e) => onChooseFile(e.target.files?.[0] ?? null)}
+            />
+          </>
+        )}
 
         {fieldError ? <p className={formStyles.error}>{fieldError}</p> : null}
       </div>
