@@ -7,7 +7,7 @@ export type ApiResponse<T> = {
 export type EnterpriseAccountFormState = {
   representativeName: string;
   representativeTitle: string;
-  businessFields: string[];
+  companyIntro: string;
   website: string;
 };
 

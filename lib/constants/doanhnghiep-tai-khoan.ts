@@ -5,7 +5,7 @@ export const ENTERPRISE_ACCOUNT_ME_ENDPOINT = "/api/doanhnghiep/me";
 export const ENTERPRISE_ACCOUNT_EMPTY_FORM: EnterpriseAccountFormState = {
   representativeName: "",
   representativeTitle: "",
-  businessFields: [],
+  companyIntro: "",
   website: ""
 };
 
@@ -13,7 +13,6 @@ export const ENTERPRISE_ACCOUNT_ERROR_REPRESENTATIVE_NAME =
   "Họ và tên chỉ gồm ký tự chữ, dài 1-255.";
 export const ENTERPRISE_ACCOUNT_ERROR_REPRESENTATIVE_TITLE =
   "Chức vụ chỉ gồm ký tự chữ, dài 1-255.";
-export const ENTERPRISE_ACCOUNT_ERROR_BUSINESS_FIELDS = "Vui lòng chọn ít nhất 1 lĩnh vực hoạt động.";
 export const ENTERPRISE_ACCOUNT_ERROR_WEBSITE = "Website không đúng định dạng.";
 
 export const ENTERPRISE_ACCOUNT_LOAD_ERROR_DEFAULT = "Lỗi tải thông tin.";

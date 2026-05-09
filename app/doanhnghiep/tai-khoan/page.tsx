@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
-import { DOANHNGHIEP_BUSINESS_FIELD_OPTIONS } from "@/lib/constants/doanhnghiep";
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
 import type { ApiResponse, EnterpriseAccountFormState } from "@/lib/types/doanhnghiep-tai-khoan";
 import {
@@ -67,8 +66,6 @@ export default function EnterpriseAccountPage() {
       cancelled = true;
     };
   }, []);
-
-  const businessOptions = useMemo(() => [...DOANHNGHIEP_BUSINESS_FIELD_OPTIONS], []);
 
   const setField = (key: keyof FormState, value: string | string[]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -180,7 +177,6 @@ export default function EnterpriseAccountPage() {
               saving={saving}
               form={form}
               fieldErrors={fieldErrors}
-              businessOptions={businessOptions}
               onSetField={setField}
               onStartEdit={startEdit}
               onCancelEdit={cancelEdit}

@@ -78,6 +78,7 @@ type PatchEnterpriseMeBody = {
   representativeName?: string;
   representativeTitle?: string;
   businessFields?: string[];
+  companyIntro?: string | null;
   website?: string | null;
 };
 
@@ -104,6 +105,8 @@ export async function PATCH(request: Request) {
   const representativeName = body.representativeName?.trim() || "";
   const representativeTitle = body.representativeTitle?.trim() || "";
   const businessFields = Array.isArray(body.businessFields) ? body.businessFields.map((x) => String(x).trim()).filter(Boolean) : [];
+  const companyIntro = typeof body.companyIntro === "string" ? body.companyIntro.trim() : body.companyIntro ?? null;
+  const companyIntroOrNull = companyIntro && companyIntro.trim() ? companyIntro.trim() : null;
   const website = typeof body.website === "string" ? body.website.trim() : body.website ?? null;
   const websiteOrNull = website && website.trim() ? website.trim() : null;
 
@@ -116,10 +119,6 @@ export async function PATCH(request: Request) {
   }
 
   const allowedFields = DOANHNGHIEP_BUSINESS_FIELD_OPTIONS as readonly string[];
-  const nextBusinessFields = businessFields.filter((x) => allowedFields.includes(x));
-  if (!nextBusinessFields.length) {
-    return NextResponse.json({ success: false, field: "businessFields", message: "Vui lòng chọn ít nhất 1 lĩnh vực hoạt động." }, { status: 400 });
-  }
 
   if (websiteOrNull && !DOANHNGHIEP_REGISTER_WEBSITE_PATTERN.test(websiteOrNull)) {
     return NextResponse.json({ success: false, field: "website", message: "Website không đúng định dạng." }, { status: 400 });
@@ -133,11 +132,19 @@ export async function PATCH(request: Request) {
   if (!user) return NextResponse.json({ success: false, message: "Không tìm thấy tài khoản." }, { status: 404 });
 
   const prevMeta = enterpriseMetaAsRecord(user.enterpriseMeta);
+  const prevBusinessFields = Array.isArray(prevMeta.businessFields)
+    ? prevMeta.businessFields.map((x) => String(x).trim()).filter(Boolean)
+    : [];
+  const nextBusinessFields =
+    businessFields.length > 0
+      ? businessFields.filter((x) => allowedFields.includes(x))
+      : prevBusinessFields.filter((x) => allowedFields.includes(x));
   const nextMeta = {
     ...prevMeta,
     representativeName,
     representativeTitle,
     businessFields: nextBusinessFields,
+    companyIntro: companyIntroOrNull,
     website: websiteOrNull
   };
 

@@ -9,7 +9,6 @@ type Props = {
   saving: boolean;
   form: FormState;
   fieldErrors: Record<string, string>;
-  businessOptions: string[];
   onSetField: (key: keyof FormState, value: string | string[]) => void;
   onStartEdit: () => void;
   onCancelEdit: () => void;
@@ -20,7 +19,6 @@ export default function EnterpriseAccountEditSection({
   saving,
   form,
   fieldErrors,
-  businessOptions,
   onSetField,
   onStartEdit,
   onCancelEdit
@@ -53,22 +51,16 @@ export default function EnterpriseAccountEditSection({
         </div>
 
         <div className={formStyles.field}>
-          <label className={formStyles.label}>Giới thiệu (lĩnh vực hoạt động)</label>
-          <select
-            multiple
+          <label className={formStyles.label}>Giới thiệu về doanh nghiệp</label>
+          <textarea
             disabled={saving}
-            className={formStyles.multiSelect}
-            value={form.businessFields}
-            onChange={(e) => onSetField("businessFields", Array.from(e.target.selectedOptions).map((o) => o.value))}
-          >
-            {businessOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-          <p className={formStyles.hint}>Giữ Ctrl (hoặc Cmd trên Mac) để chọn nhiều lĩnh vực.</p>
-          {fieldErrors.businessFields ? <p className={formStyles.error}>{fieldErrors.businessFields}</p> : null}
+            className={formStyles.textarea}
+            value={form.companyIntro}
+            onChange={(e) => onSetField("companyIntro", e.target.value)}
+            placeholder="Nhập giới thiệu ngắn về doanh nghiệp"
+            style={{ width: "100%", minHeight: 110, resize: "vertical" }}
+          />
+          {fieldErrors.companyIntro ? <p className={formStyles.error}>{fieldErrors.companyIntro}</p> : null}
         </div>
 
         <div className={formStyles.field}>
@@ -108,8 +100,8 @@ export default function EnterpriseAccountEditSection({
             <td>{form.representativeTitle || "—"}</td>
           </tr>
           <tr>
-            <th scope="row">Giới thiệu (lĩnh vực hoạt động)</th>
-            <td>{form.businessFields.length ? form.businessFields.join(", ") : "—"}</td>
+            <th scope="row">Giới thiệu về doanh nghiệp</th>
+            <td>{form.companyIntro || "—"}</td>
           </tr>
           <tr>
             <th scope="row">Website công ty</th>

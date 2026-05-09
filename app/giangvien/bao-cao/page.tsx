@@ -42,6 +42,7 @@ export default function GiangvienQuanLyBCPage() {
   const [updateTarget, setUpdateTarget] = useState<Row | null>(null);
 
   const [reviewTarget, setReviewTarget] = useState<Row | null>(null);
+  const [reviewAction, setReviewAction] = useState<"APPROVE" | "REJECT">("APPROVE");
   const [rejectReason, setRejectReason] = useState("");
   const [evaluation, setEvaluation] = useState("");
   const [dqtPoint, setDqtPoint] = useState("");
@@ -150,6 +151,7 @@ export default function GiangvienQuanLyBCPage() {
 
   const openReview = (r: Row) => {
     setReviewTarget(r);
+    setReviewAction("APPROVE");
     setRejectReason("");
     setEvaluation(r.report?.supervisorEvaluation ?? "");
     setDqtPoint(r.report?.supervisorPoint != null ? String(r.report.supervisorPoint) : "");
@@ -159,6 +161,14 @@ export default function GiangvienQuanLyBCPage() {
   const closeReview = () => {
     setReviewTarget(null);
   };
+
+  function submitReview() {
+    if (reviewAction === "REJECT") {
+      void submitReject();
+      return;
+    }
+    void submitApprove();
+  }
 
   return (
     <main className={styles.page}>
@@ -247,16 +257,17 @@ export default function GiangvienQuanLyBCPage() {
       <BaoCaoReviewPopup
         reviewTarget={reviewTarget}
         busy={busy}
+        reviewAction={reviewAction}
         evaluation={evaluation}
         dqtPoint={dqtPoint}
         kthpPoint={kthpPoint}
         rejectReason={rejectReason}
+        onReviewActionChange={setReviewAction}
         onEvaluationChange={setEvaluation}
         onDqtPointChange={setDqtPoint}
         onKthpPointChange={setKthpPoint}
         onRejectReasonChange={setRejectReason}
-        onApprove={() => void submitApprove()}
-        onReject={() => void submitReject()}
+        onConfirm={submitReview}
         onClose={closeReview}
       />
 
