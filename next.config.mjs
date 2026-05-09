@@ -1,8 +1,21 @@
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: "/admin/phe-duyet",
+        destination: "/admin/quan-ly-doanh-nghiep?status=PENDING",
+        permanent: false
+      },
+      {
+        source: "/admin/phe-duyet/:path*",
+        destination: "/admin/quan-ly-doanh-nghiep?status=PENDING",
+        permanent: false
+      }
+    ];
+  },
   experimental: {
-    // JSON đăng ký có base64 (tối đa ~2×20MB); tăng giới hạn body cho Server Actions nếu dùng sau này
     serverActions: {
       bodySizeLimit: "45mb"
     }

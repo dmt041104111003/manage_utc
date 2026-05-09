@@ -1,3 +1,8 @@
+export function metaRecord(meta: unknown): Record<string, unknown> {
+  if (!meta || typeof meta !== "object" || Array.isArray(meta)) return {};
+  return meta as Record<string, unknown>;
+}
+
 /** Bỏ base64 nặng khỏi enterpriseMeta khi trả API admin (danh sách / chi tiết). */
 export function stripHeavyEnterpriseMeta(meta: unknown): unknown {
   if (!meta || typeof meta !== "object" || Array.isArray(meta)) return meta;

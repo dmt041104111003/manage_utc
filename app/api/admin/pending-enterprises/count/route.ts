@@ -10,7 +10,10 @@ export async function GET() {
   }
 
   const count = await prisma.user.count({
-    where: { role: Role.doanhnghiep, enterpriseStatus: EnterpriseStatus.PENDING }
+    where: {
+      role: Role.doanhnghiep,
+      OR: [{ enterpriseStatus: EnterpriseStatus.PENDING }, { enterpriseStatus: null }]
+    }
   });
 
   return NextResponse.json({ count });

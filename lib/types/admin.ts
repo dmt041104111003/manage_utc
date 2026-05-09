@@ -1,4 +1,5 @@
-/** Bản ghi doanh nghiệp chờ phê duyệt (API list / detail). */
+import type { EnterpriseStatus } from "@prisma/client";
+
 export type PendingEnterpriseItem = {
   id: string;
   email: string;
@@ -8,4 +9,21 @@ export type PendingEnterpriseItem = {
   taxCode: string | null;
   enterpriseMeta: unknown;
   createdAt: string;
+};
+
+export type AdminEnterpriseListItem = {
+  id: string;
+  email: string;
+  companyName: string | null;
+  taxCode: string | null;
+  enterpriseStatus: EnterpriseStatus | null;
+  createdAt: string;
+};
+
+export type AdminEnterpriseDetail = AdminEnterpriseListItem & {
+  phone: string | null;
+  fullName: string;
+  representativeTitle: string | null;
+  enterpriseMeta: unknown;
+  updatedAt: string;
 };

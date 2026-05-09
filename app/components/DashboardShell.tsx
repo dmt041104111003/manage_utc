@@ -10,7 +10,7 @@ import { useAdminPendingEnterpriseCount } from "@/hooks/useAdminPendingEnterpris
 import { useDashboardSidebar } from "@/hooks/useDashboardSidebar";
 import styles from "./dashboard-shell.module.css";
 
-const ADMIN_PHE_DUYET_HREF = "/admin/phe-duyet";
+const ADMIN_QUAN_LY_DOANH_NGHIEP_HREF = "/admin/quan-ly-doanh-nghiep";
 
 export type { DashboardRole };
 
@@ -41,7 +41,9 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
           {navItems.map((item) => {
             const active = isDashboardNavActive(pathname, item.href);
             const pending =
-              role === "admin" && item.href === ADMIN_PHE_DUYET_HREF ? pendingEnterpriseCount : undefined;
+              role === "admin" && item.href === ADMIN_QUAN_LY_DOANH_NGHIEP_HREF
+                ? pendingEnterpriseCount
+                : undefined;
             const showPendingBadge = typeof pending === "number";
             const displayCount = showPendingBadge ? (pending > 99 ? "99+" : String(pending)) : "";
             const badgeText = showPendingBadge ? `(${displayCount})` : "";

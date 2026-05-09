@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   }
 
   if (user.role === Role.doanhnghiep) {
-    if (user.enterpriseStatus === EnterpriseStatus.PENDING) {
+    if (user.enterpriseStatus === EnterpriseStatus.PENDING || user.enterpriseStatus == null) {
       return NextResponse.json(
         {
           success: false,

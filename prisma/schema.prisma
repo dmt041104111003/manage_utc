@@ -31,6 +31,7 @@ model User {
   enterpriseStatus   EnterpriseStatus?
   companyName        String?
   taxCode            String?             @unique
+  representativeTitle String?
   enterpriseMeta     Json?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt

@@ -185,10 +185,6 @@
   }
 }
 
-.pheDuyetBody {
-  margin-top: 4px;
-}
-
 .tableWrap {
   overflow-x: auto;
   margin-top: 8px;
@@ -212,6 +208,47 @@
   background: #f9fafb;
   font-weight: 600;
   color: #374151;
+}
+
+/** Bảng chi tiết trong modal «Xem thông tin doanh nghiệp» */
+.viewModalDetailTableWrap {
+  margin-top: 8px;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.viewModalDetailTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.viewModalDetailTable th,
+.viewModalDetailTable td {
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.viewModalDetailTable thead th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.viewModalDetailTable tbody th {
+  background: #f9fafb;
+  font-weight: 500;
+  color: #6b7280;
+  width: 32%;
+  max-width: 14rem;
+}
+
+.viewModalDetailTable tbody td {
+  color: #111827;
+  word-break: break-word;
+  background: #fff;
 }
 
 .rowActions {
@@ -374,4 +411,132 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+.modalWide {
+  max-width: 40rem;
+}
+
+.modalExtraWide {
+  max-width: 52rem;
+  max-height: min(90vh, 100%);
+  overflow-y: auto;
+}
+
+.searchToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.searchField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 12rem;
+  flex: 1;
+}
+
+.searchField label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.textInputSearch,
+.selectInput {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  max-width: 100%;
+}
+
+.selectInput {
+  min-width: 11rem;
+}
+
+.btnPrimary {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: #1e40af;
+  border-color: #1e40af;
+}
+
+.btnDanger {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.textLinkBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 6px 0 0;
+  font-size: 13px;
+  color: #1d4ed8;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+}
+
+.textLinkBtn:hover:not(:disabled) {
+  color: #1e3a8a;
+}
+
+.textLinkBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.previewLogo {
+  max-width: 120px;
+  max-height: 120px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.licenseLink {
+  font-size: 13px;
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.statusNote {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.statusTextPlain {
+  font-size: 13px;
+  font-weight: 400;
+  color: #374151;
+  line-height: 1.45;
+}
+
+.statusCurrentRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.5;
 }

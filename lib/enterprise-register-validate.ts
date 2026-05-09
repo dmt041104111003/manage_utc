@@ -184,7 +184,9 @@ export async function validateEnterpriseRegisterPayload(
     companyLogoMime: logoDecoded.mime,
     companyLogoBase64: logoDecoded.base64,
     companyLogoByteLength: logoDecoded.byteLength,
-    website: website || null
+    website: website || null,
+    representativeName,
+    representativeTitle
   };
 
   const passwordHash = await hashPassword(taxCode);
@@ -198,6 +200,7 @@ export async function validateEnterpriseRegisterPayload(
     enterpriseStatus: "PENDING" as EnterpriseStatus,
     companyName,
     taxCode,
+    representativeTitle,
     enterpriseMeta
   };
 
