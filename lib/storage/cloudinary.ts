@@ -1,34 +1,28 @@
 import crypto from "crypto";
 import path from "path";
 import { v2 as cloudinary } from "cloudinary";
+import {
+  buildCloudinaryImageDeliveryUrl,
+  buildCloudinaryRawDeliveryUrl
+} from "./cloudinary-public";
 
 export type CloudinaryUploadResult = {
   publicId: string;
 };
 
-export const CLOUDINARY_REF_PREFIX = "cloudinary:";
+export {
+  CLOUDINARY_REF_PREFIX,
+  buildCloudinaryImageDeliveryUrl,
+  buildCloudinaryRawDeliveryUrl,
+  enterpriseLicensePublicIdFromStored,
+  fromCloudinaryRef,
+  toCloudinaryRef
+} from "./cloudinary-public";
 
 function requiredEnv(name: string): string {
   const v = process.env[name];
   if (!v) throw new Error(`Missing env: ${name}`);
   return v;
-}
-
-/**
- * Raw/authenticated file proxy (API routes): trùng cloud với upload — ưu CLOUDINARY_CLOUD_NAME.
- * (Trước đây ưu NEXT_PUBLIC_* dễ lệch env Vercel → fetch 404.)
- */
-function rawDeliveryCloudName(): string | null {
-  const srv = String(process.env.CLOUDINARY_CLOUD_NAME || "").trim();
-  if (srv) return srv;
-  return String(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "").trim() || null;
-}
-
-/** Ảnh delivery trên client: ưu NEXT_PUBLIC_* (thường chỉ biến này lộ ra bundle). */
-function imageDeliveryCloudName(): string | null {
-  const pub = String(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "").trim();
-  if (pub) return pub;
-  return String(process.env.CLOUDINARY_CLOUD_NAME || "").trim() || null;
 }
 
 function sanitizeSegment(s: string): string {
@@ -189,30 +183,6 @@ async function uploadBytesToCloudinary(input: {
   return { publicId: outPublicId };
 }
 
-export function buildCloudinaryRawDeliveryUrl(publicId: string): string | null {
-  const cloudName = rawDeliveryCloudName();
-  if (!cloudName) return null;
-  const pid = String(publicId || "").replace(/^\/+/, "");
-  const encodedPid = pid
-    .split("/")
-    .filter(Boolean)
-    .map((seg) => encodeURIComponent(seg))
-    .join("/");
-  return `https://res.cloudinary.com/${encodeURIComponent(cloudName)}/raw/upload/${encodedPid}`;
-}
-
-export function buildCloudinaryImageDeliveryUrl(publicId: string): string | null {
-  const cloudName = imageDeliveryCloudName();
-  if (!cloudName) return null;
-  const pid = String(publicId || "").replace(/^\/+/, "");
-  const encodedPid = pid
-    .split("/")
-    .filter(Boolean)
-    .map((seg) => encodeURIComponent(seg))
-    .join("/");
-  return `https://res.cloudinary.com/${encodeURIComponent(cloudName)}/image/upload/${encodedPid}`;
-}
-
 function cloudinarySigningEnv(): { cloud_name: string; api_key: string; api_secret: string } | null {
   const cloud_name =
     String(process.env.CLOUDINARY_CLOUD_NAME || "").trim() ||
@@ -278,25 +248,3 @@ export async function fetchCloudinaryBytesByPublicId(publicId: string): Promise<
   }
   return null;
 }
-
-export function toCloudinaryRef(publicId: string): string {
-  return `${CLOUDINARY_REF_PREFIX}${publicId}`;
-}
-
-export function fromCloudinaryRef(value: string | null | undefined): string | null {
-  const raw = String(value || "").trim();
-  if (!raw.startsWith(CLOUDINARY_REF_PREFIX)) return null;
-  const pid = raw.slice(CLOUDINARY_REF_PREFIX.length).trim();
-  return pid || null;
-}
-
-/** public_id từ DB: `cloudinary:...` hoặc legacy chỉ path `enterprise_licenses/...`. */
-export function enterpriseLicensePublicIdFromStored(value: string | null | undefined): string | null {
-  const prefixed = fromCloudinaryRef(value);
-  if (prefixed) return prefixed;
-  const t = String(value || "").trim();
-  if (!t || t.includes("..") || t.includes("://") || t.startsWith("{")) return null;
-  if (t.startsWith("enterprise_licenses/") && t.length <= 500) return t;
-  return null;
-}
-

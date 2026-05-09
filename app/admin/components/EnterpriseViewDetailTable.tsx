@@ -13,7 +13,7 @@ import {
   buildCloudinaryImageDeliveryUrl,
   enterpriseLicensePublicIdFromStored,
   fromCloudinaryRef
-} from "@/lib/storage/cloudinary";
+} from "@/lib/storage/cloudinary-public";
 import styles from "../styles/dashboard.module.css";
 
 type Props = { item: AdminEnterpriseDetail };

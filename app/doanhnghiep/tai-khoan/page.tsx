@@ -24,7 +24,7 @@ import {
   buildCloudinaryImageDeliveryUrl,
   enterpriseLicensePublicIdFromStored,
   fromCloudinaryRef
-} from "@/lib/storage/cloudinary";
+} from "@/lib/storage/cloudinary-public";
 import {
   buildEnterpriseAccountPatchPayload,
   mapEnterpriseAccountFormFromMe,
