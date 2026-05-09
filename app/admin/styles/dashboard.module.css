@@ -605,85 +605,26 @@
 }
 
 .statCard {
-  background: rgba(255, 255, 255, 0.65);
+  background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 16px 18px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
-/* Auto tints for all admin stat grids */
-.statsGrid2 > .statCard:nth-child(1) {
-  background: rgba(239, 246, 255, 0.72); /* blue-50 */
-  border-color: rgba(29, 78, 216, 0.28);
-}
-.statsGrid2 > .statCard:nth-child(2) {
-  background: rgba(240, 253, 244, 0.72); /* green-50 */
-  border-color: rgba(22, 163, 74, 0.26);
-}
-
-.statsGrid3 > .statCard:nth-child(6n + 1) {
-  background: rgba(255, 251, 235, 0.72); /* amber-50 */
-  border-color: rgba(245, 158, 11, 0.32);
-}
-.statsGrid3 > .statCard:nth-child(6n + 2) {
-  background: rgba(239, 246, 255, 0.72); /* blue-50 */
-  border-color: rgba(29, 78, 216, 0.28);
-}
-.statsGrid3 > .statCard:nth-child(6n + 3) {
-  background: rgba(240, 253, 244, 0.72); /* green-50 */
-  border-color: rgba(22, 163, 74, 0.26);
-}
-.statsGrid3 > .statCard:nth-child(6n + 4) {
-  background: rgba(254, 242, 242, 0.72); /* red-50 */
-  border-color: rgba(220, 38, 38, 0.26);
-}
-.statsGrid3 > .statCard:nth-child(6n + 5) {
-  background: rgba(250, 245, 255, 0.72); /* purple-50 */
-  border-color: rgba(109, 40, 217, 0.26); /* violet-700 */
-}
-.statsGrid3 > .statCard:nth-child(6n + 6) {
-  background: rgba(236, 254, 255, 0.72); /* cyan-50 */
-  border-color: rgba(14, 116, 144, 0.26); /* cyan-700 */
-}
-
-.statsGrid4 > .statCard:nth-child(1) {
-  background: rgba(255, 251, 235, 0.72); /* amber-50 */
-  border-color: rgba(245, 158, 11, 0.32);
-}
-.statsGrid4 > .statCard:nth-child(2) {
-  background: rgba(239, 246, 255, 0.72); /* blue-50 */
-  border-color: rgba(29, 78, 216, 0.28);
-}
-.statsGrid4 > .statCard:nth-child(3) {
-  background: rgba(240, 253, 244, 0.72); /* green-50 */
-  border-color: rgba(22, 163, 74, 0.26);
-}
-.statsGrid4 > .statCard:nth-child(4) {
-  background: rgba(254, 242, 242, 0.72); /* red-50 */
-  border-color: rgba(220, 38, 38, 0.26);
-}
-
-/* ---- Transparent tinted variants (admin enterprise stats) ---- */
-.statCardTintPending {
-  background: rgba(255, 251, 235, 0.75); /* amber-50 */
-  border-color: rgba(245, 158, 11, 0.35); /* amber-500 */
-}
-
-.statCardTintApproved {
-  background: rgba(239, 246, 255, 0.75); /* blue-50 */
-  border-color: rgba(29, 78, 216, 0.30); /* blue-700 */
-}
-
+/* Cùng tone trung tính cho mọi ô trong grid (nhãn xám, số đậm trên nền trắng) */
+.statCardTintPending,
+.statCardTintApproved,
 .statCardTintRejected {
-  background: rgba(254, 242, 242, 0.75); /* red-50 */
-  border-color: rgba(220, 38, 38, 0.28); /* red-600 */
+  background: #ffffff;
+  border-color: #e5e7eb;
 }
 
 .statLabel {
   margin: 0;
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: #9ca3af;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -692,7 +633,7 @@
   margin: 8px 0 0;
   font-size: 24px;
   font-weight: 700;
-  color: #111827;
+  color: #0f172a;
   line-height: 1;
 }
 
@@ -845,23 +786,12 @@
   margin-top: 0;
 }
 
-/* Performance mode: flatten heavy visuals for faster render */
+/* Performance mode: flatten heavy visuals (không áp vào statCard — giữ đổ bóng card) */
 .card,
-.statCard,
 .modal,
 .header {
   box-shadow: none !important;
   border-radius: 4px !important;
-}
-
-.statsGrid2 > .statCard,
-.statsGrid3 > .statCard,
-.statsGrid4 > .statCard,
-.statCardTintPending,
-.statCardTintApproved,
-.statCardTintRejected {
-  background: #fff !important;
-  border-color: #e5e7eb !important;
 }
 
 .textInputSearch:focus,
