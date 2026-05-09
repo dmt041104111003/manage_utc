@@ -63,6 +63,11 @@ enum SupervisorDegree {
   PROF
 }
 
+enum SupervisorAssignmentStatus {
+  GUIDING
+  COMPLETED
+}
+
 enum InternshipBatchSemester {
   HK_I
   HK_II
@@ -110,6 +115,8 @@ model InternshipBatch {
   updatedAt DateTime               @updatedAt
 
   jobPosts JobPost[]
+
+  supervisorAssignments SupervisorAssignment[]
 
   @@unique([semester, schoolYear])
   @@unique([startDate, endDate])
@@ -192,6 +199,8 @@ model StudentProfile {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id])
+
+  assignmentLinks SupervisorAssignmentStudent[]
 }
 
 model SupervisorProfile {
@@ -213,4 +222,40 @@ model SupervisorProfile {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id])
+
+  assignments SupervisorAssignment[]
+}
+
+model SupervisorAssignment {
+  id String @id @default(cuid())
+
+  faculty String
+  status SupervisorAssignmentStatus @default(GUIDING)
+
+  internshipBatchId String
+  supervisorProfileId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  internshipBatch InternshipBatch @relation(fields: [internshipBatchId], references: [id])
+  supervisorProfile SupervisorProfile @relation(fields: [supervisorProfileId], references: [id])
+
+  students SupervisorAssignmentStudent[]
+
+  @@unique([internshipBatchId, supervisorProfileId])
+}
+
+model SupervisorAssignmentStudent {
+  id String @id @default(cuid())
+
+  supervisorAssignmentId String
+  studentProfileId String
+
+  createdAt DateTime @default(now())
+
+  supervisorAssignment SupervisorAssignment @relation(fields: [supervisorAssignmentId], references: [id])
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
+
+  @@unique([studentProfileId, supervisorAssignmentId])
 }
