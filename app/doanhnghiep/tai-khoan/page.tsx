@@ -20,7 +20,7 @@ import {
 } from "@/lib/utils/enterprise-admin-display";
 import { metaRecord } from "@/lib/utils/enterprise-meta";
 import { formatAdminEnterpriseStatusLine } from "@/lib/utils/admin-enterprise-display";
-import { buildCloudinaryImageDeliveryUrl, buildCloudinaryRawDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
+import { buildCloudinaryImageDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
 import {
   buildEnterpriseAccountPatchPayload,
   mapEnterpriseAccountFormFromMe,
@@ -156,11 +156,10 @@ export default function EnterpriseAccountPage() {
   const address = buildEnterpriseHeadquartersAddress(me.enterpriseMeta);
 
   const licName = typeof m.businessLicenseName === "string" && m.businessLicenseName.trim() ? m.businessLicenseName : "—";
-  const licMime = typeof m.businessLicenseMime === "string" ? m.businessLicenseMime : "application/octet-stream";
   const licB64 = typeof m.businessLicenseBase64 === "string" ? m.businessLicenseBase64 : null;
   const licPublicId = fromCloudinaryRef(typeof m.businessLicensePublicId === "string" ? m.businessLicensePublicId : null);
-  const licFromCloud = licPublicId ? buildCloudinaryRawDeliveryUrl(licPublicId) : null;
-  const licHref = licFromCloud ?? (licB64 ? dataUrlFromBase64(licMime, licB64) : null);
+  const licHref =
+    licPublicId || licB64 ? `/api/files/enterprise-business-license/${me.id}` : null;
 
   const logoMime = typeof m.companyLogoMime === "string" ? m.companyLogoMime : "";
   const logoB64 = typeof m.companyLogoBase64 === "string" ? m.companyLogoBase64 : null;

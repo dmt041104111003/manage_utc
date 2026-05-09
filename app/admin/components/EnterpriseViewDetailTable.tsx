@@ -9,7 +9,7 @@ import {
 } from "@/lib/utils/enterprise-admin-display";
 import { formatAdminEnterpriseStatusLine } from "@/lib/utils/admin-enterprise-display";
 import { resolveRepresentativeTitle } from "@/lib/utils/enterprise-representative";
-import { buildCloudinaryImageDeliveryUrl, buildCloudinaryRawDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
+import { buildCloudinaryImageDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
 import styles from "../styles/dashboard.module.css";
 
 type Props = { item: AdminEnterpriseDetail };
@@ -21,7 +21,6 @@ export function EnterpriseViewDetailTable({ item }: Props) {
   const repName = typeof m.representativeName === "string" ? m.representativeName : item.fullName;
   const titleDisplay = resolveRepresentativeTitle(item.representativeTitle, item.enterpriseMeta);
   const licName = typeof m.businessLicenseName === "string" ? m.businessLicenseName : "—";
-  const licMime = typeof m.businessLicenseMime === "string" ? m.businessLicenseMime : "application/octet-stream";
   const licB64 = typeof m.businessLicenseBase64 === "string" ? m.businessLicenseBase64 : null;
   const logoMime = typeof m.companyLogoMime === "string" ? m.companyLogoMime : "";
   const logoB64 = typeof m.companyLogoBase64 === "string" ? m.companyLogoBase64 : null;
@@ -29,8 +28,8 @@ export function EnterpriseViewDetailTable({ item }: Props) {
 
   const licPublicId = fromCloudinaryRef(typeof m.businessLicensePublicId === "string" ? m.businessLicensePublicId : null);
   const logoPublicId = fromCloudinaryRef(typeof m.companyLogoPublicId === "string" ? m.companyLogoPublicId : null);
-  const licFromCloud = licPublicId ? buildCloudinaryRawDeliveryUrl(licPublicId) : null;
-  const licHref = licFromCloud ?? (licB64 ? dataUrlFromBase64(licMime, licB64) : null);
+  const licHref =
+    licPublicId || licB64 ? `/api/files/enterprise-business-license/${item.id}` : null;
   const logoFromCloud = logoPublicId ? buildCloudinaryImageDeliveryUrl(logoPublicId) : null;
   const logoSrc =
     logoFromCloud ??
@@ -68,7 +67,7 @@ export function EnterpriseViewDetailTable({ item }: Props) {
             <th scope="row">File giấy phép kinh doanh</th>
             <td>
               {licHref ? (
-                <a className={styles.licenseLink} href={licHref} target="_blank" rel="noopener noreferrer">
+                <a className={styles.detailLink} href={licHref} target="_blank" rel="noopener noreferrer" download={licName}>
                   {licName}
                 </a>
               ) : (

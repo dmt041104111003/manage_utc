@@ -49,12 +49,19 @@ export function buildInternshipReportPublicId(ownerId: string, originalName: str
   return `internship_reports/${safeOwner}_${Date.now()}_${safeName}`;
 }
 
+function licensePublicIdSuffix(originalName: string): string {
+  const ext = path.extname(String(originalName || "").trim()).toLowerCase();
+  if (/^\.(pdf|docx?)$/i.test(ext)) return ext.replace(/[^.a-z0-9]/gi, "") || ".pdf";
+  return ".pdf";
+}
+
 export function buildEnterpriseLicensePublicId(ownerKey: string, originalName: string): string {
   const safeOwner = sanitizeSegment(ownerKey) || "enterprise";
   const safeOriginal = sanitizeSegment(originalName) || "business_license";
   const nameNoExt = sanitizeSegment(removeExtension(safeOriginal)).slice(0, 80) || "business_license";
   const safeName = nameNoExt.replace(/\s+/g, "_");
-  return `enterprise_licenses/${safeOwner}_${Date.now()}_${safeName}`;
+  const suffix = licensePublicIdSuffix(safeOriginal);
+  return `enterprise_licenses/${safeOwner}_${Date.now()}_${safeName}${suffix}`;
 }
 
 export function buildEnterpriseLogoPublicId(ownerKey: string, originalName: string): string {
