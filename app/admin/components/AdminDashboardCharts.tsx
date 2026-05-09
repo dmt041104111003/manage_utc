@@ -14,10 +14,7 @@ import {
   YAxis,
   CartesianGrid,
   LineChart as RechartsLineChart,
-  Line,
-  Defs,
-  LinearGradient,
-  Stop
+  Line
 } from "recharts";
 
 import styles from "../styles/dashboard.module.css";
@@ -46,14 +43,14 @@ export function DonutChart({ segments }: { segments: DonutSegment[] }) {
     <div style={{ position: "relative", width: "100%", height: 280 }}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
-          <Defs>
+          <defs>
             {data.map((d, i) => (
-              <LinearGradient key={d.name} id={`${uid}-donut-${i}`} x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0%" stopColor={d.color} stopOpacity={1} />
-                <Stop offset="100%" stopColor={darkenHex(d.color, 0.28)} stopOpacity={1} />
-              </LinearGradient>
+              <linearGradient key={d.name} id={`${uid}-donut-${i}`} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={d.color} stopOpacity={1} />
+                <stop offset="100%" stopColor={darkenHex(d.color, 0.28)} stopOpacity={1} />
+              </linearGradient>
             ))}
-          </Defs>
+          </defs>
           <Pie
             data={data}
             cx="50%"
@@ -61,7 +58,6 @@ export function DonutChart({ segments }: { segments: DonutSegment[] }) {
             innerRadius={62}
             outerRadius={96}
             paddingAngle={2.5}
-            cornerRadius={4}
             dataKey="value"
             stroke="#fff"
             strokeWidth={2}
@@ -73,7 +69,7 @@ export function DonutChart({ segments }: { segments: DonutSegment[] }) {
           </Pie>
           <Tooltip
             {...RECHARTS_TOOLTIP_PROPS}
-            formatter={(value: number | undefined) => [formatChartInt(value), "Giá trị"]}
+            formatter={(value) => [formatChartInt(value as number | undefined), "Giá trị"]}
           />
           <Legend
             verticalAlign="bottom"
@@ -116,13 +112,13 @@ export function BarChart({ labels, values }: { labels: string[]; values: number[
   return (
     <ResponsiveContainer width="100%" height={248}>
       <RechartsBarChart data={data} margin={{ top: 12, right: 20, left: 4, bottom: 52 }}>
-        <Defs>
-          <LinearGradient id={`${uid}-bar-blue`} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor="#60a5fa" />
-            <Stop offset="55%" stopColor="#2563eb" />
-            <Stop offset="100%" stopColor="#1e3a8a" />
-          </LinearGradient>
-        </Defs>
+        <defs>
+          <linearGradient id={`${uid}-bar-blue`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#60a5fa" />
+            <stop offset="55%" stopColor="#2563eb" />
+            <stop offset="100%" stopColor="#1e3a8a" />
+          </linearGradient>
+        </defs>
         <CartesianGrid {...RECHARTS_GRID_PROPS} />
         <XAxis
           dataKey="name"
@@ -143,7 +139,7 @@ export function BarChart({ labels, values }: { labels: string[]; values: number[
         />
         <Tooltip
           {...RECHARTS_TOOLTIP_PROPS}
-          formatter={(value: number | undefined) => [formatChartInt(value), "Số lượng"]}
+          formatter={(value) => [formatChartInt(value as number | undefined), "Số lượng"]}
         />
         <Bar
           dataKey="value"
@@ -171,14 +167,14 @@ export function ProgressColumnChart({ labels, values }: { labels: string[]; valu
   return (
     <ResponsiveContainer width="100%" height={248}>
       <RechartsBarChart data={data} margin={{ top: 12, right: 20, left: 4, bottom: 52 }}>
-        <Defs>
+        <defs>
           {data.map((d, i) => (
-            <LinearGradient key={`${d.name}-${i}`} id={`${uid}-prog-${i}`} x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor={d.color} stopOpacity={1} />
-              <Stop offset="100%" stopColor={darkenHex(d.color, 0.25)} stopOpacity={1} />
-            </LinearGradient>
+            <linearGradient key={`${d.name}-${i}`} id={`${uid}-prog-${i}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={d.color} stopOpacity={1} />
+              <stop offset="100%" stopColor={darkenHex(d.color, 0.25)} stopOpacity={1} />
+            </linearGradient>
           ))}
-        </Defs>
+        </defs>
         <CartesianGrid {...RECHARTS_GRID_PROPS} />
         <XAxis
           dataKey="name"
@@ -193,7 +189,7 @@ export function ProgressColumnChart({ labels, values }: { labels: string[]; valu
         <YAxis tick={RECHARTS_TICK_PROPS} allowDecimals={false} width={40} axisLine={false} tickLine={false} />
         <Tooltip
           {...RECHARTS_TOOLTIP_PROPS}
-          formatter={(value: number | undefined) => [formatChartInt(value), "Sinh viên"]}
+          formatter={(value) => [formatChartInt(value as number | undefined), "Sinh viên"]}
         />
         <Bar dataKey="value" name="Sinh viên" radius={[12, 12, 0, 0]} maxBarSize={52} {...ANIM}>
           {data.map((_, i) => (
@@ -222,10 +218,7 @@ export function LineChart({ labels, series }: { labels: string[]; series: Simple
         <CartesianGrid {...RECHARTS_GRID_PROPS_LINE} />
         <XAxis dataKey="name" tick={RECHARTS_TICK_PROPS} axisLine={{ stroke: "#cbd5e1" }} tickLine={{ stroke: "#cbd5e1" }} />
         <YAxis tick={RECHARTS_TICK_PROPS} allowDecimals={false} width={42} axisLine={false} tickLine={false} />
-        <Tooltip
-          {...RECHARTS_TOOLTIP_PROPS}
-          formatter={(value: number | undefined) => formatChartInt(value)}
-        />
+        <Tooltip {...RECHARTS_TOOLTIP_PROPS} formatter={(value) => formatChartInt(value as number | undefined)} />
         <Legend iconType="circle" iconSize={11} wrapperStyle={RECHARTS_LEGEND_WRAPPER_STYLE} />
         {series.map((s) => (
           <Line

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -12,6 +12,13 @@ import {
   ResponsiveContainer
 } from "recharts";
 import styles from "../styles/dashboard.module.css";
+import {
+  formatChartInt,
+  RECHARTS_GRID_PROPS,
+  RECHARTS_TICK_PROPS,
+  RECHARTS_TOOLTIP_PROPS
+} from "@/lib/constants/recharts-dashboard-ui";
+import { darkenHex } from "@/lib/utils/chart-colors";
 import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 type Batch = { id: string; name: string; status: string };
@@ -34,6 +41,8 @@ const INTERNSHIP_COLORS = [
   "#6b7280", "#2563eb", "#0ea5e9", "#f59e0b", "#16a34a", "#ef4444"
 ];
 
+const GV_CHART_ANIM = { isAnimationActive: true, animationDuration: 900, animationEasing: "ease-out" as const };
+
 function StatusBarChart({
   labels,
   values,
@@ -43,18 +52,36 @@ function StatusBarChart({
   values: number[];
   colors: string[];
 }) {
+  const uid = useId().replace(/:/g, "");
   if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
   const data = labels.map((name, i) => ({ name, value: values[i] ?? 0 }));
   return (
-    <ResponsiveContainer width="100%" height={230}>
-      <BarChart data={data} margin={{ top: 5, right: 16, left: 0, bottom: 56 }}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-30} textAnchor="end" />
-        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={36} />
-        <Tooltip />
-        <Bar dataKey="value" name="Sinh viên" radius={[4, 4, 0, 0]}>
+    <ResponsiveContainer width="100%" height={252}>
+      <BarChart data={data} margin={{ top: 12, right: 20, left: 4, bottom: 56 }}>
+        <defs>
+          {colors.map((c, i) => (
+            <linearGradient key={`g-${i}`} id={`${uid}-gv-${i}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={c} stopOpacity={1} />
+              <stop offset="100%" stopColor={darkenHex(c, 0.24)} stopOpacity={1} />
+            </linearGradient>
+          ))}
+        </defs>
+        <CartesianGrid {...RECHARTS_GRID_PROPS} />
+        <XAxis
+          dataKey="name"
+          tick={RECHARTS_TICK_PROPS}
+          interval={0}
+          angle={-28}
+          textAnchor="end"
+          height={72}
+          axisLine={{ stroke: "#cbd5e1" }}
+          tickLine={{ stroke: "#cbd5e1" }}
+        />
+        <YAxis tick={RECHARTS_TICK_PROPS} allowDecimals={false} width={40} axisLine={false} tickLine={false} />
+        <Tooltip {...RECHARTS_TOOLTIP_PROPS} formatter={(v) => [formatChartInt(v as number | undefined), "Sinh viên"]} />
+        <Bar dataKey="value" name="Sinh viên" radius={[12, 12, 0, 0]} maxBarSize={52} {...GV_CHART_ANIM}>
           {data.map((_, i) => (
-            <Cell key={`cell-${i}`} fill={colors[i % colors.length]} />
+            <Cell key={`cell-${i}`} fill={`url(#${uid}-gv-${i % colors.length})`} />
           ))}
         </Bar>
       </BarChart>
