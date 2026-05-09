@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
+import { resolveLoginEmail } from "@/lib/auth/identifier";
 import styles from "../styles/login.module.css";
 
 function LoginForm() {
@@ -16,6 +17,8 @@ function LoginForm() {
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const showForgotPassword = useMemo(() => resolveLoginEmail(identifier) !== "admin@utc.edu.vn", [identifier]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -160,7 +163,7 @@ function LoginForm() {
           {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
 
           <div className={styles.links}>
-            <Link href="/auth/quenmatkhau">Quên mật khẩu?</Link>
+            {showForgotPassword ? <Link href="/auth/quenmatkhau">Quên mật khẩu?</Link> : null}
             <Link href="/auth/dangky">Đăng ký doanh nghiệp</Link>
           </div>
         </div>

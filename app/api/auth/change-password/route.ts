@@ -45,6 +45,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, code: "UNAUTHORIZED", message: "Tài khoản không tồn tại." }, { status: 401 });
   }
 
+  if (user.role === "admin") {
+    return NextResponse.json(
+      {
+        success: false,
+        code: "NOT_ALLOWED",
+        message: "Tài khoản quản trị không đổi mật khẩu qua cổng này. Vui lòng liên hệ bộ phận kỹ thuật."
+      },
+      { status: 403 }
+    );
+  }
+
   const currentOk = await verifyPassword(currentPassword, user.passwordHash);
   if (!currentOk) {
     return NextResponse.json(

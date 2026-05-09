@@ -78,7 +78,11 @@ export async function middleware(request: NextRequest) {
       return loginRedirect(request, pathname);
     }
     try {
-      await jwtVerify(token, secret);
+      const { payload } = await jwtVerify(token, secret);
+      const role = typeof payload.role === "string" ? payload.role : "";
+      if (role === "admin") {
+        return NextResponse.redirect(new URL(ROLE_HOME.admin, request.url));
+      }
     } catch {
       const res = loginRedirect(request, pathname);
       res.cookies.set(SESSION_COOKIE_NAME, "", { path: "/", maxAge: 0 });

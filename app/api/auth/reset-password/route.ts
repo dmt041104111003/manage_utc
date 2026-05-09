@@ -50,6 +50,17 @@ export async function POST(request: Request) {
     );
   }
 
+  if (user.role === "admin") {
+    return NextResponse.json(
+      {
+        success: false,
+        code: "NOT_ALLOWED",
+        message: "Tài khoản quản trị không hỗ trợ đặt lại mật khẩu qua liên kết này."
+      },
+      { status: 403 }
+    );
+  }
+
   if (!AUTH_STRONG_PASSWORD_PATTERN.test(newPassword)) {
     return NextResponse.json(
       {

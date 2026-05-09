@@ -40,6 +40,17 @@ export async function POST(request: Request) {
     );
   }
 
+  if (user.role === "admin") {
+    return NextResponse.json(
+      {
+        success: false,
+        code: "NOT_ALLOWED",
+        message: "Tài khoản quản trị không hỗ trợ đặt lại mật khẩu qua email. Vui lòng liên hệ bộ phận kỹ thuật."
+      },
+      { status: 403 }
+    );
+  }
+
   let resetToken: string;
   try {
     resetToken = await signPasswordResetToken(email);
