@@ -6,7 +6,8 @@ import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 
 import type { AccountRow, AccountStatus, Role } from "@/lib/types/admin-quan-ly-tai-khoan";
-import { roleLabel } from "@/lib/constants/admin-quan-ly-tai-khoan";
+import { ADMIN_QUAN_LY_TAI_KHOAN_PAGE_SIZE, roleLabel } from "@/lib/constants/admin-quan-ly-tai-khoan";
+import { deleteCacheByPrefix, getOrFetchCached } from "@/lib/utils/client-query-cache";
 
 import AdminTaiKhoanToolbar from "./components/AdminTaiKhoanToolbar";
 import AdminTaiKhoanTableSection from "./components/AdminTaiKhoanTableSection";
@@ -38,38 +39,65 @@ export default function AdminQuanLyTaiKhoanPage() {
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (opts?: { force?: boolean; silent?: boolean; targetPage?: number }) => {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
+    const targetPage = opts?.targetPage ?? page;
+    if (!silent) setLoading(true);
     setError("");
-    setPage(1);
     try {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
       if (filterRole !== "all") params.set("role", filterRole);
       if (filterStatus !== "all") params.set("status", filterStatus);
-      const res = await fetch(`/api/admin/accounts?${params.toString()}`);
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách tài khoản.");
+      params.set("page", String(targetPage));
+      params.set("pageSize", String(ADMIN_QUAN_LY_TAI_KHOAN_PAGE_SIZE));
+      const url = `/api/admin/accounts?${params.toString()}`;
+      const data = await getOrFetchCached<any>(
+        `admin:accounts:list:${url}`,
+        async () => {
+          const res = await fetch(url);
+          const payload = await res.json();
+          if (!res.ok || !payload.success) throw new Error(payload.message || "Không tải được danh sách tài khoản.");
+          return payload;
+        },
+        { force }
+      );
       setItems((data.items || []) as AccountRow[]);
       setLatestBatchAccountStats(data.latestBatchAccountStats ?? null);
+      setTotalItems(Number(data.totalItems || 0));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Lỗi.");
       setItems([]);
       setLatestBatchAccountStats(null);
+      setTotalItems(0);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
   useEffect(() => {
-    void load();
-  }, []);
+    void load({ targetPage: page });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void load({ force: true, silent: true, targetPage: page });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQ, filterRole, filterStatus, page]);
 
   const openView = async (row: AccountRow) => {
     try {
-      const res = await fetch(`/api/admin/accounts/${row.id}`);
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được thông tin tài khoản.");
+      const data = await getOrFetchCached<any>(`admin:accounts:detail:${row.id}`, async () => {
+        const res = await fetch(`/api/admin/accounts/${row.id}`);
+        const payload = await res.json();
+        if (!res.ok || !payload.success) throw new Error(payload.message || "Không tải được thông tin tài khoản.");
+        return payload;
+      });
       setViewTarget(data.item);
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Không tải được thông tin tài khoản.");
@@ -101,7 +129,8 @@ export default function AdminQuanLyTaiKhoanPage() {
       if (!res.ok || !data.success) throw new Error(data.message || "Cập nhật trạng thái thất bại.");
       setToast(data.message || "Cập nhật trạng thái tài khoản thành công.");
       setStatusTarget(null);
-      await load();
+      deleteCacheByPrefix("admin:accounts:");
+      await load({ force: true, targetPage: page });
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Cập nhật trạng thái thất bại.");
     } finally {
@@ -118,7 +147,8 @@ export default function AdminQuanLyTaiKhoanPage() {
       if (!res.ok || !data.success) throw new Error(data.message || "Xóa tài khoản thất bại.");
       setToast(data.message || "Xóa tài khoản thành công.");
       setDeleteTarget(null);
-      await load();
+      deleteCacheByPrefix("admin:accounts:");
+      await load({ force: true, targetPage: page });
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Xóa tài khoản thất bại.");
     } finally {
@@ -159,12 +189,16 @@ export default function AdminQuanLyTaiKhoanPage() {
         onChangeSearchQ={setSearchQ}
         onChangeFilterRole={setFilterRole}
         onChangeFilterStatus={setFilterStatus}
-        onSearch={() => void load()}
+        onSearch={() => {
+          setPage(1);
+          void load({ force: true, targetPage: 1 });
+        }}
       />
 
       <AdminTaiKhoanTableSection
         loading={loading}
         items={items}
+        totalItems={totalItems}
         page={page}
         busyId={busyId}
         onPageChange={setPage}

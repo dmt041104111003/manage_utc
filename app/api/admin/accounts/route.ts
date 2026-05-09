@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth/admin-session";
+import { ADMIN_QUAN_LY_TAI_KHOAN_PAGE_SIZE } from "@/lib/constants/admin-quan-ly-tai-khoan";
 
 type AccountStatus = "ACTIVE" | "STOPPED";
 
@@ -14,6 +15,8 @@ export async function GET(request: Request) {
     const q = searchParams.get("q")?.trim() || "";
     const roleParam = searchParams.get("role")?.trim() || "all";
     const statusParam = (searchParams.get("status")?.trim() || "all") as AccountStatus | "all";
+    const page = Math.max(Number(searchParams.get("page") || "1") || 1, 1);
+    const pageSize = Math.max(Number(searchParams.get("pageSize") || String(ADMIN_QUAN_LY_TAI_KHOAN_PAGE_SIZE)) || ADMIN_QUAN_LY_TAI_KHOAN_PAGE_SIZE, 1);
 
     const where: Prisma.UserWhereInput = {
       role: { in: [Role.sinhvien, Role.giangvien, Role.doanhnghiep] }
@@ -43,9 +46,12 @@ export async function GET(request: Request) {
 
     if (andParts.length) where.AND = andParts;
 
+    const totalItems = await prisma.user.count({ where });
     const rows = await prisma.user.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       select: {
         id: true,
         fullName: true,
@@ -142,7 +148,10 @@ export async function GET(request: Request) {
         phone: r.phone ?? null,
         role: r.role,
         status: (r.isLocked ? "STOPPED" : "ACTIVE") as AccountStatus
-      }))
+      })),
+      page,
+      pageSize,
+      totalItems
     });
   } catch (e) {
     console.error("[GET /api/admin/accounts]", e);

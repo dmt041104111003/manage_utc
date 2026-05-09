@@ -4,6 +4,7 @@ import { getAdminSession } from "@/lib/auth/admin-session";
 import { hashPassword } from "@/lib/auth/password";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { fetchProvinceList, fetchWardsForProvince } from "@/lib/vn-open-api";
+import { ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE } from "@/lib/constants/admin-quan-ly-sinh-vien";
 
 const MSV_PATTERN = /^\d{8,15}$/;
 const NAME_PATTERN = /^[\p{L}\s]{1,255}$/u;
@@ -45,6 +46,8 @@ export async function GET(request: Request) {
     const faculty = searchParams.get("faculty")?.trim() || "all";
     const status = (searchParams.get("status")?.trim() || "all") as InternshipStatus | "all";
     const degree = (searchParams.get("degree")?.trim() || "all") as Degree | "all";
+    const page = Math.max(Number(searchParams.get("page") || "1") || 1, 1);
+    const pageSize = Math.max(Number(searchParams.get("pageSize") || String(ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE)) || ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE, 1);
 
     const prismaAny = prisma as any;
 
@@ -69,9 +72,12 @@ export async function GET(request: Request) {
 
     if (andParts.length) where.AND = andParts;
 
+    const totalItems = await prismaAny.studentProfile.count({ where });
     const rows = await prismaAny.studentProfile.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       select: {
         id: true,
         userId: true,
@@ -216,7 +222,10 @@ export async function GET(request: Request) {
         permanentWardName: r.permanentWardName ?? null,
         hasLinkedData: linked.has(String(r.userId))
       })),
-      faculties
+      faculties,
+      page,
+      pageSize,
+      totalItems
     });
   } catch (e) {
     console.error("[GET /api/admin/students]", e);

@@ -4,6 +4,7 @@ import { getAdminSession } from "@/lib/auth/admin-session";
 import { hashPassword } from "@/lib/auth/password";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { fetchProvinceList, fetchWardsForProvince } from "@/lib/vn-open-api";
+import { ADMIN_QUAN_LY_GVHD_PAGE_SIZE } from "@/lib/constants/admin-quan-ly-gvhd";
 
 const NAME_PATTERN = /^[\p{L}\s]{1,255}$/u;
 const PHONE_PATTERN = /^\d{8,12}$/;
@@ -41,6 +42,8 @@ export async function GET(request: Request) {
     const q = searchParams.get("q")?.trim() || "";
     const faculty = searchParams.get("faculty")?.trim() || "all";
     const degree = (searchParams.get("degree")?.trim() || "all") as Degree | "all";
+    const page = Math.max(Number(searchParams.get("page") || "1") || 1, 1);
+    const pageSize = Math.max(Number(searchParams.get("pageSize") || String(ADMIN_QUAN_LY_GVHD_PAGE_SIZE)) || ADMIN_QUAN_LY_GVHD_PAGE_SIZE, 1);
 
     const prismaAny = prisma as any;
     const where: any = {};
@@ -59,9 +62,12 @@ export async function GET(request: Request) {
     }
     if (andParts.length) where.AND = andParts;
 
+    const totalItems = await prismaAny.supervisorProfile.count({ where });
     const rows = await prismaAny.supervisorProfile.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       select: {
         id: true,
         userId: true,
@@ -138,7 +144,10 @@ export async function GET(request: Request) {
         permanentWardCode: r.permanentWardCode,
         permanentWardName: r.permanentWardName ?? null
       })),
-      faculties
+      faculties,
+      page,
+      pageSize,
+      totalItems
     });
   } catch (e) {
     console.error("[GET /api/admin/supervisors]", e);

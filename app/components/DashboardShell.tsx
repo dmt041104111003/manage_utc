@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { DASHBOARD_NAV_BY_ROLE, DASHBOARD_TOPBAR_TITLE_BY_ROLE } from "@/lib/constants/dashboard-shell";
 import type { DashboardRole } from "@/lib/types/dashboard";
 import { isDashboardNavActive } from "@/lib/utils/navigation";
 import { useAdminPendingEnterpriseCount } from "@/hooks/useAdminPendingEnterpriseCount";
 import { useDashboardSidebar } from "@/hooks/useDashboardSidebar";
+import { clearAllQueryCache } from "@/lib/utils/client-query-cache";
 import styles from "./dashboard-shell.module.css";
 
 const ADMIN_QUAN_LY_DOANH_NGHIEP_HREF = "/admin/quan-ly-doanh-nghiep";
@@ -29,6 +30,27 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
   const pathname = usePathname();
   const { menuOpen, closeMenu, toggleMenu, logoutBusy, handleLogout } = useDashboardSidebar();
   const { count: pendingEnterpriseCount } = useAdminPendingEnterpriseCount(role === "admin");
+  const reloadingRef = useRef(false);
+
+  useEffect(() => {
+    const originalFetch = window.fetch.bind(window);
+    const patchedFetch: typeof window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = String(init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+      const res = await originalFetch(input, init);
+      const isMutation = method !== "GET" && method !== "HEAD";
+      if (!isMutation || !res.ok || reloadingRef.current) return res;
+      reloadingRef.current = true;
+      clearAllQueryCache();
+      setTimeout(() => {
+        window.location.reload();
+      }, 0);
+      return res;
+    };
+    window.fetch = patchedFetch;
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
 
   const navItems = DASHBOARD_NAV_BY_ROLE[role];
 

@@ -22,10 +22,12 @@ import {
   ADMIN_QUAN_LY_SINH_VIEN_KHOL_PATTERN,
   ADMIN_QUAN_LY_SINH_VIEN_MSV_PATTERN,
   ADMIN_QUAN_LY_SINH_VIEN_NAME_PATTERN,
-  ADMIN_QUAN_LY_SINH_VIEN_PHONE_PATTERN
+  ADMIN_QUAN_LY_SINH_VIEN_PHONE_PATTERN,
+  ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE
 } from "@/lib/constants/admin-quan-ly-sinh-vien";
 import { calcAgeFromBirthDate, toBirthDateInputValue } from "@/lib/utils/admin-quan-ly-sinh-vien-dates";
 import { buildEmptyStudentFormState } from "@/lib/utils/admin-quan-ly-sinh-vien-form";
+import { deleteCacheByPrefix, getOrFetchCached } from "@/lib/utils/client-query-cache";
 
 import AdminSinhVienToolbar from "./components/AdminSinhVienToolbar";
 import AdminSinhVienTableSection from "./components/AdminSinhVienTableSection";
@@ -72,6 +74,7 @@ export default function AdminQuanLySinhVienPage() {
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   // address dropdowns
   const [provinces, setProvinces] = useState<Province[]>([]);
@@ -120,36 +123,58 @@ export default function AdminQuanLySinhVienPage() {
     };
   }, [form.permanentProvinceCode]);
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (opts?: { force?: boolean; silent?: boolean; targetPage?: number }) => {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
+    const targetPage = opts?.targetPage ?? page;
+    if (!silent) setLoading(true);
     setError("");
-    setPage(1);
     try {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
       if (filterFaculty !== "all") params.set("faculty", filterFaculty);
       if (filterInternshipStatus !== "all") params.set("status", filterInternshipStatus);
       if (filterDegree !== "all") params.set("degree", filterDegree);
-      const res = await fetch(`/api/admin/students?${params.toString()}`);
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách sinh viên.");
+      params.set("page", String(targetPage));
+      params.set("pageSize", String(ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE));
+      const url = `/api/admin/students?${params.toString()}`;
+      const data = await getOrFetchCached<any>(
+        `admin:students:list:${url}`,
+        async () => {
+          const res = await fetch(url);
+          const payload = await res.json();
+          if (!res.ok || !payload.success) throw new Error(payload.message || "Không tải được danh sách sinh viên.");
+          return payload;
+        },
+        { force }
+      );
       setItems(data.items || []);
       setFaculties(data.faculties || []);
       setLatestBatchInternshipStats(data.latestBatchInternshipStats ?? null);
+      setTotalItems(Number(data.totalItems || 0));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Lỗi.");
       setItems([]);
       setFaculties([]);
       setLatestBatchInternshipStats(null);
+      setTotalItems(0);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    void load();
+    void load({ targetPage: page });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void load({ force: true, silent: true, targetPage: page });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQ, filterFaculty, filterInternshipStatus, filterDegree, page]);
 
   const showPopup = (message: string) => setToastPopup({ open: true, message });
 
@@ -261,7 +286,9 @@ export default function AdminQuanLySinhVienPage() {
       showPopup(data.message || "Tạo sinh viên thành công.");
       setAddOpen(false);
       resetForm();
-      await load();
+      deleteCacheByPrefix("admin:students:");
+      setPage(1);
+      await load({ force: true, targetPage: 1 });
     } catch (e) {
       showPopup(e instanceof Error ? e.message : "Tạo sinh viên thất bại.");
     } finally {
@@ -307,7 +334,8 @@ export default function AdminQuanLySinhVienPage() {
       showPopup(data.message || "Cập nhật sinh viên thành công.");
       setEditTarget(null);
       resetForm();
-      await load();
+      deleteCacheByPrefix("admin:students:");
+      await load({ force: true, targetPage: page });
     } catch (e) {
       showPopup(e instanceof Error ? e.message : "Cập nhật sinh viên thất bại.");
     } finally {
@@ -318,9 +346,12 @@ export default function AdminQuanLySinhVienPage() {
   const openView = async (row: StudentListItem) => {
     try {
       setViewStudent(null);
-      const res = await fetch(`/api/admin/students/${row.id}`);
-      const data = await res.json();
-      if (!res.ok || !data.success || !data.item) throw new Error(data.message || "Không tải được thông tin sinh viên.");
+      const data = await getOrFetchCached<any>(`admin:students:detail:${row.id}`, async () => {
+        const res = await fetch(`/api/admin/students/${row.id}`);
+        const payload = await res.json();
+        if (!res.ok || !payload.success || !payload.item) throw new Error(payload.message || "Không tải được thông tin sinh viên.");
+        return payload;
+      });
       setViewStudent(data.item as ViewStudent);
       setViewOpen(true);
     } catch (e) {
@@ -344,7 +375,8 @@ export default function AdminQuanLySinhVienPage() {
       }
       showPopup(data.message || "Xóa sinh viên thành công.");
       setDeleteTarget(null);
-      await load();
+      deleteCacheByPrefix("admin:students:");
+      await load({ force: true, targetPage: page });
     } catch (e) {
       showPopup(e instanceof Error ? e.message : "Xóa thất bại.");
     } finally {
@@ -497,7 +529,9 @@ export default function AdminQuanLySinhVienPage() {
       }
       showPopup(data.message || "Tạo danh sách sinh viên thành công.");
       setImportOpen(false);
-      await load();
+      deleteCacheByPrefix("admin:students:");
+      setPage(1);
+      await load({ force: true, targetPage: 1 });
     } catch (e) {
       showPopup(e instanceof Error ? e.message : "Tạo danh sách sinh viên thất bại.");
     } finally {
@@ -558,7 +592,10 @@ export default function AdminQuanLySinhVienPage() {
         onChangeFilterFaculty={setFilterFaculty}
         onChangeFilterInternshipStatus={setFilterInternshipStatus}
         onChangeFilterDegree={setFilterDegree}
-        onSearch={() => void load()}
+        onSearch={() => {
+          setPage(1);
+          void load({ force: true, targetPage: 1 });
+        }}
         onOpenAdd={openAddSingle}
         onOpenImport={openAddBulk}
       />
@@ -566,6 +603,7 @@ export default function AdminQuanLySinhVienPage() {
       <AdminSinhVienTableSection
         loading={loading}
         items={items}
+        totalItems={totalItems}
         page={page}
         busyId={busyId}
         onPageChange={setPage}

@@ -12,6 +12,7 @@ import styles from "../../styles/dashboard.module.css";
 type Props = {
   loading: boolean;
   items: StudentListItem[];
+  totalItems: number;
   page: number;
   busyId: string | null;
   onPageChange: (p: number) => void;
@@ -21,14 +22,9 @@ type Props = {
 };
 
 export default function AdminSinhVienTableSection(props: Props) {
-  const { loading, items, page, busyId, onPageChange, onView, onEdit, onDelete } = props;
+  const { loading, items, totalItems, page, busyId, onPageChange, onView, onEdit, onDelete } = props;
 
   if (loading) return <p className={styles.modulePlaceholder}>Đang tải…</p>;
-
-  const pagedItems = items.slice(
-    (page - 1) * ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE,
-    (page - 1) * ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE + ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE
-  );
 
   return (
     <>
@@ -55,7 +51,7 @@ export default function AdminSinhVienTableSection(props: Props) {
                 </td>
               </tr>
             ) : (
-              pagedItems.map((row, idx) => (
+              items.map((row, idx) => (
                 <tr key={row.id}>
                   <td data-label="STT">{(page - 1) * ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE + idx + 1}</td>
                   <td data-label="MSV">{row.msv}</td>
@@ -90,7 +86,7 @@ export default function AdminSinhVienTableSection(props: Props) {
       <Pagination
         page={page}
         pageSize={ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE}
-        totalItems={items.length}
+        totalItems={totalItems}
         onPageChange={onPageChange}
         buttonClassName={styles.btn}
         activeButtonClassName={`${styles.btn} ${styles.btnPrimary}`}
