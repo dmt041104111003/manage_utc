@@ -16,6 +16,7 @@ import {
   buildJobFormForEdit,
   validateJobForm
 } from "@/lib/utils/doanhnghiep-tuyen-dung";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import TuyenDungToolbar from "./components/TuyenDungToolbar";
 import TuyenDungTableSection from "./components/TuyenDungTableSection";
 const TuyenDungViewPopup = dynamic(() => import("./components/TuyenDungViewPopup"), { ssr: false });
@@ -37,6 +38,8 @@ export default function DoanhNghiepTuyenDungPage() {
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [statusStats, setStatusStats] = useState({ PENDING: 0, REJECTED: 0, ACTIVE: 0, STOPPED: 0 });
 
   const [viewJob, setViewJob] = useState<JobDetailResponse | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
@@ -67,29 +70,45 @@ export default function DoanhNghiepTuyenDungPage() {
     setEnterpriseDefaults({ intro: "", website });
   };
 
-  const load = async (params?: { q?: string; date?: string }) => {
-    setLoading(true);
-    setError("");
-    setPage(1);
+  const load = async (params?: { q?: string; date?: string; status?: "all" | JobStatus; page?: number }, opts?: { force?: boolean; silent?: boolean }) => {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
       const url = new URL("/api/doanhnghiep/tuyen-dung", window.location.origin);
       if (params?.q !== undefined) url.searchParams.set("q", params.q || "");
       if (params?.date) url.searchParams.set("date", params.date);
-      // Status is NOT passed to server — we filter client-side to always have all counts for stats
-      const res = await fetch(url.toString());
-      const data = (await res.json()) as ApiResponse<JobListItem[]>;
-      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được tin tuyển dụng.");
+      if (params?.status) url.searchParams.set("status", params.status);
+      const nextPage = params?.page ?? page;
+      url.searchParams.set("page", String(nextPage));
+      url.searchParams.set("pageSize", String(DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE));
+      const cacheKey = `enterprise:tuyen-dung:list:${url.toString()}`;
+      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      setError("");
+      const data = await getOrFetchCached<any>(
+        cacheKey,
+        async () => {
+          const res = await fetch(url.toString());
+          const payload = await res.json();
+          if (!res.ok || !payload.success) throw new Error(payload.message || "Không tải được tin tuyển dụng.");
+          return payload;
+        },
+        { force }
+      );
       setItems((data.items || []) as JobListItem[]);
+      setTotalItems(Number(data.totalItems || 0));
+      setStatusStats(data.statusStats || { PENDING: 0, REJECTED: 0, ACTIVE: 0, STOPPED: 0 });
+      setPage(nextPage);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Lỗi.");
       setItems([]);
+      setTotalItems(0);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   const refresh = async () => {
-    await load({ q: searchQ, date: searchDate });
+    await load({ q: searchQ, date: searchDate, status: searchStatus, page }, { force: true });
   };
 
   useEffect(() => {
@@ -102,9 +121,17 @@ export default function DoanhNghiepTuyenDungPage() {
       } catch {
         setFacultyOptions([]);
       }
-      await load({ q: searchQ, date: searchDate });
+      await load({ q: searchQ, date: searchDate, status: searchStatus, page: 1 }, { force: true });
     })();
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void load({ q: searchQ, date: searchDate, status: searchStatus, page }, { force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQ, searchDate, searchStatus, page]);
 
   const resetFormForAdd = () => {
     setFieldErrors({});
@@ -276,11 +303,7 @@ export default function DoanhNghiepTuyenDungPage() {
     { label: "Từ chối duyệt",  status: "REJECTED" as const },
     { label: "Đang hoạt động", status: "ACTIVE"   as const },
     { label: "Dừng hoạt động", status: "STOPPED"  as const }
-  ].map((c) => ({ ...c, count: items.filter((i) => i.status === c.status).length }));
-
-  // Client-side status filter for table display
-  const displayItems =
-    searchStatus === "all" ? items : items.filter((i) => i.status === searchStatus);
+  ].map((c) => ({ ...c, count: statusStats[c.status] || 0 }));
 
   return (
     <main className={styles.page}>
@@ -311,20 +334,21 @@ export default function DoanhNghiepTuyenDungPage() {
         onSearchQChange={setSearchQ}
         onSearchDateChange={setSearchDate}
         onSearchStatusChange={setSearchStatus}
-        onSearch={() => void refresh()}
+        onSearch={() => void load({ q: searchQ, date: searchDate, status: searchStatus, page: 1 }, { force: true })}
         onAdd={() => void openAdd()}
       />
 
       <TuyenDungTableSection
         loading={loading}
-        items={displayItems}
+        items={items}
+        totalItems={totalItems}
         page={page}
         busyId={busyId}
         onView={(row) => void openView(row)}
         onEdit={(row) => void openEdit(row)}
         onStop={setStopTarget}
         onDelete={setDeleteTarget}
-        onPageChange={setPage}
+        onPageChange={(p) => void load({ q: searchQ, date: searchDate, status: searchStatus, page: p }, { force: true })}
       />
 
       <TuyenDungViewPopup

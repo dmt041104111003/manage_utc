@@ -22,7 +22,7 @@ import {
 } from "@/lib/constants/admin-quan-ly-gvhd";
 import { calcAgeFromBirthDate, toBirthDateInputValue } from "@/lib/utils/admin-quan-ly-gvhd-dates";
 import { buildEmptySupervisorFormState } from "@/lib/utils/admin-quan-ly-gvhd-form";
-import { deleteCacheByPrefix, getOrFetchCached } from "@/lib/utils/client-query-cache";
+import { deleteCacheByPrefix, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 import AdminGiangVienToolbar from "./components/AdminGiangVienToolbar";
 import AdminGiangVienTableSection from "./components/AdminGiangVienTableSection";
@@ -117,8 +117,6 @@ export default function AdminQuanLyGVHDPage() {
     const force = Boolean(opts?.force);
     const silent = Boolean(opts?.silent);
     const targetPage = opts?.targetPage ?? page;
-    if (!silent) setLoading(true);
-    setError("");
     try {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
@@ -127,8 +125,11 @@ export default function AdminQuanLyGVHDPage() {
       params.set("page", String(targetPage));
       params.set("pageSize", String(ADMIN_QUAN_LY_GVHD_PAGE_SIZE));
       const url = `/api/admin/supervisors?${params.toString()}`;
+      const cacheKey = `admin:supervisors:list:${url}`;
+      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      setError("");
       const data = await getOrFetchCached<any>(
-        `admin:supervisors:list:${url}`,
+        cacheKey,
         async () => {
           const res = await fetch(url);
           const payload = await res.json();

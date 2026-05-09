@@ -7,6 +7,10 @@ type Entry<T> = {
 
 const QUERY_CACHE = new Map<string, Entry<unknown>>();
 
+export function hasCachedValue(key: string): boolean {
+  return QUERY_CACHE.has(key);
+}
+
 export async function getOrFetchCached<T>(
   key: string,
   fetcher: () => Promise<T>,

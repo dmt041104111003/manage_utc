@@ -27,7 +27,7 @@ import {
 } from "@/lib/constants/admin-quan-ly-sinh-vien";
 import { calcAgeFromBirthDate, toBirthDateInputValue } from "@/lib/utils/admin-quan-ly-sinh-vien-dates";
 import { buildEmptyStudentFormState } from "@/lib/utils/admin-quan-ly-sinh-vien-form";
-import { deleteCacheByPrefix, getOrFetchCached } from "@/lib/utils/client-query-cache";
+import { deleteCacheByPrefix, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 import AdminSinhVienToolbar from "./components/AdminSinhVienToolbar";
 import AdminSinhVienTableSection from "./components/AdminSinhVienTableSection";
@@ -127,8 +127,6 @@ export default function AdminQuanLySinhVienPage() {
     const force = Boolean(opts?.force);
     const silent = Boolean(opts?.silent);
     const targetPage = opts?.targetPage ?? page;
-    if (!silent) setLoading(true);
-    setError("");
     try {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
@@ -138,8 +136,11 @@ export default function AdminQuanLySinhVienPage() {
       params.set("page", String(targetPage));
       params.set("pageSize", String(ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE));
       const url = `/api/admin/students?${params.toString()}`;
+      const cacheKey = `admin:students:list:${url}`;
+      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      setError("");
       const data = await getOrFetchCached<any>(
-        `admin:students:list:${url}`,
+        cacheKey,
         async () => {
           const res = await fetch(url);
           const payload = await res.json();

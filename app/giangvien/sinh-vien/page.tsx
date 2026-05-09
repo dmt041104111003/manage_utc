@@ -8,6 +8,7 @@ import {
   GIANGVIEN_SINH_VIEN_ENDPOINT
 } from "@/lib/constants/giangvien-sinh-vien";
 import { buildGiangVienSinhVienQueryParams, getGiangVienSinhVienLoadErrorMessage } from "@/lib/utils/giangvien-sinh-vien";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import SinhVienToolbar from "./components/SinhVienToolbar";
 import SinhVienTableSection from "./components/SinhVienTableSection";
 import SinhVienViewPopup from "./components/SinhVienViewPopup";
@@ -41,14 +42,25 @@ export default function GiangvienSinhVienPage() {
 
   const [viewTarget, setViewTarget] = useState<Row | null>(null);
 
-  async function load() {
-    setLoading(true);
-    setError("");
+  async function load(opts?: { force?: boolean; silent?: boolean }) {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
       const sp = buildGiangVienSinhVienQueryParams({ q, batchId, guidanceStatus });
-      const res = await fetch(`${GIANGVIEN_SINH_VIEN_ENDPOINT}?${sp.toString()}`);
-      const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải danh sách sinh viên được phân công.");
+      const url = `${GIANGVIEN_SINH_VIEN_ENDPOINT}?${sp.toString()}`;
+      const cacheKey = `gv:sinh-vien:list:${url}`;
+      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      setError("");
+      const data = await getOrFetchCached<any>(
+        cacheKey,
+        async () => {
+          const res = await fetch(url);
+          const payload = await res.json();
+          if (!res.ok || !payload?.success) throw new Error(payload?.message || "Không thể tải danh sách sinh viên được phân công.");
+          return payload;
+        },
+        { force }
+      );
       setItems(Array.isArray(data.items) ? data.items : []);
       setBatches(Array.isArray(data.batches) ? data.batches : []);
       if (data.latestBatchGuidanceStats) {
@@ -59,7 +71,7 @@ export default function GiangvienSinhVienPage() {
     } catch (e: unknown) {
       setError(getGiangVienSinhVienLoadErrorMessage(e));
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -67,6 +79,14 @@ export default function GiangvienSinhVienPage() {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void load({ force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, batchId, guidanceStatus]);
 
   return (
     <main className={styles.page}>
@@ -105,7 +125,7 @@ export default function GiangvienSinhVienPage() {
         onQChange={setQ}
         onBatchIdChange={setBatchId}
         onGuidanceStatusChange={setGuidanceStatus}
-        onSearch={() => void load()}
+        onSearch={() => void load({ force: true })}
       />
 
       <SinhVienTableSection

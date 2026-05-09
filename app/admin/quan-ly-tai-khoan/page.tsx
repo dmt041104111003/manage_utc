@@ -7,7 +7,7 @@ import MessagePopup from "../../components/MessagePopup";
 
 import type { AccountRow, AccountStatus, Role } from "@/lib/types/admin-quan-ly-tai-khoan";
 import { ADMIN_QUAN_LY_TAI_KHOAN_PAGE_SIZE, roleLabel } from "@/lib/constants/admin-quan-ly-tai-khoan";
-import { deleteCacheByPrefix, getOrFetchCached } from "@/lib/utils/client-query-cache";
+import { deleteCacheByPrefix, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 import AdminTaiKhoanToolbar from "./components/AdminTaiKhoanToolbar";
 import AdminTaiKhoanTableSection from "./components/AdminTaiKhoanTableSection";
@@ -45,8 +45,6 @@ export default function AdminQuanLyTaiKhoanPage() {
     const force = Boolean(opts?.force);
     const silent = Boolean(opts?.silent);
     const targetPage = opts?.targetPage ?? page;
-    if (!silent) setLoading(true);
-    setError("");
     try {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
@@ -55,8 +53,11 @@ export default function AdminQuanLyTaiKhoanPage() {
       params.set("page", String(targetPage));
       params.set("pageSize", String(ADMIN_QUAN_LY_TAI_KHOAN_PAGE_SIZE));
       const url = `/api/admin/accounts?${params.toString()}`;
+      const cacheKey = `admin:accounts:list:${url}`;
+      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      setError("");
       const data = await getOrFetchCached<any>(
-        `admin:accounts:list:${url}`,
+        cacheKey,
         async () => {
           const res = await fetch(url);
           const payload = await res.json();

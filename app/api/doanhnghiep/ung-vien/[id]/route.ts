@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
+import { DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE } from "@/lib/constants/doanhnghiep-ung-vien-detail";
 
 function extractHistoryMeta(history: any[]): {
   responseDeadline: string | null;
@@ -29,7 +30,7 @@ function extractHistoryMeta(history: any[]): {
   return { responseDeadline, interviewLocation };
 }
 
-export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!token) return NextResponse.json({ success: false, message: "Vui lòng đăng nhập." }, { status: 401 });
@@ -46,6 +47,9 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
   if (role !== "doanhnghiep") return NextResponse.json({ success: false, message: "Không có quyền truy cập." }, { status: 403 });
 
   const { id } = await ctx.params;
+  const { searchParams } = new URL(request.url);
+  const page = Math.max(Number(searchParams.get("page") || "1") || 1, 1);
+  const pageSize = Math.max(Number(searchParams.get("pageSize") || String(DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE)) || DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE, 1);
   const prismaAny = prisma as any;
 
   const job = await prismaAny.jobPost.findFirst({
@@ -71,9 +75,13 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
   });
   if (!job) return NextResponse.json({ success: false, message: "Không tìm thấy tin tuyển dụng." }, { status: 404 });
 
-  const apps = await prismaAny.jobApplication.findMany({
+  const [totalItems, apps] = await Promise.all([
+    prismaAny.jobApplication.count({ where: { jobPostId: id } }),
+    prismaAny.jobApplication.findMany({
     where: { jobPostId: id },
     orderBy: { createdAt: "desc" },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
     select: {
       id: true,
       status: true,
@@ -103,7 +111,8 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
         }
       }
     }
-  });
+  })
+  ]);
 
   const now = new Date();
 
@@ -158,6 +167,9 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
 
   return NextResponse.json({
     success: true,
+    page,
+    pageSize,
+    totalItems,
     job: {
       ...job,
       createdAt: job.createdAt?.toISOString?.() ?? null,

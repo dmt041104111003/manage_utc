@@ -24,6 +24,7 @@ import {
   BCTT_ERROR_REQUIRED_FILE_BEFORE_SUBMIT
 } from "@/lib/constants/sinhvien-bao-cao-thuc-tap";
 import { getSinhVienBaoCaoStatusHintText, isAllowedBcttMime } from "@/lib/utils/sinhvien-bao-cao-thuc-tap";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import BaoCaoThucTapStatusSection from "./components/BaoCaoThucTapStatusSection";
 import BaoCaoThucTapSupervisorSection from "./components/BaoCaoThucTapSupervisorSection";
 import BaoCaoThucTapStatusHistorySection from "./components/BaoCaoThucTapStatusHistorySection";
@@ -53,14 +54,22 @@ export default function SinhvienBaoCaoThucTapPage() {
   const [deleteLocalFile, setDeleteLocalFile] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  async function load() {
-    setLoading(true);
-    setError("");
+  async function load(opts?: { force?: boolean; silent?: boolean }) {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
-      const res = await fetch(SINHVIEN_BAO_CAO_THUC_TAP_ENDPOINT);
-      const data = await res.json();
-      if (!res.ok || !data?.success)
-        throw new Error(data?.message || SINHVIEN_BAO_CAO_THUC_TAP_LOAD_ERROR_DEFAULT);
+      if (!silent && (force || !hasCachedValue("sv:bao-cao-thuc-tap:me"))) setLoading(true);
+      setError("");
+      const data = await getOrFetchCached<any>(
+        "sv:bao-cao-thuc-tap:me",
+        async () => {
+          const res = await fetch(SINHVIEN_BAO_CAO_THUC_TAP_ENDPOINT);
+          const payload = await res.json();
+          if (!res.ok || !payload?.success) throw new Error(payload?.message || SINHVIEN_BAO_CAO_THUC_TAP_LOAD_ERROR_DEFAULT);
+          return payload;
+        },
+        { force }
+      );
       const item = data.item;
       setInternshipStatus(item.internshipStatus);
       setSupervisor(item.supervisor ?? null);
@@ -71,12 +80,20 @@ export default function SinhvienBaoCaoThucTapPage() {
     } catch (e: any) {
       setError(e?.message || SINHVIEN_BAO_CAO_THUC_TAP_LOAD_ERROR_DEFAULT);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
   useEffect(() => {
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void load({ force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -136,7 +153,7 @@ export default function SinhvienBaoCaoThucTapPage() {
       setUploadOpen(false);
       resetUploadState();
       setToast(data?.message || SINHVIEN_BAO_CAO_THUC_TAP_SUBMIT_NEW_SUCCESS_DEFAULT);
-      await load();
+      await load({ force: true });
     } catch (e: any) {
       setFieldErrors({ file: e?.message || SINHVIEN_BAO_CAO_THUC_TAP_SUBMIT_NEW_ERROR_DEFAULT });
     } finally {
@@ -165,7 +182,7 @@ export default function SinhvienBaoCaoThucTapPage() {
       setEditOpen(false);
       resetUploadState();
       setToast(data?.message || SINHVIEN_BAO_CAO_THUC_TAP_SUBMIT_EDIT_SUCCESS_DEFAULT);
-      await load();
+      await load({ force: true });
     } catch (e: any) {
       setFieldErrors({ file: e?.message || SINHVIEN_BAO_CAO_THUC_TAP_SUBMIT_EDIT_ERROR_DEFAULT });
     } finally {

@@ -16,6 +16,7 @@ import {
   buildGiangVienTaiKhoanPatchPayload,
   validateGiangVienTaiKhoanForm
 } from "@/lib/utils/giangvien-tai-khoan";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import GiangVienProfileInfo from "./components/GiangVienProfileInfo";
 import GiangVienAccountEditSection from "./components/GiangVienAccountEditSection";
 
@@ -51,24 +52,41 @@ export default function GiangVienTaiKhoanPage() {
     setFieldErrors({});
   };
 
-  async function load() {
-    setLoading(true);
-    setError("");
+  async function load(opts?: { force?: boolean; silent?: boolean }) {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
-      const res = await fetch("/api/giangvien/me");
-      const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || GIANGVIEN_TAI_KHOAN_LOAD_ERROR_DEFAULT);
+      if (!silent && (force || !hasCachedValue("gv:tai-khoan:me"))) setLoading(true);
+      setError("");
+      const data = await getOrFetchCached<any>(
+        "gv:tai-khoan:me",
+        async () => {
+          const res = await fetch("/api/giangvien/me");
+          const payload = await res.json();
+          if (!res.ok || !payload?.success) throw new Error(payload?.message || GIANGVIEN_TAI_KHOAN_LOAD_ERROR_DEFAULT);
+          return payload;
+        },
+        { force }
+      );
       setMe(data.item ?? null);
       if (data.item) syncDraftFromMe(data.item as GiangVienMe);
     } catch (e: any) {
       setError(e?.message || GIANGVIEN_TAI_KHOAN_LOAD_ERROR_DEFAULT);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
   useEffect(() => {
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void load({ force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -125,7 +143,7 @@ export default function GiangVienTaiKhoanPage() {
       if (!res.ok || !data?.success) throw new Error(data?.message || GIANGVIEN_TAI_KHOAN_NETWORK_ERROR_DEFAULT);
       setToast(data?.message || GIANGVIEN_TAI_KHOAN_SUBMIT_SUCCESS_DEFAULT);
       setIsEditing(false);
-      await load();
+      await load({ force: true });
     } catch (e: any) {
       setError(e?.message || GIANGVIEN_TAI_KHOAN_NETWORK_ERROR_DEFAULT);
     } finally {

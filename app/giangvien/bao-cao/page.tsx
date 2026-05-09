@@ -7,6 +7,7 @@ import adminStyles from "../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import type { Degree, InternshipStatus, Row } from "@/lib/types/giangvien-bao-cao-thuc-tap";
 import { validateGiangVienBaoCaoApprove } from "@/lib/utils/giangvien-bao-cao-thuc-tap";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import BaoCaoToolbar from "./components/BaoCaoToolbar";
 import BaoCaoTableSection from "./components/BaoCaoTableSection";
 const BaoCaoViewPopup = dynamic(() => import("./components/BaoCaoViewPopup"), { ssr: false });
@@ -50,23 +51,34 @@ export default function GiangvienQuanLyBCPage() {
   const [kthpPoint, setKthpPoint] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function load() {
-    setLoading(true);
-    setError("");
+  async function load(opts?: { force?: boolean; silent?: boolean }) {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
       const sp = new URLSearchParams();
       if (q.trim()) sp.set("q", q.trim());
       if (degreeFilter !== "all") sp.set("degree", degreeFilter);
       if (statusFilter !== "all") sp.set("status", statusFilter);
-      const res = await fetch(`/api/giangvien/bao-cao-thuc-tap?${sp.toString()}`);
-      const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải danh sách BCTT.");
+      const url = `/api/giangvien/bao-cao-thuc-tap?${sp.toString()}`;
+      const cacheKey = `gv:bao-cao:list:${url}`;
+      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      setError("");
+      const data = await getOrFetchCached<any>(
+        cacheKey,
+        async () => {
+          const res = await fetch(url);
+          const payload = await res.json();
+          if (!res.ok || !payload?.success) throw new Error(payload?.message || "Không thể tải danh sách BCTT.");
+          return payload;
+        },
+        { force }
+      );
       setRows(Array.isArray(data.items) ? data.items : []);
       setLatestBatchInternshipStats(data.latestBatchInternshipStats ?? null);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Không thể tải danh sách BCTT.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -74,6 +86,14 @@ export default function GiangvienQuanLyBCPage() {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void load({ force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, degreeFilter, statusFilter]);
 
   async function submitUpdateInternship() {
     if (!updateTarget) return;
@@ -86,7 +106,7 @@ export default function GiangvienQuanLyBCPage() {
       if (!res.ok || !data?.success) throw new Error(data?.message || "Cập nhật thất bại.");
       setUpdateTarget(null);
       setToast(data?.message || "Cập nhật thành công.");
-      await load();
+      await load({ force: true });
     } catch (e: unknown) {
       setToast(e instanceof Error ? e.message : "Cập nhật thất bại.");
     } finally {
@@ -115,7 +135,7 @@ export default function GiangvienQuanLyBCPage() {
       if (!res.ok || !data?.success) throw new Error(data?.message || "Duyệt thất bại.");
       setReviewTarget(null);
       setToast(data?.message || "Duyệt thành công.");
-      await load();
+      await load({ force: true });
     } catch (e: unknown) {
       setToast(e instanceof Error ? e.message : "Duyệt thất bại.");
     } finally {
@@ -142,7 +162,7 @@ export default function GiangvienQuanLyBCPage() {
       setDqtPoint("");
       setKthpPoint("");
       setToast(data?.message || "Từ chối thành công.");
-      await load();
+      await load({ force: true });
     } catch (e: unknown) {
       setToast(e instanceof Error ? e.message : "Từ chối thất bại.");
     } finally {
@@ -231,7 +251,7 @@ export default function GiangvienQuanLyBCPage() {
         onQChange={setQ}
         onDegreeFilterChange={setDegreeFilter}
         onStatusFilterChange={setStatusFilter}
-        onSearch={() => void load()}
+        onSearch={() => void load({ force: true })}
       />
 
       <BaoCaoTableSection

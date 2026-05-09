@@ -9,6 +9,7 @@ import {
   DOANHNGHIEP_UNG_VIEN_PAGE_SIZE
 } from "@/lib/constants/doanhnghiep-ung-vien";
 import { buildDoanhNghiepUngVienListUrl, getDoanhNghiepUngVienLoadErrorMessage } from "@/lib/utils/doanhnghiep-ung-vien";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import UngVienToolbar from "./components/UngVienToolbar";
 import UngVienTableSection from "./components/UngVienTableSection";
 
@@ -36,10 +37,11 @@ export default function DoanhNghiepUngVienPage() {
   const [status, setStatus] = useState<JobStatus | "all">("all");
 
   const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
-  async function load(nextPage = 1) {
-    setLoading(true);
-    setError("");
+  async function load(nextPage = 1, opts?: { force?: boolean; silent?: boolean }) {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
       const url = buildDoanhNghiepUngVienListUrl({
         origin: window.location.origin,
@@ -48,16 +50,29 @@ export default function DoanhNghiepUngVienPage() {
         deadlineDate,
         status
       });
-      const res = await fetch(url.toString());
-      const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || DOANHNGHIEP_UNG_VIEN_ERROR_DEFAULT);
+      url.searchParams.set("page", String(nextPage));
+      url.searchParams.set("pageSize", String(DOANHNGHIEP_UNG_VIEN_PAGE_SIZE));
+      const cacheKey = `enterprise:ung-vien:list:${url.toString()}`;
+      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      setError("");
+      const data = await getOrFetchCached<any>(
+        cacheKey,
+        async () => {
+          const res = await fetch(url.toString());
+          const payload = await res.json();
+          if (!res.ok || !payload?.success) throw new Error(payload?.message || DOANHNGHIEP_UNG_VIEN_ERROR_DEFAULT);
+          return payload;
+        },
+        { force }
+      );
       setItems(Array.isArray(data.items) ? data.items : []);
       if (data.appStats) setAppStats(data.appStats as AppStats);
+      setTotalItems(Number(data.totalItems || 0));
       setPage(nextPage);
     } catch (e: unknown) {
       setError(getDoanhNghiepUngVienLoadErrorMessage(e));
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -67,8 +82,12 @@ export default function DoanhNghiepUngVienPage() {
   }, []);
 
   useEffect(() => {
-    setPage(1);
-  }, [q, createdDate, deadlineDate, status]);
+    const timer = setInterval(() => {
+      void load(page, { force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, q, createdDate, deadlineDate, status]);
 
   return (
     <main className={styles.page}>
@@ -106,14 +125,15 @@ export default function DoanhNghiepUngVienPage() {
         onCreatedDateChange={setCreatedDate}
         onDeadlineDateChange={setDeadlineDate}
         onStatusChange={setStatus}
-        onSearch={() => void load(1)}
+        onSearch={() => void load(1, { force: true })}
       />
 
       <UngVienTableSection
         loading={loading}
         items={items}
+        totalItems={totalItems}
         page={page}
-        onPageChange={setPage}
+        onPageChange={(p) => void load(p, { force: true })}
       />
     </main>
   );

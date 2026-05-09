@@ -13,14 +13,14 @@ const PAGE_SIZE = DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE;
 
 type Props = {
   applicants: Applicant[];
+  totalItems: number;
   page: number;
   busy: boolean;
   onView: (a: Applicant) => void;
   onPageChange: (p: number) => void;
 };
 
-export default function ApplicantTableSection({ applicants, page, busy, onView, onPageChange }: Props) {
-  const paged = applicants.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+export default function ApplicantTableSection({ applicants, totalItems, page, busy, onView, onPageChange }: Props) {
 
   return (
     <section style={{ marginTop: 16 }}>
@@ -41,14 +41,14 @@ export default function ApplicantTableSection({ applicants, page, busy, onView, 
             </tr>
           </thead>
           <tbody>
-            {paged.length === 0 ? (
+            {applicants.length === 0 ? (
               <tr>
                 <td colSpan={6} className={styles.modulePlaceholder}>
                   Chưa có ứng viên ứng tuyển.
                 </td>
               </tr>
             ) : (
-              paged.map((a, idx) => {
+              applicants.map((a, idx) => {
                 const colors = applicationStatusColor[a.status];
                 return (
                   <tr key={a.id}>
@@ -92,7 +92,7 @@ export default function ApplicantTableSection({ applicants, page, busy, onView, 
       <Pagination
         page={page}
         pageSize={PAGE_SIZE}
-        totalItems={applicants.length}
+        totalItems={totalItems}
         onPageChange={onPageChange}
         buttonClassName={adminStyles.btn}
         activeButtonClassName={`${adminStyles.btn} ${adminStyles.btnPrimary}`}

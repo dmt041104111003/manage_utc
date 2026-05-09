@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
+import { DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE } from "@/lib/constants/doanhnghiep-tuyen-dung";
 
 function getTodayStart() {
   const d = new Date();
@@ -53,6 +54,8 @@ export async function GET(request: Request) {
   const q = (searchParams.get("q") || "").trim();
   const date = searchParams.get("date") || "";
   const status = (searchParams.get("status") || "all").trim();
+  const page = Math.max(Number(searchParams.get("page") || "1") || 1, 1);
+  const pageSize = Math.max(Number(searchParams.get("pageSize") || String(DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE)) || DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE, 1);
 
   const prismaAny = prisma as any;
   const now = new Date();
@@ -72,32 +75,49 @@ export async function GET(request: Request) {
     where.OR = [{ title: { contains: q, mode: "insensitive" } }, { expertise: { contains: q, mode: "insensitive" } }];
   }
 
-  if (status && status !== "all") {
-    where.status = status;
-  }
+  const whereForStats: Record<string, unknown> = { ...where };
+  if (status && status !== "all") where.status = status;
 
   const dateRange = parseDateOnly(date);
   if (dateRange) {
     where.createdAt = { gte: dateRange.start, lte: dateRange.end };
   }
 
-  const rows = await prismaAny.jobPost.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      createdAt: true,
-      recruitmentCount: true,
-      expertise: true,
-      workType: true,
-      status: true,
-      deadlineAt: true
-    }
-  });
+  const [totalItems, rows, groupedStatusRows] = await Promise.all([
+    prismaAny.jobPost.count({ where }),
+    prismaAny.jobPost.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        recruitmentCount: true,
+        expertise: true,
+        workType: true,
+        status: true,
+        deadlineAt: true
+      }
+    }),
+    prismaAny.jobPost.groupBy({
+      by: ["status"],
+      where: whereForStats,
+      _count: { _all: true }
+    })
+  ]);
+  const statusStats = { PENDING: 0, REJECTED: 0, ACTIVE: 0, STOPPED: 0 };
+  for (const g of groupedStatusRows as Array<{ status: keyof typeof statusStats; _count: { _all: number } }>) {
+    if (g.status in statusStats) statusStats[g.status] = Number(g._count?._all || 0);
+  }
 
   return NextResponse.json({
     success: true,
+    page,
+    pageSize,
+    totalItems,
+    statusStats,
     items: rows.map((r: any) => ({
       id: r.id,
       title: r.title,

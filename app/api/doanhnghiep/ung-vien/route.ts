@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
+import { DOANHNGHIEP_UNG_VIEN_PAGE_SIZE } from "@/lib/constants/doanhnghiep-ung-vien";
 
 type JobStatus = "PENDING" | "REJECTED" | "ACTIVE" | "STOPPED";
 
@@ -34,6 +35,8 @@ export async function GET(request: Request) {
   const createdDate = (searchParams.get("createdDate") || "").trim();
   const deadlineDate = (searchParams.get("deadlineDate") || "").trim();
   const status = (searchParams.get("status") || "all").trim() as JobStatus | "all";
+  const page = Math.max(Number(searchParams.get("page") || "1") || 1, 1);
+  const pageSize = Math.max(Number(searchParams.get("pageSize") || String(DOANHNGHIEP_UNG_VIEN_PAGE_SIZE)) || DOANHNGHIEP_UNG_VIEN_PAGE_SIZE, 1);
 
   const where: any = { enterpriseUserId: sub };
   const and: any[] = [];
@@ -59,10 +62,13 @@ export async function GET(request: Request) {
 
   const prismaAny = prisma as any;
 
-  const [rows, appStatusRows] = await Promise.all([
+  const [totalItems, rows, appStatusRows] = await Promise.all([
+    prismaAny.jobPost.count({ where }),
     prismaAny.jobPost.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       select: {
         id: true,
         title: true,
@@ -88,6 +94,9 @@ export async function GET(request: Request) {
   return NextResponse.json({
     success: true,
     appStats,
+    page,
+    pageSize,
+    totalItems,
     items: rows.map((r: any) => ({
       id: r.id,
       title: r.title,

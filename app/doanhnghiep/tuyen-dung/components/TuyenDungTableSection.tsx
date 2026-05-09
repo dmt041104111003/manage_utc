@@ -10,6 +10,7 @@ const PAGE_SIZE = DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE;
 type Props = {
   loading: boolean;
   items: JobListItem[];
+  totalItems: number;
   page: number;
   busyId: string | null;
   onView: (row: JobListItem) => void;
@@ -22,6 +23,7 @@ type Props = {
 export default function TuyenDungTableSection({
   loading,
   items,
+  totalItems,
   page,
   busyId,
   onView,
@@ -30,8 +32,6 @@ export default function TuyenDungTableSection({
   onDelete,
   onPageChange
 }: Props) {
-  const pagedItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
   if (loading) {
     return <p className={styles.modulePlaceholder}>Đang tải…</p>;
   }
@@ -60,7 +60,7 @@ export default function TuyenDungTableSection({
                 </td>
               </tr>
             ) : (
-              pagedItems.map((row, idx) => (
+              items.map((row, idx) => (
                 <tr key={row.id}>
                   <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                   <td data-label="Tiêu đề">{row.title}</td>
@@ -97,7 +97,7 @@ export default function TuyenDungTableSection({
       <Pagination
         page={page}
         pageSize={PAGE_SIZE}
-        totalItems={items.length}
+        totalItems={totalItems}
         onPageChange={onPageChange}
         buttonClassName={adminStyles.btn}
         activeButtonClassName={`${adminStyles.btn} ${adminStyles.btnPrimary}`}

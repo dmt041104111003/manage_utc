@@ -13,12 +13,12 @@ const PAGE_SIZE = DOANHNGHIEP_UNG_VIEN_PAGE_SIZE;
 type Props = {
   loading: boolean;
   items: JobRow[];
+  totalItems: number;
   page: number;
   onPageChange: (p: number) => void;
 };
 
-export default function UngVienTableSection({ loading, items, page, onPageChange }: Props) {
-  const paged = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+export default function UngVienTableSection({ loading, items, totalItems, page, onPageChange }: Props) {
 
   if (loading) {
     return <p className={styles.modulePlaceholder}>Đang tải…</p>;
@@ -41,14 +41,14 @@ export default function UngVienTableSection({ loading, items, page, onPageChange
             </tr>
           </thead>
           <tbody>
-            {paged.length === 0 ? (
+            {items.length === 0 ? (
               <tr>
                 <td colSpan={8} className={styles.modulePlaceholder}>
                   Không có tin tuyển dụng phù hợp.
                 </td>
               </tr>
             ) : (
-              paged.map((row, idx) => (
+              items.map((row, idx) => (
                 <tr key={row.id}>
                   <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
                   <td data-label="Tiêu đề">{row.title}</td>
@@ -72,7 +72,7 @@ export default function UngVienTableSection({ loading, items, page, onPageChange
       <Pagination
         page={page}
         pageSize={PAGE_SIZE}
-        totalItems={items.length}
+        totalItems={totalItems}
         onPageChange={onPageChange}
         buttonClassName={adminStyles.btn}
         activeButtonClassName={`${adminStyles.btn} ${adminStyles.btnPrimary}`}

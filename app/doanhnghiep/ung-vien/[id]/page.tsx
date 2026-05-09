@@ -9,6 +9,8 @@ import type { Applicant, JobApplicationStatus, JobDetail } from "@/lib/types/doa
 import { getAvailableNextStatuses } from "@/lib/types/doanhnghiep-ung-vien-detail";
 import JobDetailInfo from "./components/JobDetailInfo";
 import ApplicantTableSection from "./components/ApplicantTableSection";
+import { DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE } from "@/lib/constants/doanhnghiep-ung-vien-detail";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 const ApplicantDetailPopup = dynamic(() => import("./components/ApplicantDetailPopup"), { ssr: false });
 
 export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,6 +21,7 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
   const [job, setJob] = useState<JobDetail | null>(null);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [toast, setToast] = useState("");
 
   const [viewTarget, setViewTarget] = useState<Applicant | null>(null);
@@ -28,27 +31,47 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
   const [interviewLocation, setInterviewLocation] = useState("");
   const [responseDeadline, setResponseDeadline] = useState("");
 
-  async function load() {
-    setLoading(true);
-    setError("");
+  async function load(nextPage = 1, opts?: { force?: boolean; silent?: boolean }) {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
-      const res = await fetch(`/api/doanhnghiep/ung-vien/${jobId}`);
-      const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải chi tiết tin tuyển dụng.");
+      const url = `/api/doanhnghiep/ung-vien/${jobId}?page=${nextPage}&pageSize=${DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE}`;
+      const cacheKey = `enterprise:ung-vien:detail:${jobId}:${nextPage}`;
+      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      setError("");
+      const data = await getOrFetchCached<any>(
+        cacheKey,
+        async () => {
+          const res = await fetch(url);
+          const payload = await res.json();
+          if (!res.ok || !payload?.success) throw new Error(payload?.message || "Không thể tải chi tiết tin tuyển dụng.");
+          return payload;
+        },
+        { force }
+      );
       setJob(data.job ?? null);
       setApplicants(Array.isArray(data.applicants) ? data.applicants : []);
-      setPage(1);
+      setTotalItems(Number(data.totalItems || 0));
+      setPage(nextPage);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Không thể tải chi tiết tin tuyển dụng.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
   useEffect(() => {
-    void load();
+    void load(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void load(page, { force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, jobId]);
 
   function openApplicant(app: Applicant) {
     setViewTarget(app);
@@ -101,7 +124,7 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
       if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể cập nhật trạng thái hồ sơ.");
       setToast(data?.message || "Cập nhật trạng thái hồ sơ thành công.");
       closeApplicant();
-      await load();
+      await load(page, { force: true });
     } catch (e: unknown) {
       setToast(e instanceof Error ? e.message : "Không thể cập nhật trạng thái hồ sơ.");
     } finally {
@@ -129,10 +152,11 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
           <JobDetailInfo job={job} />
           <ApplicantTableSection
             applicants={applicants}
+            totalItems={totalItems}
             page={page}
             busy={busy}
             onView={openApplicant}
-            onPageChange={setPage}
+            onPageChange={(p) => void load(p, { force: true })}
           />
         </>
       ) : null}

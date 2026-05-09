@@ -34,13 +34,51 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
 
   useEffect(() => {
     const originalFetch = window.fetch.bind(window);
+    const globalAny = window as typeof window & {
+      __manageUtcFetchCache?: Map<string, { bodyText: string; status: number; statusText: string; headers: Record<string, string> }>;
+    };
+    const fetchCache =
+      globalAny.__manageUtcFetchCache ?? (globalAny.__manageUtcFetchCache = new Map());
     const patchedFetch: typeof window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const method = String(init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      const isGet = method === "GET";
+      const bypass = Boolean(init?.cache === "no-store" || init?.cache === "reload" || init?.headers instanceof Headers && init.headers.get("x-no-cache") === "1");
+      const cacheKey = `${method}:${url}`;
+      if (isGet && !bypass && fetchCache.has(cacheKey)) {
+        const hit = fetchCache.get(cacheKey)!;
+        return new Response(hit.bodyText, {
+          status: hit.status,
+          statusText: hit.statusText,
+          headers: hit.headers
+        });
+      }
       const res = await originalFetch(input, init);
       const isMutation = method !== "GET" && method !== "HEAD";
+      if (isGet && res.ok && !bypass) {
+        const contentType = String(res.headers.get("content-type") || "").toLowerCase();
+        if (contentType.includes("application/json")) {
+          try {
+            const bodyText = await res.clone().text();
+            const headers: Record<string, string> = {};
+            res.headers.forEach((v, k) => {
+              headers[k] = v;
+            });
+            fetchCache.set(cacheKey, {
+              bodyText,
+              status: res.status,
+              statusText: res.statusText,
+              headers
+            });
+          } catch {
+            // ignore cache failure
+          }
+        }
+      }
       if (!isMutation || !res.ok || reloadingRef.current) return res;
       reloadingRef.current = true;
       clearAllQueryCache();
+      fetchCache.clear();
       setTimeout(() => {
         window.location.reload();
       }, 0);

@@ -4,13 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 
 import type { OverviewPayload } from "@/lib/types/admin-dashboard";
-import {
-  BarChart,
-  DonutChart,
-  LineChart,
-  ProgressColumnChart,
-  TopFacultiesCard
-} from "../components/AdminDashboardCharts";
+import { TopFacultiesCard } from "../components/AdminDashboardCharts";
 
 export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -102,44 +96,52 @@ export default function AdminDashboardPage() {
           {/* Row 1: Two donuts */}
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Trạng thái hồ sơ ứng tuyển</h2>
-            <div className={styles.chartPadding}>
-              <DonutChart segments={applicationStatusDonut.segments} />
-              <div className={styles.muted} style={{ marginTop: 8, fontSize: 13 }}>
-                Tổng: {applicationStatusDonut.total} hồ sơ
-              </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              {applicationStatusDonut.segments.map((s) => (
+                <div key={s.label} className={styles.statusNote}>{s.label}: {s.value}</div>
+              ))}
+              <div className={styles.muted}>Tổng: {applicationStatusDonut.total} hồ sơ</div>
             </div>
           </article>
 
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Trạng thái tin tuyển dụng</h2>
-            <div className={styles.chartPadding}>
-              <DonutChart segments={jobStatusDonut.segments} />
-              <div className={styles.muted} style={{ marginTop: 8, fontSize: 13 }}>
-                Tổng: {jobStatusDonut.total} tin
-              </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              {jobStatusDonut.segments.map((s) => (
+                <div key={s.label} className={styles.statusNote}>{s.label}: {s.value}</div>
+              ))}
+              <div className={styles.muted}>Tổng: {jobStatusDonut.total} tin</div>
             </div>
           </article>
 
           {/* Row 2: Two bars */}
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Số lượng doanh nghiệp liên kết theo ngành/khoa</h2>
-            <div className={styles.chartPadding}>
-              <BarChart labels={enterprisesByField.labels} values={enterprisesByField.values} />
+            <div style={{ display: "grid", gap: 8 }}>
+              {enterprisesByField.labels.map((name, i) => (
+                <div key={name} className={styles.statusNote}>{name}: {enterprisesByField.values[i] ?? 0}</div>
+              ))}
             </div>
           </article>
 
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Tiến độ thực tập: số lượng sinh viên theo trạng thái</h2>
-            <div className={styles.chartPadding}>
-              <ProgressColumnChart labels={progress.labels} values={progress.values} />
+            <div style={{ display: "grid", gap: 8 }}>
+              {progress.labels.map((name, i) => (
+                <div key={name} className={styles.statusNote}>{name}: {progress.values[i] ?? 0}</div>
+              ))}
             </div>
           </article>
 
           {/* Row 3: Line chart full width */}
           <article className={styles.card} style={{ gridColumn: "1 / -1" }}>
             <h2 className={styles.panelTitle}>Thống kê tổng số bài đăng tuyển dụng theo doanh nghiệp</h2>
-            <div className={styles.chartPadding}>
-              <LineChart labels={lineJobPosts.labels} series={lineJobPosts.series} />
+            <div style={{ display: "grid", gap: 8 }}>
+              {lineJobPosts.series.map((s) => (
+                <div key={s.name} className={styles.statusNote}>
+                  {s.name}: {s.data.reduce((acc, v) => acc + Number(v || 0), 0)}
+                </div>
+              ))}
             </div>
           </article>
 

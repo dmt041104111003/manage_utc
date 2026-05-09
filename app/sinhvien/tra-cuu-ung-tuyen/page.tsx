@@ -14,6 +14,7 @@ import {
   getSinhVienTraCuuUngTuyenStatusNoteText
 } from "@/lib/constants/sinhvien-tra-cuu-ung-tuyen";
 import { fetchSinhVienTraCuuUngTuyenList } from "@/lib/utils/sinhvien-tra-cuu-ung-tuyen";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import TraCuuUngTuyenToolbar from "./components/TraCuuUngTuyenToolbar";
 import TraCuuUngTuyenJobGrid from "./components/TraCuuUngTuyenJobGrid";
 
@@ -29,11 +30,18 @@ export default function SinhVienTraCuuUngTuyenPage() {
   const [province, setProvince] = useState("all");
   const [provinceOptions, setProvinceOptions] = useState<string[]>([]);
 
-  async function load() {
-    setLoading(true);
-    setError("");
+  async function load(opts?: { force?: boolean; silent?: boolean }) {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
-      const result = await fetchSinhVienTraCuuUngTuyenList({ q, workType, province });
+      const key = `sv:tra-cuu-ung-tuyen:list:q=${encodeURIComponent(q)}&workType=${workType}&province=${encodeURIComponent(province)}`;
+      if (!silent && (force || !hasCachedValue(key))) setLoading(true);
+      setError("");
+      const result = await getOrFetchCached(
+        key,
+        () => fetchSinhVienTraCuuUngTuyenList({ q, workType, province }),
+        { force }
+      );
       setItems(result.items);
       setCanApply(result.canApply);
       setInternshipStatus(result.internshipStatus);
@@ -41,7 +49,7 @@ export default function SinhVienTraCuuUngTuyenPage() {
     } catch (e: any) {
       setError(e?.message || SINHVIEN_TRA_CUU_UNG_TUYEN_LOAD_ERROR_DEFAULT);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -49,6 +57,14 @@ export default function SinhVienTraCuuUngTuyenPage() {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void load({ force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, workType, province]);
 
   const statusNote = useMemo(() => {
     return getSinhVienTraCuuUngTuyenStatusNoteText(canApply, internshipStatus);
@@ -71,7 +87,7 @@ export default function SinhVienTraCuuUngTuyenPage() {
         onQChange={setQ}
         onWorkTypeChange={setWorkType}
         onProvinceChange={setProvince}
-        onSearch={() => void load()}
+        onSearch={() => void load({ force: true })}
       />
 
       <p className={cardStyles.statusNote}>{statusNote}</p>
