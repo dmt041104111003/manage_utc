@@ -39,6 +39,16 @@ export default function AdminQuanLySinhVienPage() {
   const [faculties, setFaculties] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [latestBatchInternshipStats, setLatestBatchInternshipStats] = useState<{
+    batchId: string | null;
+    batchName: string | null;
+    notStarted: number;
+    doing: number;
+    selfFinanced: number;
+    reportSubmitted: number;
+    completed: number;
+    rejected: number;
+  } | null>(null);
 
   const [searchQ, setSearchQ] = useState("");
   const [filterFaculty, setFilterFaculty] = useState<string>("all");
@@ -125,10 +135,12 @@ export default function AdminQuanLySinhVienPage() {
       if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách sinh viên.");
       setItems(data.items || []);
       setFaculties(data.faculties || []);
+      setLatestBatchInternshipStats(data.latestBatchInternshipStats ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Lỗi.");
       setItems([]);
       setFaculties([]);
+      setLatestBatchInternshipStats(null);
     } finally {
       setLoading(false);
     }
@@ -525,6 +537,40 @@ export default function AdminQuanLySinhVienPage() {
       </header>
 
       {error ? <p className={styles.error}>{error}</p> : null}
+
+      {!loading && latestBatchInternshipStats?.batchId ? (
+        <section aria-label="Thống kê trạng thái thực tập đợt mới nhất">
+          <div className={styles.statusNote} style={{ marginBottom: 10 }}>
+            Đợt thực tập mới nhất: <strong>{latestBatchInternshipStats.batchName ?? "—"}</strong>
+          </div>
+          <div className={styles.statsGrid3}>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Chưa thực tập</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.notStarted}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Đang thực tập</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.doing}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Thực tập tự túc</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.selfFinanced}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Đã nộp BCTT</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.reportSubmitted}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Hoàn thành</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.completed}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Từ chối</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.rejected}</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <AdminSinhVienToolbar
         searchQ={searchQ}

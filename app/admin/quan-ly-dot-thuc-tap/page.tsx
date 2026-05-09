@@ -28,6 +28,7 @@ export default function AdminQuanLyDotThucTapPage() {
   const [toast, setToast] = useState("");
 
   const [items, setItems] = useState<InternshipBatchRow[]>([]);
+  const [batchStatusStats, setBatchStatusStats] = useState<{ open: number; closed: number } | null>(null);
 
   const [searchName, setSearchName] = useState("");
   const [searchStart, setSearchStart] = useState("");
@@ -73,9 +74,11 @@ export default function AdminQuanLyDotThucTapPage() {
       const data = (await res.json()) as ApiResponse<InternshipBatchRow>;
       if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách đợt thực tập.");
       setItems((data.items || []) as any);
+      setBatchStatusStats((data as any).batchStatusStats ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Lỗi.");
       setItems([]);
+      setBatchStatusStats(null);
     } finally {
       setLoading(false);
     }
@@ -279,6 +282,21 @@ export default function AdminQuanLyDotThucTapPage() {
       {toast ? <MessagePopup open message={toast} onClose={dismissToast} /> : null}
 
       {error ? <p className={styles.error}>{error}</p> : null}
+
+      {!loading && batchStatusStats ? (
+        <section aria-label="Thống kê trạng thái đợt thực tập">
+          <div className={styles.statsGrid2}>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Đợt thực tập đang mở</p>
+              <p className={styles.statValue}>{batchStatusStats.open}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Đợt thực tập đã đóng</p>
+              <p className={styles.statValue}>{batchStatusStats.closed}</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <AdminInternshipBatchToolbar
         searchName={searchName}

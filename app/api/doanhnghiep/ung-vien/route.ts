@@ -58,22 +58,36 @@ export async function GET(request: Request) {
   if (and.length) where.AND = and;
 
   const prismaAny = prisma as any;
-  const rows = await prismaAny.jobPost.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      createdAt: true,
-      deadlineAt: true,
-      recruitmentCount: true,
-      status: true,
-      _count: { select: { jobApplications: true } }
-    }
-  });
+
+  const [rows, appStatusRows] = await Promise.all([
+    prismaAny.jobPost.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        deadlineAt: true,
+        recruitmentCount: true,
+        status: true,
+        _count: { select: { jobApplications: true } }
+      }
+    }),
+    // Aggregate all application statuses for this enterprise (ignoring current search filters)
+    prismaAny.jobApplication.findMany({
+      where: { jobPost: { enterpriseUserId: sub } },
+      select: { status: true }
+    }) as Promise<Array<{ status: string }>>
+  ]);
+
+  const appStats = { PENDING_REVIEW: 0, INTERVIEW_INVITED: 0, OFFERED: 0, REJECTED: 0, STUDENT_DECLINED: 0 };
+  for (const row of appStatusRows) {
+    if (row.status in appStats) appStats[row.status as keyof typeof appStats]++;
+  }
 
   return NextResponse.json({
     success: true,
+    appStats,
     items: rows.map((r: any) => ({
       id: r.id,
       title: r.title,

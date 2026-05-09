@@ -19,6 +19,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
   const [toast, setToast] = useState("");
 
   const [items, setItems] = useState<JobListItem[]>([]);
+  const [statusStats, setStatusStats] = useState<{ pending: number; rejected: number; active: number; stopped: number } | null>(null);
 
   const [batches, setBatches] = useState<InternshipBatchRow[]>([]);
   const [expertises, setExpertises] = useState<string[]>([]);
@@ -72,9 +73,11 @@ export default function AdminQuanLyTinTuyenDungPage() {
       if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách tin.");
       setItems((data.items || []) as any);
       if (Array.isArray(data.expertises)) setExpertises(data.expertises);
+      setStatusStats((data as any).statusStats ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Lỗi.");
       setItems([]);
+      setStatusStats(null);
     } finally {
       setLoading(false);
     }
@@ -180,6 +183,29 @@ export default function AdminQuanLyTinTuyenDungPage() {
       {toast ? <MessagePopup open message={toast} onClose={dismissToast} /> : null}
 
       {error ? <p className={styles.error}>{error}</p> : null}
+
+      {!loading && statusStats ? (
+        <section aria-label="Thống kê trạng thái tin tuyển dụng">
+          <div className={styles.statsGrid4}>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Chờ duyệt</p>
+              <p className={styles.statValue}>{statusStats.pending}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Từ chối duyệt</p>
+              <p className={styles.statValue}>{statusStats.rejected}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Đang hoạt động</p>
+              <p className={styles.statValue}>{statusStats.active}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Dừng hoạt động</p>
+              <p className={styles.statValue}>{statusStats.stopped}</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <AdminTinTuyenDungToolbar
         searchQ={searchQ}

@@ -23,6 +23,20 @@ export default function GiangvienQuanLyBCPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [toast, setToast] = useState("");
 
+  const [latestBatchInternshipStats, setLatestBatchInternshipStats] = useState<{
+    batchId: string | null;
+    batchName: string | null;
+    totalAssigned: number;
+    notStarted: number;
+    doing: number;
+    selfFinanced: number;
+    reportSubmitted: number;
+    reportRejected: number;
+    reportApproved: number;
+    internshipCompleted: number;
+    reportNotCompleted: number;
+  } | null>(null);
+
   const [viewTarget, setViewTarget] = useState<Row | null>(null);
 
   const [updateTarget, setUpdateTarget] = useState<Row | null>(null);
@@ -46,6 +60,7 @@ export default function GiangvienQuanLyBCPage() {
       const data = await res.json();
       if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải danh sách BCTT.");
       setRows(Array.isArray(data.items) ? data.items : []);
+      setLatestBatchInternshipStats(data.latestBatchInternshipStats ?? null);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Không thể tải danh sách BCTT.");
     } finally {
@@ -153,6 +168,50 @@ export default function GiangvienQuanLyBCPage() {
       </header>
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
+
+      {!loading && latestBatchInternshipStats?.batchId ? (
+        <section className={styles.statsSection} aria-label="Thống kê tiến độ thực tập đợt mới nhất">
+          <p className={styles.statsSectionTitle}>
+            Đợt thực tập mới nhất:{" "}
+            <span className={styles.statsSectionBatchName}>{latestBatchInternshipStats.batchName ?? "—"}</span>
+          </p>
+
+          <div className={styles.statsGrid4}>
+            <div className={styles.statCard}>
+              <p className={styles.statCardTitle}>Chưa thực tập</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.notStarted}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statCardTitle}>Đang thực tập</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.doing}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statCardTitle}>Thực tập tự túc</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.selfFinanced}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statCardTitle}>Đã nộp BCTT</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.reportSubmitted}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statCardTitle}>Từ chối duyệt BCTT</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.reportRejected}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statCardTitle}>Đã hoàn thành BCTT</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.reportApproved}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statCardTitle}>Hoàn thành thực tập</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.internshipCompleted}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statCardTitle}>Chưa hoàn thành BCTT</p>
+              <p className={styles.statValue}>{latestBatchInternshipStats.reportNotCompleted}</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <BaoCaoToolbar
         q={q}

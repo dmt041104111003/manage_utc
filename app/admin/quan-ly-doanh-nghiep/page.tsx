@@ -30,6 +30,11 @@ export default function AdminQuanLyDoanhNghiepPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+  const [enterpriseStatusStats, setEnterpriseStatusStats] = useState<{
+    pending: number;
+    approved: number;
+    rejected: number;
+  } | null>(null);
 
   const [searchQ, setSearchQ] = useState("");
   const [searchStatus, setSearchStatus] = useState<string>("all");
@@ -77,11 +82,13 @@ export default function AdminQuanLyDoanhNghiepPage() {
       const params = buildAdminEnterprisesListQueryParams(appliedQ, appliedStatus);
       const res = await fetch(`/api/admin/enterprises?${params.toString()}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || ADMIN_ENTERPRISE_MSG.listLoadFail);
+      if (!res.ok || data?.success === false) throw new Error(data.message || ADMIN_ENTERPRISE_MSG.listLoadFail);
       setItems(data.items as AdminEnterpriseListItem[]);
+      setEnterpriseStatusStats(data.enterpriseStatusStats ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : ADMIN_ENTERPRISE_MSG.genericError);
       setItems([]);
+      setEnterpriseStatusStats(null);
     } finally {
       setLoading(false);
     }
@@ -237,6 +244,25 @@ export default function AdminQuanLyDoanhNghiepPage() {
       </header>
 
       {toast ? <MessagePopup open message={toast} onClose={dismissToast} /> : null}
+
+      {!loading && enterpriseStatusStats ? (
+        <section aria-label="Thống kê trạng thái doanh nghiệp" style={{ marginBottom: 8 }}>
+          <div className={styles.statsGrid3}>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>DN chờ phê duyệt</p>
+              <p className={styles.statValue}>{enterpriseStatusStats.pending}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>DN đã phê duyệt</p>
+              <p className={styles.statValue}>{enterpriseStatusStats.approved}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>DN bị từ chối</p>
+              <p className={styles.statValue}>{enterpriseStatusStats.rejected}</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <AdminEnterpriseToolbar
         searchQ={searchQ}

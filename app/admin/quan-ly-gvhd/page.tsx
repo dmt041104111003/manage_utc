@@ -33,6 +33,12 @@ export default function AdminQuanLyGVHDPage() {
   const [faculties, setFaculties] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [latestBatchSupervisorStats, setLatestBatchSupervisorStats] = useState<{
+    batchId: string | null;
+    batchName: string | null;
+    assigned: number;
+    unassigned: number;
+  } | null>(null);
 
   const [searchQ, setSearchQ] = useState("");
   const [filterFaculty, setFilterFaculty] = useState<string>("all");
@@ -117,10 +123,12 @@ export default function AdminQuanLyGVHDPage() {
       if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách GVHD.");
       setItems(data.items || []);
       setFaculties(data.faculties || []);
+      setLatestBatchSupervisorStats(data.latestBatchSupervisorStats ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Lỗi.");
       setItems([]);
       setFaculties([]);
+      setLatestBatchSupervisorStats(null);
     } finally {
       setLoading(false);
     }
@@ -452,6 +460,24 @@ export default function AdminQuanLyGVHDPage() {
       </header>
 
       {error ? <p className={styles.error}>{error}</p> : null}
+
+      {!loading && latestBatchSupervisorStats?.batchId ? (
+        <section aria-label="Thống kê phân công GVHD đợt mới nhất">
+          <div className={styles.statusNote} style={{ marginBottom: 10 }}>
+            Đợt thực tập mới nhất: <strong>{latestBatchSupervisorStats.batchName ?? "—"}</strong>
+          </div>
+          <div className={styles.statsGrid2}>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>GVHD đã được phân công</p>
+              <p className={styles.statValue}>{latestBatchSupervisorStats.assigned}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>GVHD chưa được phân công</p>
+              <p className={styles.statValue}>{latestBatchSupervisorStats.unassigned}</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <AdminGiangVienToolbar
         searchQ={searchQ}

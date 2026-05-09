@@ -81,6 +81,84 @@
   line-height: 1.55;
 }
 
+/* ----- Stat cards (Quản lý SV được phân công) ----- */
+.statsSection {
+  margin-bottom: 18px;
+}
+
+.statsSectionTitle {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.statsSectionBatchName {
+  color: #374151;
+  font-weight: 600;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.statCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 16px 18px;
+}
+
+.statLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Tiêu đề card dạng câu (không viết hoa toàn bộ) */
+.statCardTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1.35;
+}
+
+.statValue {
+  margin: 8px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+}
+
+.statsGrid4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 980px) {
+  .statsGrid4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statsGrid4 {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ----- Dashboard charts ----- */
 .overviewControls {
   display: flex;

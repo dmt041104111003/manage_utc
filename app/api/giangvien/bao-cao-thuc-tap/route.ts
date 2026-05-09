@@ -53,6 +53,107 @@ export async function GET(request: Request) {
   if ("error" in giangVien) return giangVien.error;
   const supervisorProfileId = giangVien.supervisorProfileId;
 
+  // --- Latest batch internship progress stats (for cards) ---
+  const latestAssignment = await prismaAny.supervisorAssignment.findFirst({
+    where: { supervisorProfileId },
+    orderBy: { internshipBatch: { startDate: "desc" } },
+    select: {
+      internshipBatchId: true,
+      internshipBatch: { select: { name: true, startDate: true } }
+    }
+  });
+
+  let latestBatchInternshipStats: {
+    batchId: string | null;
+    batchName: string | null;
+    totalAssigned: number;
+    notStarted: number;
+    doing: number;
+    selfFinanced: number;
+    reportSubmitted: number;
+    reportRejected: number;
+    reportApproved: number;
+    internshipCompleted: number;
+    reportNotCompleted: number;
+  } = {
+    batchId: null,
+    batchName: null,
+    totalAssigned: 0,
+    notStarted: 0,
+    doing: 0,
+    selfFinanced: 0,
+    reportSubmitted: 0,
+    reportRejected: 0,
+    reportApproved: 0,
+    internshipCompleted: 0,
+    reportNotCompleted: 0
+  };
+
+  if (latestAssignment?.internshipBatchId) {
+    const bid = String(latestAssignment.internshipBatchId);
+    const batchName = latestAssignment.internshipBatch?.name ?? null;
+
+    const latestLinks: Array<{
+      studentProfile: { internshipStatus: InternshipStatus; internshipReport: { reviewStatus: ReportReviewStatus } | null };
+    }> = await prismaAny.supervisorAssignmentStudent.findMany({
+      where: {
+        supervisorAssignment: { supervisorProfileId, internshipBatchId: bid }
+      },
+      select: {
+        studentProfile: {
+          select: {
+            internshipStatus: true,
+            internshipReport: { select: { reviewStatus: true } }
+          }
+        }
+      }
+    });
+
+    let notStarted = 0;
+    let doing = 0;
+    let selfFinanced = 0;
+    let reportSubmitted = 0;
+    let reportRejected = 0;
+    let reportApproved = 0;
+    let internshipCompleted = 0;
+
+    for (const x of latestLinks) {
+      const s = x.studentProfile?.internshipStatus as InternshipStatus;
+      const review = x.studentProfile?.internshipReport?.reviewStatus as ReportReviewStatus | undefined;
+
+      if (s === "NOT_STARTED") notStarted++;
+      else if (s === "DOING") doing++;
+      else if (s === "SELF_FINANCED") selfFinanced++;
+      else if (s === "COMPLETED") internshipCompleted++;
+
+      if (s === "REPORT_SUBMITTED") {
+        if (review === "APPROVED") reportApproved++;
+        else if (review === "REJECTED") reportRejected++;
+        else reportSubmitted++;
+      } else if (s === "REJECTED") {
+        // In this module, REJECTED represents report rejected.
+        reportRejected++;
+      }
+    }
+
+    const totalAssigned = latestLinks.length;
+    const reportNotCompleted = Math.max(0, totalAssigned - reportApproved);
+
+    latestBatchInternshipStats = {
+      batchId: bid,
+      batchName,
+      totalAssigned,
+      notStarted,
+      doing,
+      selfFinanced,
+      reportSubmitted,
+      reportRejected,
+      reportApproved,
+      internshipCompleted,
+      reportNotCompleted
+    };
+  }
+
   const { searchParams } = new URL(request.url);
   const q = (searchParams.get("q") || "").trim();
   const degree = (searchParams.get("degree") || "all").trim();
@@ -219,6 +320,6 @@ export async function GET(request: Request) {
     };
   });
 
-  return NextResponse.json({ success: true, items });
+  return NextResponse.json({ success: true, items, latestBatchInternshipStats });
 }
 

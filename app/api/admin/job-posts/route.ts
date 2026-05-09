@@ -45,6 +45,31 @@ export async function GET(request: Request) {
     if (status && status !== "all") where.status = status;
     if (expertise && expertise !== "all") where.expertise = { contains: expertise, mode: "insensitive" };
 
+    // Status stats for cards (apply same filters)
+    let statusStats: { pending: number; rejected: number; active: number; stopped: number } = {
+      pending: 0,
+      rejected: 0,
+      active: 0,
+      stopped: 0
+    };
+    try {
+      const grouped = await (prisma as any).jobPost.groupBy({
+        by: ["status"],
+        where,
+        _count: { _all: true }
+      });
+      for (const g of grouped as any[]) {
+        const s = String(g.status);
+        const c = Number(g._count?._all ?? 0);
+        if (s === "PENDING") statusStats.pending = c;
+        else if (s === "REJECTED") statusStats.rejected = c;
+        else if (s === "ACTIVE") statusStats.active = c;
+        else if (s === "STOPPED") statusStats.stopped = c;
+      }
+    } catch {
+      // Không để lỗi thống kê chặn tải danh sách
+    }
+
     const rows = await (prisma as any).jobPost.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -72,6 +97,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
+      statusStats,
       items: rows.map((r: any) => ({
         id: r.id,
         title: r.title,

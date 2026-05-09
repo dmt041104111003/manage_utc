@@ -12,6 +12,20 @@ import SinhVienToolbar from "./components/SinhVienToolbar";
 import SinhVienTableSection from "./components/SinhVienTableSection";
 import SinhVienViewPopup from "./components/SinhVienViewPopup";
 
+type LatestBatchGuidanceStats = {
+  batchId: string | null;
+  batchName: string | null;
+  guiding: number;
+  completed: number;
+};
+
+const EMPTY_LATEST_STATS: LatestBatchGuidanceStats = {
+  batchId: null,
+  batchName: null,
+  guiding: 0,
+  completed: 0
+};
+
 export default function GiangvienSinhVienPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -22,6 +36,8 @@ export default function GiangvienSinhVienPage() {
 
   const [items, setItems] = useState<Row[]>([]);
   const [batches, setBatches] = useState<BatchOption[]>([]);
+  const [latestBatchGuidanceStats, setLatestBatchGuidanceStats] =
+    useState<LatestBatchGuidanceStats>(EMPTY_LATEST_STATS);
 
   const [viewTarget, setViewTarget] = useState<Row | null>(null);
 
@@ -35,6 +51,11 @@ export default function GiangvienSinhVienPage() {
       if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải danh sách sinh viên được phân công.");
       setItems(Array.isArray(data.items) ? data.items : []);
       setBatches(Array.isArray(data.batches) ? data.batches : []);
+      if (data.latestBatchGuidanceStats) {
+        setLatestBatchGuidanceStats(data.latestBatchGuidanceStats as LatestBatchGuidanceStats);
+      } else {
+        setLatestBatchGuidanceStats(EMPTY_LATEST_STATS);
+      }
     } catch (e: unknown) {
       setError(getGiangVienSinhVienLoadErrorMessage(e));
     } finally {
@@ -54,6 +75,27 @@ export default function GiangvienSinhVienPage() {
       </header>
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
+
+      {!loading && latestBatchGuidanceStats.batchId ? (
+        <section className={styles.statsSection} aria-label="Thống kê đợt thực tập mới nhất">
+          <p className={styles.statsSectionTitle}>
+            Đợt thực tập mới nhất:{" "}
+            <span className={styles.statsSectionBatchName}>
+              {latestBatchGuidanceStats.batchName ?? "—"}
+            </span>
+          </p>
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <p className={styles.statCardTitle}>Đang thực tập</p>
+              <p className={styles.statValue}>{latestBatchGuidanceStats.guiding}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statCardTitle}>Hoàn thành hướng dẫn thực tập</p>
+              <p className={styles.statValue}>{latestBatchGuidanceStats.completed}</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <SinhVienToolbar
         q={q}

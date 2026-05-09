@@ -17,6 +17,12 @@ export default function AdminQuanLyTaiKhoanPage() {
   const [items, setItems] = useState<AccountRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [latestBatchAccountStats, setLatestBatchAccountStats] = useState<{
+    batchId: string | null;
+    batchName: string | null;
+    active: number;
+    stopped: number;
+  } | null>(null);
 
   const [searchQ, setSearchQ] = useState("");
   const [filterRole, setFilterRole] = useState<Role | "all">("all");
@@ -45,9 +51,11 @@ export default function AdminQuanLyTaiKhoanPage() {
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách tài khoản.");
       setItems((data.items || []) as AccountRow[]);
+      setLatestBatchAccountStats(data.latestBatchAccountStats ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Lỗi.");
       setItems([]);
+      setLatestBatchAccountStats(null);
     } finally {
       setLoading(false);
     }
@@ -124,6 +132,24 @@ export default function AdminQuanLyTaiKhoanPage() {
       </header>
 
       {error ? <p className={styles.error}>{error}</p> : null}
+
+      {!loading && latestBatchAccountStats?.batchId ? (
+        <section aria-label="Thống kê tài khoản đợt mới nhất">
+          <div className={styles.statusNote} style={{ marginBottom: 10 }}>
+            Đợt thực tập mới nhất: <strong>{latestBatchAccountStats.batchName ?? "—"}</strong>
+          </div>
+          <div className={styles.statsGrid2}>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Tài khoản đang hoạt động</p>
+              <p className={styles.statValue}>{latestBatchAccountStats.active}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Tài khoản dừng hoạt động</p>
+              <p className={styles.statValue}>{latestBatchAccountStats.stopped}</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <AdminTaiKhoanToolbar
         searchQ={searchQ}

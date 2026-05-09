@@ -36,72 +36,114 @@ export async function GET(request: Request) {
   const admin = await getAdminSession();
   if (!admin) return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
 
-  const { searchParams } = new URL(request.url);
-  const q = searchParams.get("q")?.trim() || "";
-  const faculty = searchParams.get("faculty")?.trim() || "all";
-  const degree = (searchParams.get("degree")?.trim() || "all") as Degree | "all";
-
-  const prismaAny = prisma as any;
-  const where: any = {};
-  const andParts: any[] = [];
-
-  if (faculty && faculty !== "all") andParts.push({ faculty });
-  if (degree && degree !== "all") andParts.push({ degree });
-  if (q) {
-    andParts.push({
-      OR: [
-        { user: { fullName: { contains: q, mode: "insensitive" } } },
-        { user: { phone: { contains: q, mode: "insensitive" } } },
-        { user: { email: { contains: q, mode: "insensitive" } } }
-      ]
-    });
-  }
-  if (andParts.length) where.AND = andParts;
-
-  const rows = await prismaAny.supervisorProfile.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      userId: true,
-      faculty: true,
-      degree: true,
-      birthDate: true,
-      gender: true,
-      permanentProvinceCode: true,
-      permanentProvinceName: true,
-      permanentWardCode: true,
-      permanentWardName: true,
-      user: { select: { fullName: true, email: true, phone: true } }
-    }
-  });
-
-  let faculties: string[] = [];
   try {
-    const fRows = await prismaAny.supervisorProfile.findMany({ distinct: ["faculty"], select: { faculty: true } });
-    faculties = fRows.map((r: any) => String(r.faculty)).filter(Boolean).sort((a: string, b: string) => a.localeCompare(b, "vi"));
-  } catch {
-    faculties = [];
-  }
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get("q")?.trim() || "";
+    const faculty = searchParams.get("faculty")?.trim() || "all";
+    const degree = (searchParams.get("degree")?.trim() || "all") as Degree | "all";
 
-  return NextResponse.json({
-    success: true,
-    items: rows.map((r: any) => ({
-      id: r.id,
-      fullName: r.user?.fullName ?? "",
-      phone: r.user?.phone ?? null,
-      email: r.user?.email ?? "",
-      faculty: r.faculty,
-      degree: r.degree as Degree,
-      birthDate: r.birthDate?.toISOString?.() ?? null,
-      gender: r.gender as Gender,
-      permanentProvinceCode: r.permanentProvinceCode,
-      permanentProvinceName: r.permanentProvinceName ?? null,
-      permanentWardCode: r.permanentWardCode,
-      permanentWardName: r.permanentWardName ?? null
-    })),
-    faculties
-  });
+    const prismaAny = prisma as any;
+    const where: any = {};
+    const andParts: any[] = [];
+
+    if (faculty && faculty !== "all") andParts.push({ faculty });
+    if (degree && degree !== "all") andParts.push({ degree });
+    if (q) {
+      andParts.push({
+        OR: [
+          { user: { fullName: { contains: q, mode: "insensitive" } } },
+          { user: { phone: { contains: q, mode: "insensitive" } } },
+          { user: { email: { contains: q, mode: "insensitive" } } }
+        ]
+      });
+    }
+    if (andParts.length) where.AND = andParts;
+
+    const rows = await prismaAny.supervisorProfile.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        userId: true,
+        faculty: true,
+        degree: true,
+        birthDate: true,
+        gender: true,
+        permanentProvinceCode: true,
+        permanentProvinceName: true,
+        permanentWardCode: true,
+        permanentWardName: true,
+        user: { select: { fullName: true, email: true, phone: true } }
+      }
+    });
+
+    let faculties: string[] = [];
+    try {
+      const fRows = await prismaAny.supervisorProfile.findMany({ distinct: ["faculty"], select: { faculty: true } });
+      faculties = fRows
+        .map((r: any) => String(r.faculty))
+        .filter(Boolean)
+        .sort((a: string, b: string) => a.localeCompare(b, "vi"));
+    } catch {
+      faculties = [];
+    }
+
+    // --- Latest batch supervisor assignment stats (for cards) ---
+    let latestBatchSupervisorStats: {
+      batchId: string | null;
+      batchName: string | null;
+      assigned: number;
+      unassigned: number;
+    } = { batchId: null, batchName: null, assigned: 0, unassigned: 0 };
+
+    try {
+      const latestBatch: { id: string; name: string } | null = await prismaAny.internshipBatch.findFirst({
+        orderBy: { startDate: "desc" },
+        select: { id: true, name: true }
+      });
+
+      if (latestBatch?.id) {
+        const batchId = String(latestBatch.id);
+        const totalSupervisors = await prismaAny.supervisorProfile.count();
+        const assignedDistinct = await prismaAny.supervisorAssignment.count({
+          where: { internshipBatchId: batchId },
+          distinct: ["supervisorProfileId"]
+        });
+
+        latestBatchSupervisorStats = {
+          batchId,
+          batchName: latestBatch.name ?? null,
+          assigned: assignedDistinct ?? 0,
+          unassigned: Math.max(0, (totalSupervisors ?? 0) - (assignedDistinct ?? 0))
+        };
+      }
+    } catch (e) {
+      console.error("[GET /api/admin/supervisors] latestBatchSupervisorStats error", e);
+    }
+
+    return NextResponse.json({
+      success: true,
+      latestBatchSupervisorStats,
+      items: rows.map((r: any) => ({
+        id: r.id,
+        fullName: r.user?.fullName ?? "",
+        phone: r.user?.phone ?? null,
+        email: r.user?.email ?? "",
+        faculty: r.faculty,
+        degree: r.degree as Degree,
+        birthDate: r.birthDate?.toISOString?.() ?? null,
+        gender: r.gender as Gender,
+        permanentProvinceCode: r.permanentProvinceCode,
+        permanentProvinceName: r.permanentProvinceName ?? null,
+        permanentWardCode: r.permanentWardCode,
+        permanentWardName: r.permanentWardName ?? null
+      })),
+      faculties
+    });
+  } catch (e) {
+    console.error("[GET /api/admin/supervisors]", e);
+    return NextResponse.json({ success: false, message: "Lỗi máy chủ." }, { status: 500 });
+  }
 }
 
 type CreateSupervisorBody = {

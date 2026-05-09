@@ -24,52 +24,68 @@ export async function GET(request: Request) {
   const admin = await getAdminSession();
   if (!admin) return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
 
-  const { searchParams } = new URL(request.url);
-  const q = searchParams.get("q")?.trim() || "";
-  const startDateStr = searchParams.get("startDate") || "";
-  const endDateStr = searchParams.get("endDate") || "";
-  const status = (searchParams.get("status") || "all").trim() as InternshipBatchStatus | "all";
+  try {
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get("q")?.trim() || "";
+    const startDateStr = searchParams.get("startDate") || "";
+    const endDateStr = searchParams.get("endDate") || "";
+    const status = (searchParams.get("status") || "all").trim() as InternshipBatchStatus | "all";
 
-  const today = getTodayStart();
+    const today = getTodayStart();
 
-  // Auto-close quá hạn.
-  await (prisma as any).internshipBatch.updateMany({
-    where: { endDate: { lt: today }, status: "OPEN" },
-    data: { status: "CLOSED" }
-  });
-
-  const dateStart = parseDateOnly(startDateStr);
-  const dateEnd = parseDateOnly(endDateStr);
-
-  const where: any = {};
-  if (q) where.name = { contains: q, mode: "insensitive" };
-  if (status !== "all") where.status = status;
-  if (dateStart) where.startDate = { gte: dateStart.start, lte: dateStart.end };
-  if (dateEnd) where.endDate = { gte: dateEnd.start, lte: dateEnd.end };
-
-  const rows = await (prisma as any).internshipBatch.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      semester: true,
-      schoolYear: true,
-      startDate: true,
-      endDate: true,
-      status: true,
-      notes: true
+    // Auto-close quá hạn.
+    try {
+      await (prisma as any).internshipBatch.updateMany({
+        where: { endDate: { lt: today }, status: "OPEN" },
+        data: { status: "CLOSED" }
+      });
+    } catch (e) {
+      console.error("[GET /api/admin/internship-batches] auto-close error", e);
     }
-  });
 
-  return NextResponse.json({
-    success: true,
-    items: rows.map((r: any) => ({
-      ...r,
-      startDate: r.startDate?.toISOString?.() ?? null,
-      endDate: r.endDate?.toISOString?.() ?? null
-    }))
-  });
+    const dateStart = parseDateOnly(startDateStr);
+    const dateEnd = parseDateOnly(endDateStr);
+
+    const where: any = {};
+    if (q) where.name = { contains: q, mode: "insensitive" };
+    if (status !== "all") where.status = status;
+    if (dateStart) where.startDate = { gte: dateStart.start, lte: dateStart.end };
+    if (dateEnd) where.endDate = { gte: dateEnd.start, lte: dateEnd.end };
+
+    const prismaAny = prisma as any;
+
+    const [rows, openCount, closedCount] = await Promise.all([
+      prismaAny.internshipBatch.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          semester: true,
+          schoolYear: true,
+          startDate: true,
+          endDate: true,
+          status: true,
+          notes: true
+        }
+      }),
+      prismaAny.internshipBatch.count({ where: { status: "OPEN" } }),
+      prismaAny.internshipBatch.count({ where: { status: "CLOSED" } })
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      batchStatusStats: { open: openCount ?? 0, closed: closedCount ?? 0 },
+      items: rows.map((r: any) => ({
+        ...r,
+        startDate: r.startDate?.toISOString?.() ?? null,
+        endDate: r.endDate?.toISOString?.() ?? null
+      }))
+    });
+  } catch (e) {
+    console.error("[GET /api/admin/internship-batches]", e);
+    return NextResponse.json({ success: false, message: "Lỗi máy chủ." }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {

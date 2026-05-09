@@ -9,63 +9,144 @@ export async function GET(request: Request) {
   const admin = await getAdminSession();
   if (!admin) return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
 
-  const { searchParams } = new URL(request.url);
-  const q = searchParams.get("q")?.trim() || "";
-  const roleParam = searchParams.get("role")?.trim() || "all";
-  const statusParam = (searchParams.get("status")?.trim() || "all") as AccountStatus | "all";
+  try {
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get("q")?.trim() || "";
+    const roleParam = searchParams.get("role")?.trim() || "all";
+    const statusParam = (searchParams.get("status")?.trim() || "all") as AccountStatus | "all";
 
-  const where: Prisma.UserWhereInput = {
-    role: { in: [Role.sinhvien, Role.giangvien, Role.doanhnghiep] }
-  };
-  const andParts: Prisma.UserWhereInput[] = [];
+    const where: Prisma.UserWhereInput = {
+      role: { in: [Role.sinhvien, Role.giangvien, Role.doanhnghiep] }
+    };
+    const andParts: Prisma.UserWhereInput[] = [];
 
-  if (q) {
-    andParts.push({
-      OR: [
-        { fullName: { contains: q, mode: "insensitive" } },
-        { phone: { contains: q, mode: "insensitive" } },
-        { email: { contains: q, mode: "insensitive" } },
-        { taxCode: { contains: q, mode: "insensitive" } },
-        { companyName: { contains: q, mode: "insensitive" } }
-      ]
-    });
-  }
-
-  if (roleParam !== "all" && Object.values(Role).includes(roleParam as Role)) {
-    const r = roleParam as Role;
-    if (([Role.sinhvien, Role.giangvien, Role.doanhnghiep] as Role[]).includes(r)) andParts.push({ role: r });
-  }
-
-  if (statusParam !== "all") {
-    andParts.push({ isLocked: statusParam === "STOPPED" });
-  }
-
-  if (andParts.length) where.AND = andParts;
-
-  const rows = await prisma.user.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      fullName: true,
-      email: true,
-      phone: true,
-      role: true,
-      isLocked: true,
-      companyName: true
+    if (q) {
+      andParts.push({
+        OR: [
+          { fullName: { contains: q, mode: "insensitive" } },
+          { phone: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+          { taxCode: { contains: q, mode: "insensitive" } },
+          { companyName: { contains: q, mode: "insensitive" } }
+        ]
+      });
     }
-  });
 
-  return NextResponse.json({
-    success: true,
-    items: rows.map((r) => ({
-      id: r.id,
-      fullName: r.role === Role.doanhnghiep ? r.companyName || r.fullName : r.fullName,
-      email: r.email,
-      phone: r.phone ?? null,
-      role: r.role,
-      status: (r.isLocked ? "STOPPED" : "ACTIVE") as AccountStatus
-    }))
-  });
+    if (roleParam !== "all" && Object.values(Role).includes(roleParam as Role)) {
+      const r = roleParam as Role;
+      if (([Role.sinhvien, Role.giangvien, Role.doanhnghiep] as Role[]).includes(r)) andParts.push({ role: r });
+    }
+
+    if (statusParam !== "all") {
+      andParts.push({ isLocked: statusParam === "STOPPED" });
+    }
+
+    if (andParts.length) where.AND = andParts;
+
+    const rows = await prisma.user.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        role: true,
+        isLocked: true,
+        companyName: true
+      }
+    });
+
+    // --- Latest batch account stats ---
+    let latestBatchAccountStats: {
+      batchId: string | null;
+      batchName: string | null;
+      active: number;
+      stopped: number;
+    } = { batchId: null, batchName: null, active: 0, stopped: 0 };
+
+    try {
+      const prismaAny = prisma as any;
+      const latestBatch: { id: string; name: string } | null = await prismaAny.internshipBatch.findFirst({
+        orderBy: { startDate: "desc" },
+        select: { id: true, name: true }
+      });
+
+      if (latestBatch?.id) {
+        const batchId = String(latestBatch.id);
+
+        // Accounts related to the latest batch:
+        // - lecturers having supervisor assignments in batch
+        // - students assigned to those assignments in batch
+        // - enterprises posting jobs in batch
+        const [assignmentRows, studentLinkRows, enterpriseJobRows] = await Promise.all([
+          prismaAny.supervisorAssignment.findMany({
+            where: { internshipBatchId: batchId },
+            select: { supervisorProfile: { select: { userId: true } } }
+          }) as Promise<Array<{ supervisorProfile: { userId: string } | null }>>,
+          prismaAny.supervisorAssignmentStudent.findMany({
+            where: { supervisorAssignment: { internshipBatchId: batchId } },
+            select: { studentProfile: { select: { userId: true } } }
+          }) as Promise<Array<{ studentProfile: { userId: string } | null }>>,
+          prismaAny.jobPost.findMany({
+            where: { internshipBatchId: batchId },
+            select: { enterpriseUserId: true }
+          }) as Promise<Array<{ enterpriseUserId: string }>>
+        ]);
+
+        const userIds = new Set<string>();
+        for (const a of assignmentRows) {
+          const id = a.supervisorProfile?.userId;
+          if (id) userIds.add(String(id));
+        }
+        for (const l of studentLinkRows) {
+          const id = l.studentProfile?.userId;
+          if (id) userIds.add(String(id));
+        }
+        for (const jp of enterpriseJobRows) {
+          if (jp.enterpriseUserId) userIds.add(String(jp.enterpriseUserId));
+        }
+
+        if (userIds.size) {
+          const list = Array.from(userIds);
+          const [active, stopped] = await Promise.all([
+            prismaAny.user.count({ where: { id: { in: list }, isLocked: false } }),
+            prismaAny.user.count({ where: { id: { in: list }, isLocked: true } })
+          ]);
+          latestBatchAccountStats = {
+            batchId,
+            batchName: latestBatch.name ?? null,
+            active,
+            stopped
+          };
+        } else {
+          latestBatchAccountStats = {
+            batchId,
+            batchName: latestBatch.name ?? null,
+            active: 0,
+            stopped: 0
+          };
+        }
+      }
+    } catch (e) {
+      console.error("[GET /api/admin/accounts] latestBatchAccountStats error", e);
+    }
+
+    return NextResponse.json({
+      success: true,
+      latestBatchAccountStats,
+      items: rows.map((r) => ({
+        id: r.id,
+        fullName: r.role === Role.doanhnghiep ? r.companyName || r.fullName : r.fullName,
+        email: r.email,
+        phone: r.phone ?? null,
+        role: r.role,
+        status: (r.isLocked ? "STOPPED" : "ACTIVE") as AccountStatus
+      }))
+    });
+  } catch (e) {
+    console.error("[GET /api/admin/accounts]", e);
+    return NextResponse.json({ success: false, message: "Lỗi máy chủ." }, { status: 500 });
+  }
 }
 

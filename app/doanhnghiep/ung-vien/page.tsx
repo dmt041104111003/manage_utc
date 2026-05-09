@@ -12,10 +12,23 @@ import { buildDoanhNghiepUngVienListUrl, getDoanhNghiepUngVienLoadErrorMessage }
 import UngVienToolbar from "./components/UngVienToolbar";
 import UngVienTableSection from "./components/UngVienTableSection";
 
+type AppStats = {
+  PENDING_REVIEW: number;
+  INTERVIEW_INVITED: number;
+  OFFERED: number;
+  REJECTED: number;
+  STUDENT_DECLINED: number;
+};
+
+const EMPTY_APP_STATS: AppStats = {
+  PENDING_REVIEW: 0, INTERVIEW_INVITED: 0, OFFERED: 0, REJECTED: 0, STUDENT_DECLINED: 0
+};
+
 export default function DoanhNghiepUngVienPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [items, setItems] = useState<JobRow[]>([]);
+  const [appStats, setAppStats] = useState<AppStats>(EMPTY_APP_STATS);
 
   const [q, setQ] = useState("");
   const [createdDate, setCreatedDate] = useState("");
@@ -39,6 +52,7 @@ export default function DoanhNghiepUngVienPage() {
       const data = await res.json();
       if (!res.ok || !data?.success) throw new Error(data?.message || DOANHNGHIEP_UNG_VIEN_ERROR_DEFAULT);
       setItems(Array.isArray(data.items) ? data.items : []);
+      if (data.appStats) setAppStats(data.appStats as AppStats);
       setPage(nextPage);
     } catch (e: unknown) {
       setError(getDoanhNghiepUngVienLoadErrorMessage(e));
@@ -64,6 +78,23 @@ export default function DoanhNghiepUngVienPage() {
       </header>
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
+
+      {/* Stat cards: application status counts */}
+      {!loading && (
+        <div className={styles.statsGrid}>
+          {[
+            { label: "Chờ xem xét",   count: appStats.PENDING_REVIEW },
+            { label: "Mời phỏng vấn", count: appStats.INTERVIEW_INVITED },
+            { label: "Trúng tuyển",   count: appStats.OFFERED },
+            { label: "Từ chối",       count: appStats.REJECTED + appStats.STUDENT_DECLINED }
+          ].map((s) => (
+            <div key={s.label} className={styles.statCard}>
+              <p className={styles.statLabel}>{s.label}</p>
+              <p className={styles.statValue}>{s.count}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <UngVienToolbar
         q={q}

@@ -44,12 +44,51 @@ export async function GET(request: Request) {
   const batchOptionsRows = batchIds.length
     ? await prismaAny.internshipBatch.findMany({
         where: { id: { in: batchIds } },
-        select: { id: true, name: true },
-        orderBy: { id: "desc" }
+        select: { id: true, name: true, startDate: true },
+        orderBy: { startDate: "desc" }
       })
     : [];
 
   const batchOptions = batchOptionsRows.map((r: any) => ({ id: String(r.id), name: r.name }));
+
+  // Đợt mới nhất (theo ngày bắt đầu) mà GV có phân công
+  const latestBatchRow = batchOptionsRows[0] ?? null;
+  let latestBatchGuidanceStats: {
+    batchId: string | null;
+    batchName: string | null;
+    guiding: number;
+    completed: number;
+  } = { batchId: null, batchName: null, guiding: 0, completed: 0 };
+
+  if (latestBatchRow) {
+    const bid = String(latestBatchRow.id);
+    const [guiding, completed] = await Promise.all([
+      prismaAny.supervisorAssignmentStudent.count({
+        where: {
+          supervisorAssignment: {
+            supervisorProfileId,
+            internshipBatchId: bid,
+            status: "GUIDING"
+          }
+        }
+      }),
+      prismaAny.supervisorAssignmentStudent.count({
+        where: {
+          supervisorAssignment: {
+            supervisorProfileId,
+            internshipBatchId: bid,
+            status: "COMPLETED"
+          }
+        }
+      })
+    ]);
+    latestBatchGuidanceStats = {
+      batchId: bid,
+      batchName: latestBatchRow.name ?? null,
+      guiding,
+      completed
+    };
+  }
 
   const where: any = {
     supervisorAssignment: {
@@ -164,5 +203,10 @@ export async function GET(request: Request) {
     };
   });
 
-  return NextResponse.json({ success: true, items, batches: batchOptions });
+  return NextResponse.json({
+    success: true,
+    items,
+    batches: batchOptions,
+    latestBatchGuidanceStats
+  });
 }

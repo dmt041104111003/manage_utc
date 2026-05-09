@@ -39,108 +39,177 @@ export async function GET(request: Request) {
   const admin = await getAdminSession();
   if (!admin) return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
 
-  const { searchParams } = new URL(request.url);
-  const q = searchParams.get("q")?.trim() || "";
-  const faculty = searchParams.get("faculty")?.trim() || "all";
-  const status = (searchParams.get("status")?.trim() || "all") as InternshipStatus | "all";
-  const degree = (searchParams.get("degree")?.trim() || "all") as Degree | "all";
+  try {
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get("q")?.trim() || "";
+    const faculty = searchParams.get("faculty")?.trim() || "all";
+    const status = (searchParams.get("status")?.trim() || "all") as InternshipStatus | "all";
+    const degree = (searchParams.get("degree")?.trim() || "all") as Degree | "all";
 
-  const prismaAny = prisma as any;
+    const prismaAny = prisma as any;
 
-  const where: any = {};
-  const andParts: any[] = [];
+    const where: any = {};
+    const andParts: any[] = [];
 
-  if (faculty && faculty !== "all") andParts.push({ faculty });
-  if (status && status !== "all") andParts.push({ internshipStatus: status });
-  if (degree && degree !== "all") andParts.push({ degree });
-  if (andParts.length) where.AND = andParts;
+    if (faculty && faculty !== "all") andParts.push({ faculty });
+    if (status && status !== "all") andParts.push({ internshipStatus: status });
+    if (degree && degree !== "all") andParts.push({ degree });
+    if (andParts.length) where.AND = andParts;
 
-  if (q) {
-    andParts.push({
-      OR: [
-        { msv: { contains: q, mode: "insensitive" } },
-        { user: { fullName: { contains: q, mode: "insensitive" } } },
-        { user: { phone: { contains: q, mode: "insensitive" } } },
-        { user: { email: { contains: q, mode: "insensitive" } } }
-      ]
-    });
-  }
+    if (q) {
+      andParts.push({
+        OR: [
+          { msv: { contains: q, mode: "insensitive" } },
+          { user: { fullName: { contains: q, mode: "insensitive" } } },
+          { user: { phone: { contains: q, mode: "insensitive" } } },
+          { user: { email: { contains: q, mode: "insensitive" } } }
+        ]
+      });
+    }
 
-  if (andParts.length) where.AND = andParts;
+    if (andParts.length) where.AND = andParts;
 
-  const rows = await prismaAny.studentProfile.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      userId: true,
-      msv: true,
-      className: true,
-      faculty: true,
-      cohort: true,
-      degree: true,
-      gender: true,
-      birthDate: true,
-      permanentProvinceCode: true,
-      permanentProvinceName: true,
-      permanentWardCode: true,
-      permanentWardName: true,
-      internshipStatus: true,
-      user: {
-        select: {
-          fullName: true,
-          email: true,
-          phone: true
+    const rows = await prismaAny.studentProfile.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        userId: true,
+        msv: true,
+        className: true,
+        faculty: true,
+        cohort: true,
+        degree: true,
+        gender: true,
+        birthDate: true,
+        permanentProvinceCode: true,
+        permanentProvinceName: true,
+        permanentWardCode: true,
+        permanentWardName: true,
+        internshipStatus: true,
+        user: {
+          select: {
+            fullName: true,
+            email: true,
+            phone: true
+          }
         }
       }
+    });
+
+    const userIds = rows.map((r: any) => r.userId);
+    const linked = new Set<string>();
+    if (userIds.length) {
+      const distinctApps = await prismaAny.jobApplication.findMany({
+        where: { studentUserId: { in: userIds } },
+        select: { studentUserId: true },
+        distinct: ["studentUserId"]
+      });
+      for (const a of distinctApps) linked.add(String(a.studentUserId));
     }
-  });
 
-  const userIds = rows.map((r: any) => r.userId);
-  const linked = new Set<string>();
-  if (userIds.length) {
-    const distinctApps = await prismaAny.jobApplication.findMany({
-      where: { studentUserId: { in: userIds } },
-      select: { studentUserId: true },
-      distinct: ["studentUserId"]
+    let faculties: string[] = [];
+    try {
+      const fRows = await prismaAny.studentProfile.findMany({
+        distinct: ["faculty"],
+        select: { faculty: true }
+      });
+      faculties = fRows
+        .map((r: any) => String(r.faculty))
+        .filter(Boolean)
+        .sort((a: string, b: string) => a.localeCompare(b, "vi"));
+    } catch {
+      faculties = [];
+    }
+
+    // --- Latest batch internship status stats (for cards) ---
+    let latestBatchInternshipStats: {
+      batchId: string | null;
+      batchName: string | null;
+      notStarted: number;
+      doing: number;
+      selfFinanced: number;
+      reportSubmitted: number;
+      completed: number;
+      rejected: number;
+    } = {
+      batchId: null,
+      batchName: null,
+      notStarted: 0,
+      doing: 0,
+      selfFinanced: 0,
+      reportSubmitted: 0,
+      completed: 0,
+      rejected: 0
+    };
+
+    try {
+      const latestBatch: { id: string; name: string } | null = await prismaAny.internshipBatch.findFirst({
+        orderBy: { startDate: "desc" },
+        select: { id: true, name: true }
+      });
+
+      if (latestBatch?.id) {
+        const batchId = String(latestBatch.id);
+        const links: Array<{ studentProfileId: string }> = await prismaAny.supervisorAssignmentStudent.findMany({
+          where: { supervisorAssignment: { internshipBatchId: batchId } },
+          distinct: ["studentProfileId"],
+          select: { studentProfileId: true }
+        });
+        const studentProfileIds = links.map((l: any) => String(l.studentProfileId)).filter(Boolean);
+
+        if (studentProfileIds.length) {
+          const statusRows: Array<{ internshipStatus: InternshipStatus }> = await prismaAny.studentProfile.findMany({
+            where: { id: { in: studentProfileIds } },
+            select: { internshipStatus: true }
+          });
+
+          for (const r of statusRows) {
+            const s = r.internshipStatus as InternshipStatus;
+            if (s === "NOT_STARTED") latestBatchInternshipStats.notStarted += 1;
+            else if (s === "DOING") latestBatchInternshipStats.doing += 1;
+            else if (s === "SELF_FINANCED") latestBatchInternshipStats.selfFinanced += 1;
+            else if (s === "REPORT_SUBMITTED") latestBatchInternshipStats.reportSubmitted += 1;
+            else if (s === "COMPLETED") latestBatchInternshipStats.completed += 1;
+            else if (s === "REJECTED") latestBatchInternshipStats.rejected += 1;
+          }
+        }
+
+        latestBatchInternshipStats.batchId = batchId;
+        latestBatchInternshipStats.batchName = latestBatch.name ?? null;
+      }
+    } catch (e) {
+      console.error("[GET /api/admin/students] latestBatchInternshipStats error", e);
+    }
+
+    return NextResponse.json({
+      success: true,
+      latestBatchInternshipStats,
+      items: rows.map((r: any) => ({
+        id: r.id,
+        msv: r.msv,
+        fullName: r.user?.fullName ?? "",
+        phone: r.user?.phone ?? null,
+        email: r.user?.email ?? "",
+        className: r.className,
+        faculty: r.faculty,
+        cohort: r.cohort,
+        degree: r.degree as Degree,
+        internshipStatus: r.internshipStatus as InternshipStatus,
+        birthDate: r.birthDate?.toISOString?.() ?? null,
+        gender: r.gender as Gender,
+        permanentProvinceCode: r.permanentProvinceCode,
+        permanentProvinceName: r.permanentProvinceName ?? null,
+        permanentWardCode: r.permanentWardCode,
+        permanentWardName: r.permanentWardName ?? null,
+        hasLinkedData: linked.has(String(r.userId))
+      })),
+      faculties
     });
-    for (const a of distinctApps) linked.add(String(a.studentUserId));
+  } catch (e) {
+    console.error("[GET /api/admin/students]", e);
+    return NextResponse.json({ success: false, message: "Lỗi máy chủ." }, { status: 500 });
   }
-
-  let faculties: string[] = [];
-  try {
-    const fRows = await prismaAny.studentProfile.findMany({
-      distinct: ["faculty"],
-      select: { faculty: true }
-    });
-    faculties = fRows.map((r: any) => String(r.faculty)).filter(Boolean).sort((a: string, b: string) => a.localeCompare(b, "vi"));
-  } catch {
-    faculties = [];
-  }
-
-  return NextResponse.json({
-    success: true,
-    items: rows.map((r: any) => ({
-      id: r.id,
-      msv: r.msv,
-      fullName: r.user?.fullName ?? "",
-      phone: r.user?.phone ?? null,
-      email: r.user?.email ?? "",
-      className: r.className,
-      faculty: r.faculty,
-      cohort: r.cohort,
-      degree: r.degree as Degree,
-      internshipStatus: r.internshipStatus as InternshipStatus,
-      birthDate: r.birthDate?.toISOString?.() ?? null,
-      gender: r.gender as Gender,
-      permanentProvinceCode: r.permanentProvinceCode,
-      permanentProvinceName: r.permanentProvinceName ?? null,
-      permanentWardCode: r.permanentWardCode,
-      permanentWardName: r.permanentWardName ?? null,
-      hasLinkedData: linked.has(String(r.userId))
-    })),
-    faculties
-  });
 }
 
 type CreateStudentBody = {

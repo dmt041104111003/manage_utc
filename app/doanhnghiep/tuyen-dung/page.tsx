@@ -66,7 +66,7 @@ export default function DoanhNghiepTuyenDungPage() {
     setEnterpriseDefaults({ intro, website });
   };
 
-  const load = async (params?: { q?: string; date?: string; status?: string }) => {
+  const load = async (params?: { q?: string; date?: string }) => {
     setLoading(true);
     setError("");
     setPage(1);
@@ -74,7 +74,7 @@ export default function DoanhNghiepTuyenDungPage() {
       const url = new URL("/api/doanhnghiep/tuyen-dung", window.location.origin);
       if (params?.q !== undefined) url.searchParams.set("q", params.q || "");
       if (params?.date) url.searchParams.set("date", params.date);
-      if (params?.status && params.status !== "all") url.searchParams.set("status", params.status);
+      // Status is NOT passed to server — we filter client-side to always have all counts for stats
       const res = await fetch(url.toString());
       const data = (await res.json()) as ApiResponse<JobListItem[]>;
       if (!res.ok || !data.success) throw new Error(data.message || "Không tải được tin tuyển dụng.");
@@ -88,13 +88,13 @@ export default function DoanhNghiepTuyenDungPage() {
   };
 
   const refresh = async () => {
-    await load({ q: searchQ, date: searchDate, status: searchStatus });
+    await load({ q: searchQ, date: searchDate });
   };
 
   useEffect(() => {
     void (async () => {
       await loadEnterpriseDefaults();
-      await load({ q: searchQ, date: searchDate, status: searchStatus });
+      await load({ q: searchQ, date: searchDate });
     })();
   }, []);
 
@@ -262,6 +262,18 @@ export default function DoanhNghiepTuyenDungPage() {
     }
   };
 
+  // Stats computed from ALL items (before status filter)
+  const statCards = [
+    { label: "Chờ duyệt",      status: "PENDING"  as const },
+    { label: "Từ chối duyệt",  status: "REJECTED" as const },
+    { label: "Đang hoạt động", status: "ACTIVE"   as const },
+    { label: "Dừng hoạt động", status: "STOPPED"  as const }
+  ].map((c) => ({ ...c, count: items.filter((i) => i.status === c.status).length }));
+
+  // Client-side status filter for table display
+  const displayItems =
+    searchStatus === "all" ? items : items.filter((i) => i.status === searchStatus);
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -271,6 +283,18 @@ export default function DoanhNghiepTuyenDungPage() {
 
       {toast ? <MessagePopup open message={toast} onClose={() => setToast("")} /> : null}
       {error ? <p className={styles.modulePlaceholder}>{error}</p> : null}
+
+      {/* Stat cards */}
+      {!loading && (
+        <div className={styles.statsGrid}>
+          {statCards.map((s) => (
+            <div key={s.status} className={styles.statCard}>
+              <p className={styles.statLabel}>{s.label}</p>
+              <p className={styles.statValue}>{s.count}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <TuyenDungToolbar
         searchQ={searchQ}
@@ -285,7 +309,7 @@ export default function DoanhNghiepTuyenDungPage() {
 
       <TuyenDungTableSection
         loading={loading}
-        items={items}
+        items={displayItems}
         page={page}
         busyId={busyId}
         onView={(row) => void openView(row)}

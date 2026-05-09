@@ -17,6 +17,14 @@ export default function AdminTienDoThucTapPage() {
 
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<ListRow[]>([]);
+  const [progressStats, setProgressStats] = useState<{
+    notStarted: number;
+    doing: number;
+    selfFinanced: number;
+    approvedReport: number;
+    completed: number;
+    notCompletedInternship: number;
+  } | null>(null);
 
   const [faculties, setFaculties] = useState<string[]>([]);
 
@@ -51,9 +59,11 @@ export default function AdminTienDoThucTapPage() {
 
       setItems(Array.isArray(data.items) ? data.items : []);
       setFaculties(Array.isArray(data.faculties) ? data.faculties : []);
+      setProgressStats(data.progressStats ?? null);
       setPage(1);
     } catch (e: any) {
       setError(e?.message || "Không thể tải dữ liệu.");
+      setProgressStats(null);
     } finally {
       setLoading(false);
     }
@@ -119,6 +129,37 @@ export default function AdminTienDoThucTapPage() {
       </header>
 
       {error ? <p className={styles.error}>{error}</p> : null}
+
+      {!loading && progressStats ? (
+        <section aria-label="Thống kê trạng thái thực tập">
+          <div className={styles.statsGrid3}>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Chưa thực tập</p>
+              <p className={styles.statValue}>{progressStats.notStarted}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Đang thực tập</p>
+              <p className={styles.statValue}>{progressStats.doing}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Thực tập tự túc</p>
+              <p className={styles.statValue}>{progressStats.selfFinanced}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Đã hoàn thành BCTT</p>
+              <p className={styles.statValue}>{progressStats.approvedReport}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Hoàn thành thực tập</p>
+              <p className={styles.statValue}>{progressStats.completed}</p>
+            </div>
+            <div className={styles.statCard}>
+              <p className={styles.statLabel}>Chưa hoàn thành thực tập</p>
+              <p className={styles.statValue}>{progressStats.notCompletedInternship}</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <AdminTienDoToolbar
         q={q}

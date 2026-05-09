@@ -21,10 +21,25 @@ import {
 import QuanLyUngTuyenToolbar from "./components/QuanLyUngTuyenToolbar";
 import QuanLyUngTuyenTableSection from "./components/QuanLyUngTuyenTableSection";
 
+type StatCard = {
+  label: string;
+  count: number;
+};
+
+function computeStats(rows: SinhVienQuanLyDangKyUngTuyenRow[]): StatCard[] {
+  return [
+    { label: "Chờ xem xét",   count: rows.filter((r) => r.status === "PENDING_REVIEW").length },
+    { label: "Mời phỏng vấn", count: rows.filter((r) => r.status === "INTERVIEW_INVITED").length },
+    { label: "Trúng tuyển",   count: rows.filter((r) => r.status === "OFFERED").length },
+    { label: "Từ chối",       count: rows.filter((r) => r.status === "REJECTED" || r.status === "STUDENT_DECLINED").length }
+  ];
+}
+
 export default function SinhVienQuanLyUngTuyenPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [rows, setRows] = useState<SinhVienQuanLyDangKyUngTuyenRow[]>([]);
+  // Always keep full dataset; filter client-side for table display
+  const [allRows, setAllRows] = useState<SinhVienQuanLyDangKyUngTuyenRow[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [toast, setToast] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -33,12 +48,18 @@ export default function SinhVienQuanLyUngTuyenPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(buildSinhVienQuanLyDangKyUngTuyenListUrl(statusFilter));
+      // Always fetch all so we can compute stats regardless of current filter
+      const res = await fetch(buildSinhVienQuanLyDangKyUngTuyenListUrl("all"));
       const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_LOAD_ERROR_DEFAULT);
-      setRows(Array.isArray(data.items) ? data.items : []);
-    } catch (e: any) {
-      setError(e?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_LOAD_ERROR_DEFAULT);
+      if (!res.ok || !data?.success)
+        throw new Error(data?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_LOAD_ERROR_DEFAULT);
+      setAllRows(Array.isArray(data.items) ? data.items : []);
+    } catch (e: unknown) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_LOAD_ERROR_DEFAULT
+      );
     } finally {
       setLoading(false);
     }
@@ -58,15 +79,30 @@ export default function SinhVienQuanLyUngTuyenPage() {
         body: JSON.stringify({ action })
       });
       const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_RESPOND_NETWORK_ERROR_DEFAULT);
+      if (!res.ok || !data?.success)
+        throw new Error(
+          data?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_RESPOND_NETWORK_ERROR_DEFAULT
+        );
       setToast(data?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_RESPOND_SUCCESS_DEFAULT);
       await load();
-    } catch (e: any) {
-      setToast(e?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_RESPOND_NETWORK_ERROR_DEFAULT);
+    } catch (e: unknown) {
+      setToast(
+        e instanceof Error
+          ? e.message
+          : SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_RESPOND_NETWORK_ERROR_DEFAULT
+      );
     } finally {
       setBusyId(null);
     }
   }
+
+  const stats = computeStats(allRows);
+
+  // Client-side filter for table
+  const displayRows =
+    statusFilter === "all"
+      ? allRows
+      : allRows.filter((r) => r.status === statusFilter);
 
   return (
     <main className={styles.page}>
@@ -74,6 +110,18 @@ export default function SinhVienQuanLyUngTuyenPage() {
         <h1 className={styles.title}>Quản lý đăng ký ứng tuyển</h1>
         <p className={styles.subtitle}>Theo dõi toàn bộ hồ sơ đã nộp và trạng thái phản hồi.</p>
       </header>
+
+      {/* Stat cards */}
+      {!loading && (
+        <div className={styles.statsGrid}>
+          {stats.map((stat) => (
+            <div key={stat.label} className={styles.statCard}>
+              <p className={styles.statLabel}>{stat.label}</p>
+              <p className={styles.statValue}>{stat.count}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
 
@@ -87,13 +135,13 @@ export default function SinhVienQuanLyUngTuyenPage() {
         <p className={styles.modulePlaceholder}>Đang tải…</p>
       ) : (
         <QuanLyUngTuyenTableSection
-          rows={rows}
+          rows={displayRows}
           busyId={busyId}
           onRespond={(id, action) => void respond(id, action)}
         />
       )}
+
       {toast ? <MessagePopup open message={toast} onClose={() => setToast("")} /> : null}
     </main>
   );
 }
-
