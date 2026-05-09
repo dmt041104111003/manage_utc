@@ -213,6 +213,17 @@
 }
 
 @media (max-width: 980px) {
+  .layout {
+    display: block;
+    overflow-x: hidden;
+  }
+
+  .main {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
   .topbar {
     display: flex;
     justify-content: space-between;
@@ -231,19 +242,26 @@
 
   .sidebar {
     position: fixed;
-    left: auto;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    transform: translateX(100%);
-    transition: none;
+    inset: 0 auto 0 0;
+    width: min(300px, 88vw);
+    max-width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0;
+    align-self: stretch;
+    flex: none;
+    transform: translate3d(-100%, 0, 0);
+    transition: transform 0.2s ease-out;
+    will-change: transform;
     box-shadow: none;
-    border-right: none;
-    border-left: 1px solid #334155;
+    border-right: 1px solid #334155;
+    border-left: none;
+    pointer-events: none;
   }
 
   .sidebarOpen {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
+    pointer-events: auto;
   }
 
   .backdropVisible {
