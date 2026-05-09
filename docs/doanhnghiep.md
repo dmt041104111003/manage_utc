@@ -97,6 +97,7 @@ lib/
 ### Chức năng
 - Xem thông tin doanh nghiệp: tên công ty, MST, lĩnh vực kinh doanh, địa chỉ trụ sở, website, người đại diện, chức danh
 - Chỉnh sửa: tên người đại diện, chức danh, **giới thiệu về doanh nghiệp** (textarea), website
+- File giấy phép + logo ưu tiên lấy từ Cloudinary (`businessLicensePublicId` / `companyLogoPublicId`), fallback dữ liệu cũ base64 nếu còn
 
 ### Sơ đồ luồng
 
@@ -150,6 +151,9 @@ sequenceDiagram
 |-------|--------|--------|--------|
 | `/api/doanhnghiep/me` | GET | `user.findUnique` (+ `enterpriseProfile`) | `{ success, item: enterprise fields }` |
 | `/api/doanhnghiep/me` | PATCH | `user.findUnique` + `user.update(enterpriseProfile)` | `{ success, message }` hoặc `{ success: false, field, message }` |
+
+### Ghi chú hiệu năng
+- Các popup lớn ở trang doanh nghiệp đã được lazy-load (dynamic import) để giảm thời gian click/mở popup.
 
 ---
 

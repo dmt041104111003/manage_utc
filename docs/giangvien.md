@@ -12,6 +12,9 @@
 | Đổi mật khẩu | `/auth/doimatkhau` | `/api/auth/change-password` | Không |
 | Dashboard | `/giangvien/dashboard` | `/api/giangvien/dashboard/overview` | Không |
 
+### Ghi chú hiệu năng
+- Popup ở trang `giangvien/bao-cao` đã lazy-load; file BCTT hiển thị qua `/api/files/internship-report/[id]` (inline mặc định), không còn nhúng base64 vào payload list.
+
 ---
 
 ## Tech Stack & cấu trúc thư mục
@@ -186,7 +189,7 @@ sequenceDiagram
     Note over GV,DB: ── Tải trang ──
     GV->>Page: Mở /giangvien/sinh-vien
     Page->>API: GET /api/giangvien/sinh-vien-phan-cong
-    API->>DB: supervisorProfile.findFirst (xác định GV)<br/>supervisorAssignment.findMany (đợt thực tập của GV)<br/>supervisorAssignmentStudent.findMany:<br/>  → studentProfile (msv, lớp, khoa, khóa, bậc, SĐT, email, ngày sinh, giới tính, địa chỉ)<br/>  → internshipStatusHistory[]<br/>  → internshipReport (file, điểm, đánh giá)<br/>  → supervisorAssignment.statusHistory<br/>  → supervisorAssignment.internshipBatch
+    API->>DB: supervisorProfile.findFirst (xác định GV)<br/>supervisorAssignment.findMany (đợt thực tập của GV)<br/>supervisorAssignmentStudent.findMany:<br/>  → studentProfile (msv, lớp, khoa, khóa, bậc, SĐT, email, ngày sinh, giới tính, địa chỉ)<br/>  → internshipStatusHistory[]<br/>  → internshipReport (id + metadata + điểm/đánh giá, không trả base64 file)<br/>  → supervisorAssignment.statusHistory<br/>  → supervisorAssignment.internshipBatch
     DB-->>API: nested data
     API-->>Page: { success, items[], batches[] }
     Page->>Toolbar: batches[] cho dropdown đợt thực tập
@@ -354,7 +357,7 @@ sequenceDiagram
 | Route | Method | Body | Prisma | Email |
 |-------|--------|------|--------|-------|
 | `/api/giangvien/bao-cao-thuc-tap` | GET | `?q, degree, status` | `supervisorProfile.findFirst` + `supervisorAssignmentStudent.findMany` (nested: `studentProfile`, `internshipReport`, `internshipBatch`) + `jobApplication.findMany` | Không |
-| `/api/files/internship-report/[id]` | GET | `?download=1` (optional) | `internshipReport.findFirst` + check quyền (`admin/giangvien/sinhvien`) | Không |
+| `/api/files/internship-report/[id]` | GET | `?download=1` (optional) | `internshipReport.findFirst` + check quyền (`admin/giangvien/sinhvien`) + proxy Cloudinary/base64 fallback | Không |
 | `/api/giangvien/bao-cao-thuc-tap/update-internship-status/[id]` | PATCH | `{ nextStatus }` | `supervisorProfile.findFirst` + `studentProfile.findFirst` + `supervisorAssignmentStudent.findFirst` + `$transaction`: `studentProfile.update` + `internshipStatusHistory.create` | SV |
 | `/api/giangvien/bao-cao-thuc-tap/[id]` | PATCH | `{ action, evaluation?, dqtPoint?, kthpPoint?, rejectReason? }` | `internshipReport.findFirst` + `supervisorAssignmentStudent.findFirst` + `studentProfile.findFirst` + `jobApplication.findFirst` + `$transaction`: `internshipReport.update` + `studentProfile.update` + `internshipStatusHistory.create` | SV |
 
@@ -492,7 +495,7 @@ stateDiagram-v2
 |-----------|--------|------|-------|---------|
 | `/api/giangvien/me` | GET | giangvien | — | Thông tin tài khoản + hồ sơ |
 | `/api/giangvien/me` | PATCH | giangvien | — | Cập nhật SĐT + địa chỉ |
-| `/api/giangvien/sinh-vien-phan-cong` | GET | giangvien | — | Danh sách SV phân công + chi tiết |
+| `/api/giangvien/sinh-vien-phan-cong` | GET | giangvien | — | Danh sách SV phân công + chi tiết (report trả `reportUrl`, không trả file base64) |
 | `/api/giangvien/bao-cao-thuc-tap` | GET | giangvien | — | Danh sách SV + metadata BCTT (đã tách file nặng khỏi payload) |
 | `/api/files/internship-report/[id]` | GET | admin/giangvien/sinhvien | — | Xem/tải file BCTT theo quyền |
 | `/api/giangvien/bao-cao-thuc-tap/update-internship-status/[id]` | PATCH | giangvien | Có | Cập nhật TT thực tập → SELF_FINANCED |

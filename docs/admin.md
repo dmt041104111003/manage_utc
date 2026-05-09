@@ -16,6 +16,9 @@
 | Quản lý tiến độ thực tập | `/admin/quan-ly-tien-do-thuc-tap` | `/api/admin/tien-do-thuc-tap` | Có (SV + GVHD) |
 | Dashboard | `/admin/dashboard` | `/api/admin/dashboard/overview` | Không |
 
+### Ghi chú hiệu năng
+- Các popup nặng ở trang admin (view/add/edit/delete/status) đã chuyển sang lazy-load (dynamic import) để giảm lag khi chuyển tab/page và khi click mở popup.
+
 ---
 
 ## Tech Stack & cấu trúc thư mục
@@ -843,7 +846,7 @@ sequenceDiagram
     Page->>DetailAPI: GET /api/admin/tien-do-thuc-tap/{id} (load detail cho modal)
     DetailAPI-->>Page: detail
     Page->>EditModal: editTarget + editDetail → mở Popup[Cập nhật TT cuối cùng]
-    EditModal->>Admin: MSV, Họ tên, Lớp, Khoa, Khóa, Bậc, GVHD<br/>File BCTT + điểm (nếu có)<br/>Dropdown: Hoàn thành / Chưa hoàn thành
+    EditModal->>Admin: MSV, Họ tên, Lớp, Khoa, Khóa, Bậc, GVHD<br/>File BCTT (Xem inline, không ép tải) + điểm (nếu có)<br/>Dropdown: Hoàn thành / Chưa hoàn thành
 
     Admin->>EditModal: Chọn finalStatus → "Lưu"
     EditModal->>Page: submitEdit()
@@ -871,6 +874,7 @@ sequenceDiagram
 | `/api/admin/tien-do-thuc-tap` | GET | `studentProfile.findMany` (+ assignments, reports, user) + distinct `faculties` | Không |
 | `/api/admin/tien-do-thuc-tap/[id]` | GET | `studentProfile` (heavy select) + `jobApplication.findFirst` | Không |
 | `/api/admin/tien-do-thuc-tap/[id]` | PATCH | `$transaction`: `studentProfile.update` + `supervisorAssignment.update` + `statusHistory.create` + (REJECTED) `user.update(LOCKED)` | Có: SV + GVHD (nếu COMPLETED); SV (nếu REJECTED) |
+| `/api/files/internship-report/[id]` | GET | `internshipReport.findFirst` + kiểm tra quyền (`admin/giangvien/sinhvien`) | Không |
 
 ### Email gửi khi cập nhật trạng thái cuối cùng
 
@@ -944,4 +948,5 @@ sequenceDiagram
 | `/api/admin/job-posts/[id]/status` | PATCH | Có (DN) | Duyệt/từ chối/dừng |
 | `/api/admin/tien-do-thuc-tap` | GET | — | Danh sách SV + tiến độ |
 | `/api/admin/tien-do-thuc-tap/[id]` | GET, PATCH | Có (SV + GVHD) | Chi tiết + cập nhật cuối |
+| `/api/files/internship-report/[id]` | GET | — | Xem/tải file BCTT theo quyền (mặc định inline) |
 | `/api/admin/pending-enterprises/count` | GET | — | Số DN chờ duyệt (badge) |
