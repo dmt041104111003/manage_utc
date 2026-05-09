@@ -71,7 +71,7 @@ export function buildDonutChartOption(segments: DonutSegment[]): EChartsOption {
         return `${x.name ?? ""}<br/><b>${formatChartInt(x.value)}</b>`;
       }
     },
-    legend: { ...LEGEND_BOTTOM, top: "bottom" },
+    legend: { ...LEGEND_BOTTOM, bottom: 6, left: "center" },
     graphic: [
       {
         type: "group",

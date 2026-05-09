@@ -34,7 +34,7 @@ export function ReactEchart({ option, height = 280, className }: Props) {
 
   useEffect(() => {
     const c = chart.current;
-    if (!c) return;
+    if (!c || c.isDisposed?.()) return;
     const next = JSON.stringify(option);
     if (next === lastJson.current) return;
     lastJson.current = next;
