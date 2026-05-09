@@ -8,6 +8,7 @@ import {
   MAIL_TRANSACTIONAL_SIGN_OFF,
   SCHOOL_FULL_NAME
 } from "@/lib/constants/school";
+import { MAIL_BRAND } from "@/lib/mail-brand";
 import { buildMailShell, escapeHtml, mailLetterClosingHtml } from "@/lib/mail-layout";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
 import { toCloudinaryRef, uploadEnterpriseLicenseBytesToCloudinary, uploadEnterpriseLogoBytesToCloudinary } from "@/lib/storage/cloudinary";
@@ -97,18 +98,19 @@ export async function POST(request: Request) {
     MAIL_TRANSACTIONAL_SIGN_OFF
   ].join("\n");
 
+  const C = MAIL_BRAND;
   const html = buildMailShell({
     bodyHtml: `
-      <p style="margin:0 0 10px;">Kính gửi <strong>${escapeHtml(name)}</strong>,</p>
-      <p style="margin:0 0 18px;font-size:12px;color:#64748b;line-height:1.5;">
+      <p style="margin:0 0 12px;font-size:16px;font-weight:600;color:${C.headerTitle};">Kính gửi <strong>${escapeHtml(name)}</strong>,</p>
+      <p style="margin:0 0 20px;font-size:13px;color:${C.muted};line-height:1.55;">
         ${escapeHtml(MAIL_PRODUCT_NAME)} — ${escapeHtml(SCHOOL_FULL_NAME)}
       </p>
-      <p style="margin:0 0 12px;">Phòng Đào tạo trân trọng thông báo: hồ sơ đăng ký tài khoản doanh nghiệp của Quý đơn vị đã được hệ thống <strong>tiếp nhận</strong> và đang chờ xét duyệt.</p>
-      <p style="margin:0 0 12px;">Sau khi hồ sơ được phê duyệt, Quý đơn vị sẽ nhận email thông báo và có thể đăng nhập theo đường dẫn dưới đây.</p>
-      <p style="margin:0 0 14px;"><strong>Đường dẫn đăng nhập:</strong><br/>
-        <a href="${escapeHtml(loginUrl)}" style="color:#005bac;font-weight:600;text-decoration:underline;word-break:break-all;">${escapeHtml(loginUrl)}</a>
+      <p style="margin:0 0 14px;color:${C.contentText};">Phòng Đào tạo trân trọng thông báo: hồ sơ đăng ký tài khoản doanh nghiệp của Quý đơn vị đã được hệ thống <strong style="color:${C.headerKicker};">tiếp nhận</strong> và đang chờ xét duyệt.</p>
+      <p style="margin:0 0 14px;color:${C.contentText};">Sau khi hồ sơ được phê duyệt, Quý đơn vị sẽ nhận email thông báo và có thể đăng nhập theo đường dẫn dưới đây.</p>
+      <p style="margin:0 0 16px;color:${C.contentText};"><strong style="color:${C.headerTitle};">Đường dẫn đăng nhập</strong><br/>
+        <a href="${escapeHtml(loginUrl)}" style="color:${C.link};font-weight:600;text-decoration:underline;word-break:break-all;">${escapeHtml(loginUrl)}</a>
       </p>
-      <p style="margin:0 0 0;font-size:13px;color:#64748b;line-height:1.55;">Trường hợp Quý đơn vị không thực hiện đăng ký, vui lòng bỏ qua thư này hoặc liên hệ quản trị hệ thống.</p>
+      <p style="margin:0;font-size:13px;color:${C.muted};line-height:1.6;">Trường hợp Quý đơn vị không thực hiện đăng ký, vui lòng bỏ qua thư này hoặc liên hệ quản trị hệ thống.</p>
       ${mailLetterClosingHtml()}
     `.trim()
   });

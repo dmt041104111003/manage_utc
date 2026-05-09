@@ -43,33 +43,41 @@ function buildHeader(): string {
   const safeName = escapeHtml(SCHOOL_FULL_NAME);
   const safeProduct = escapeHtml(MAIL_PRODUCT_NAME);
   const logoUrl = getSchoolEmailLogoUrl();
+  /* Nền trắng ô logo: client mail hay tô đen vùng alpha của PNG/WebP */
   const logoCell =
     logoUrl !== ""
-      ? `<td style="width:84px;vertical-align:top;padding-right:14px;">
-           <img src="${escapeHtml(logoUrl)}" width="64" height="64" alt=""
-                style="display:block;border-radius:6px;border:1px solid ${MAIL_BRAND.rule};" />
+      ? `<td valign="top" style="width:88px;padding-right:16px;">
+           <table role="presentation" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
+                  style="background-color:#ffffff;border:1px solid ${MAIL_BRAND.rule};border-radius:8px;">
+             <tr>
+               <td align="center" valign="middle" bgcolor="#ffffff" style="background-color:#ffffff;padding:8px;">
+                 <img src="${escapeHtml(logoUrl)}" width="56" height="56" alt=""
+                      style="display:block;width:56px;height:56px;background-color:#ffffff;border:0;outline:none;text-decoration:none;" />
+               </td>
+             </tr>
+           </table>
          </td>`
       : "";
   return `
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
        style="background-color:#ffffff;">
   <tr>
-    <td height="3" bgcolor="${MAIL_BRAND.accentBar}" style="background-color:${MAIL_BRAND.accentBar};font-size:0;line-height:0;">&nbsp;</td>
+    <td height="4" bgcolor="${MAIL_BRAND.accentBar}" style="background-color:${MAIL_BRAND.accentBar};font-size:4px;line-height:4px;">&nbsp;</td>
   </tr>
   <tr>
-    <td bgcolor="${MAIL_BRAND.headerStrip}" style="background-color:${MAIL_BRAND.headerStrip};padding:18px 26px 16px;border-bottom:1px solid ${MAIL_BRAND.rule};">
+    <td bgcolor="${MAIL_BRAND.headerStrip}" style="background-color:${MAIL_BRAND.headerStrip};padding:20px 26px 18px;border-bottom:1px solid ${MAIL_BRAND.rule};">
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
         <tr>
           ${logoCell}
-          <td style="vertical-align:top;color:${MAIL_BRAND.text};">
-            <p style="margin:0 0 4px;font-family:${FONT};font-size:10px;font-weight:700;
-                      letter-spacing:0.1em;text-transform:uppercase;color:${MAIL_BRAND.headerKicker};">
+          <td valign="top" style="vertical-align:top;color:${MAIL_BRAND.text};">
+            <p style="margin:0 0 6px;font-family:${FONT};font-size:11px;font-weight:700;
+                      letter-spacing:0.12em;text-transform:uppercase;color:${MAIL_BRAND.headerKicker};line-height:1.4;">
               Bộ Giáo dục và Đào tạo
             </p>
-            <p style="margin:0 0 6px;font-family:${FONT};font-size:17px;font-weight:700;color:${MAIL_BRAND.headerTitle};line-height:1.3;">
+            <p style="margin:0 0 8px;font-family:${FONT};font-size:18px;font-weight:700;color:${MAIL_BRAND.headerTitle};line-height:1.35;">
               ${safeName}
             </p>
-            <p style="margin:0;font-family:${FONT};font-size:12px;font-weight:500;color:${MAIL_BRAND.headerSubtitle};">
+            <p style="margin:0;font-family:${FONT};font-size:13px;font-weight:600;color:${MAIL_BRAND.headerSubtitle};line-height:1.5;">
               Phòng Đào tạo · ${safeProduct}
             </p>
           </td>
@@ -92,44 +100,53 @@ function buildFooter(): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${MAIL_BRAND.footerStrip}"
        style="background-color:${MAIL_BRAND.footerStrip};">
   <tr>
-    <td style="padding:16px 28px 14px;border-top:1px solid ${MAIL_BRAND.rule};">
-      <p style="margin:0 0 8px;font-family:${FONT};font-size:10px;font-weight:700;
-                letter-spacing:0.08em;text-transform:uppercase;color:${MAIL_BRAND.muted};">Thông tin liên hệ</p>
-      <p style="margin:0 0 4px;font-family:${FONT};font-size:12px;line-height:1.75;color:${MAIL_BRAND.text};">
+    <td style="padding:18px 28px 16px;border-top:1px solid ${MAIL_BRAND.rule};line-height:1.65;font-size:14px;">
+      <p style="margin:0 0 10px;font-family:${FONT};font-size:11px;font-weight:700;
+                letter-spacing:0.1em;text-transform:uppercase;color:${MAIL_BRAND.headerKicker};line-height:1.4;">
+        Thông tin liên hệ
+      </p>
+      <p style="margin:0 0 8px;font-family:${FONT};font-size:13px;line-height:1.7;color:${MAIL_BRAND.text};">
         <span style="color:${MAIL_BRAND.muted};">Địa chỉ · </span>${safeAddr}
       </p>
-      <p style="margin:0 0 4px;font-family:${FONT};font-size:12px;color:${MAIL_BRAND.text};">
-        <span style="color:${MAIL_BRAND.muted};">Điện thoại · </span><strong>${safeHotline}</strong>
+      <p style="margin:0 0 8px;font-family:${FONT};font-size:13px;line-height:1.7;color:${MAIL_BRAND.text};">
+        <span style="color:${MAIL_BRAND.muted};">Điện thoại · </span><strong style="color:${MAIL_BRAND.headerTitle};">${safeHotline}</strong>
       </p>
-      <p style="margin:0 0 4px;font-family:${FONT};font-size:12px;color:${MAIL_BRAND.text};">
+      <p style="margin:0 0 8px;font-family:${FONT};font-size:13px;line-height:1.7;color:${MAIL_BRAND.text};">
         <span style="color:${MAIL_BRAND.muted};">Email · </span>
         <a href="mailto:${safeEmail}" style="color:${MAIL_BRAND.link};text-decoration:underline;">${safeEmail}</a>
       </p>
-      <p style="margin:0;font-family:${FONT};font-size:12px;color:${MAIL_BRAND.text};">
+      <p style="margin:0;font-family:${FONT};font-size:13px;line-height:1.7;color:${MAIL_BRAND.text};">
         <span style="color:${MAIL_BRAND.muted};">Website · </span>
         <a href="${safeWeb}" style="color:${MAIL_BRAND.link};text-decoration:underline;">${safeWeb}</a>
       </p>
     </td>
   </tr>
   <tr>
-    <td bgcolor="${MAIL_BRAND.footerNote}" style="background-color:${MAIL_BRAND.footerNote};padding:12px 28px 14px;border-top:1px solid ${MAIL_BRAND.rule};">
-      <p style="margin:0;font-family:${FONT};font-size:11px;color:${MAIL_BRAND.muted};line-height:1.55;">
-        <em>Email tự động</em> từ ${safeProduct} — ${safeName}. Vui lòng không trả lời trực tiếp thư này.
+    <td bgcolor="${MAIL_BRAND.footerNote}" style="background-color:${MAIL_BRAND.footerNote};padding:14px 28px 16px;border-top:1px solid ${MAIL_BRAND.rule};line-height:1.65;">
+      <p style="margin:0 0 8px;font-family:${FONT};font-size:12px;color:${MAIL_BRAND.muted};line-height:1.6;">
+        Thư được gửi tự động từ <strong style="color:${MAIL_BRAND.text};">${safeProduct}</strong>.
+      </p>
+      <p style="margin:0;font-family:${FONT};font-size:12px;color:${MAIL_BRAND.muted};line-height:1.6;">
+        Vui lòng không trả lời trực tiếp hộp thư này. Mọi thắc mắc xin liên hệ theo thông tin phía trên — ${safeName}.
       </p>
     </td>
   </tr>
 </table>`.trim();
 }
 
-/** Kết thư kiểu công văn: gạch ngang + Trân trọng + Phòng Đào tạo + tên trường. */
+/** Gạch ngăn + kết thư (không dùng &lt;hr&gt; — một số client làm chồng dòng). */
 export function mailLetterClosingHtml(): string {
   const safeName = escapeHtml(SCHOOL_FULL_NAME);
   return `
-<hr style="border:none;border-top:1px solid ${MAIL_BRAND.rule};margin:22px 0 18px;" />
-<p style="margin:0;font-family:${FONT};font-size:14px;line-height:1.6;color:${MAIL_BRAND.text};">Trân trọng,</p>
-<p style="margin:12px 0 0;font-family:${FONT};font-size:14px;line-height:1.65;color:${MAIL_BRAND.text};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:26px 0 20px;">
+  <tr>
+    <td style="border-top:1px solid ${MAIL_BRAND.rule};height:1px;font-size:1px;line-height:1px;">&nbsp;</td>
+  </tr>
+</table>
+<p style="margin:0 0 4px;font-family:${FONT};font-size:15px;line-height:1.65;color:${MAIL_BRAND.contentText};">Trân trọng,</p>
+<p style="margin:0;font-family:${FONT};font-size:15px;line-height:1.7;color:${MAIL_BRAND.contentText};">
   <strong style="color:${MAIL_BRAND.headerTitle};">Phòng Đào tạo</strong><br/>
-  <span style="color:${MAIL_BRAND.muted};">${safeName}</span>
+  <span style="color:${MAIL_BRAND.muted};font-size:14px;">${safeName}</span>
 </p>`.trim();
 }
 
@@ -138,8 +155,8 @@ export function buildMailShell({ bodyHtml, belowCardHtml }: MailShellOptions): s
     ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
               style="max-width:600px;margin:0 auto;">
         <tr>
-          <td style="padding:10px 28px 0;font-family:${FONT};font-size:12px;
-                     line-height:1.55;color:${MAIL_ACCENT.muted};">
+          <td style="padding:12px 28px 0;font-family:${FONT};font-size:12px;
+                     line-height:1.6;color:${MAIL_ACCENT.muted};">
             ${belowCardHtml}
           </td>
         </tr>
@@ -156,24 +173,31 @@ export function buildMailShell({ bodyHtml, belowCardHtml }: MailShellOptions): s
 </head>
 <body style="margin:0;padding:0;background:${MAIL_BRAND.pageBg};color-scheme:light;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-       style="background:${MAIL_BRAND.pageBg};padding:28px 14px 36px;">
-  <tr><td align="center">
+       style="background:${MAIL_BRAND.pageBg};padding:32px 16px 40px;">
+  <tr><td align="center" style="line-height:normal;">
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-           bgcolor="#ffffff" style="max-width:600px;background:#ffffff;overflow:hidden;border-radius:8px;
+           bgcolor="#ffffff" style="max-width:600px;background:#ffffff;border-radius:10px;
                   border:1px solid ${MAIL_BRAND.cardBorder};
-                  box-shadow:0 4px 24px rgba(15,23,42,0.06);">
+                  box-shadow:0 8px 32px rgba(0,91,172,0.08);">
 
-      <tr><td style="padding:0;line-height:0;">${buildHeader()}</td></tr>
+      <tr><td style="padding:0;line-height:normal;">${buildHeader()}</td></tr>
 
       <tr>
-        <td bgcolor="#ffffff" style="padding:26px 28px 22px;font-family:${FONT};
-                   font-size:14px;line-height:1.75;color:${MAIL_BRAND.text};">
-          ${bodyHtml}
+        <td bgcolor="#ffffff" style="padding:0;line-height:normal;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="5" bgcolor="${MAIL_BRAND.stripe}" style="width:5px;min-width:5px;background-color:${MAIL_BRAND.stripe};font-size:1px;line-height:1px;">&nbsp;</td>
+              <td bgcolor="${MAIL_BRAND.contentBg}" style="background-color:${MAIL_BRAND.contentBg};padding:26px 28px 28px 22px;font-family:${FONT};
+                         font-size:15px;line-height:1.8;color:${MAIL_BRAND.contentText};">
+                ${bodyHtml}
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
 
-      <tr><td style="padding:0;line-height:0;">${buildFooter()}</td></tr>
+      <tr><td style="padding:0;line-height:normal;">${buildFooter()}</td></tr>
 
     </table>
 
@@ -204,9 +228,9 @@ export function mailCalloutHtml(
     <td style="padding:12px 16px;">
       <p style="margin:0 0 8px;font-family:${FONT};font-size:12px;font-weight:700;
                 letter-spacing:0.05em;text-transform:uppercase;
-                color:${map.title};">${escapeHtml(title)}</p>
-      <div style="font-family:${FONT};font-size:14px;
-                  color:${MAIL_BRAND.text};line-height:1.65;">${innerHtml}</div>
+                color:${map.title};line-height:1.4;">${escapeHtml(title)}</p>
+      <div style="font-family:${FONT};font-size:14px;line-height:1.7;
+                  color:${MAIL_BRAND.contentText};">${innerHtml}</div>
     </td>
   </tr>
 </table>`.trim();

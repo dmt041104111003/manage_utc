@@ -41,92 +41,136 @@ export function BrandedEmailLayout({ preview, children }: Props) {
       </Head>
       <Preview>{preview}</Preview>
       <Body style={{ margin: 0, backgroundColor: B.pageBg, fontFamily: font, colorScheme: "light" }}>
-        <Section style={{ padding: "28px 14px 36px" }}>
+        <Section style={{ padding: "32px 16px 40px" }}>
           <Container
             style={{
               maxWidth: 600,
               margin: "0 auto",
               backgroundColor: "#ffffff",
               border: `1px solid ${B.cardBorder}`,
-              borderRadius: 8,
-              overflow: "hidden",
-              boxShadow: "0 4px 24px rgba(15,23,42,0.06)"
+              borderRadius: 10,
+              boxShadow: "0 8px 32px rgba(0,91,172,0.08)"
             }}
           >
             <Row>
-              <Column style={{ height: 3, backgroundColor: B.accentBar, lineHeight: 0, fontSize: 0 }}>&nbsp;</Column>
+              <Column style={{ height: 4, backgroundColor: B.accentBar, lineHeight: "4px", fontSize: "4px" }}>&nbsp;</Column>
             </Row>
             <Section
               style={{
                 backgroundColor: B.headerStrip,
-                padding: "18px 26px 16px",
+                padding: "20px 26px 18px",
                 borderBottom: `1px solid ${B.rule}`
               }}
             >
               <Row>
                 {logoUrl ? (
-                  <Column style={{ width: 78, verticalAlign: "top", paddingRight: 14 }}>
-                    <Img
-                      src={logoUrl}
-                      width={64}
-                      height={64}
-                      alt="Logo UTC"
-                      style={{ display: "block", borderRadius: 6, border: `1px solid ${B.rule}` }}
-                    />
+                  <Column style={{ width: 88, verticalAlign: "top", paddingRight: 16 }}>
+                    <Section
+                      style={{
+                        backgroundColor: "#ffffff",
+                        border: `1px solid ${B.rule}`,
+                        borderRadius: 8,
+                        padding: "8px",
+                        textAlign: "center"
+                      }}
+                    >
+                      <Img
+                        src={logoUrl}
+                        width={56}
+                        height={56}
+                        alt="Logo UTC"
+                        style={{
+                          display: "block",
+                          margin: "0 auto",
+                          width: 56,
+                          height: 56,
+                          backgroundColor: "#ffffff",
+                          border: 0
+                        }}
+                      />
+                    </Section>
                   </Column>
                 ) : null}
                 <Column style={{ verticalAlign: "top" }}>
                   <Text
                     style={{
-                      margin: "0 0 4px",
-                      fontSize: 10,
+                      margin: "0 0 6px",
+                      fontSize: 11,
                       fontWeight: 700,
-                      letterSpacing: "0.1em",
+                      letterSpacing: "0.12em",
                       textTransform: "uppercase",
-                      color: B.headerKicker
+                      color: B.headerKicker,
+                      lineHeight: "1.4"
                     }}
                   >
                     Bộ Giáo dục và Đào tạo
                   </Text>
-                  <Text style={{ margin: "0 0 6px", fontSize: 17, fontWeight: 700, color: B.headerTitle, lineHeight: 1.3 }}>
+                  <Text style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700, color: B.headerTitle, lineHeight: "1.35" }}>
                     {SCHOOL_FULL_NAME}
                   </Text>
-                  <Text style={{ margin: 0, fontSize: 12, fontWeight: 500, color: B.headerSubtitle }}>
+                  <Text style={{ margin: 0, fontSize: 13, fontWeight: 600, color: B.headerSubtitle, lineHeight: "1.5" }}>
                     Phòng Đào tạo · {MAIL_PRODUCT_NAME}
                   </Text>
                 </Column>
               </Row>
             </Section>
-            <Section style={{ padding: "26px 28px 22px", fontSize: 14, lineHeight: 1.75, color: B.text }}>{children}</Section>
+            <Section style={{ padding: 0, lineHeight: "normal" }}>
+              <Row>
+                <Column style={{ width: 5, backgroundColor: B.stripe, fontSize: "1px", lineHeight: "1px" }}>&nbsp;</Column>
+                <Column style={{ backgroundColor: B.contentBg, padding: "26px 28px 28px 22px" }}>
+                  <Section style={{ fontSize: 15, lineHeight: "1.8", color: B.contentText }}>{children}</Section>
+                </Column>
+              </Row>
+            </Section>
             <Hr style={{ borderColor: B.rule, borderWidth: 1, margin: 0 }} />
-            <Section style={{ backgroundColor: B.footerStrip, padding: "16px 28px 14px" }}>
-              <Text style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 700, color: B.muted, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            <Section style={{ backgroundColor: B.footerStrip, padding: "18px 28px 16px", lineHeight: "1.65" }}>
+              <Text
+                style={{
+                  margin: "0 0 10px",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: B.headerKicker,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  lineHeight: "1.4"
+                }}
+              >
                 Thông tin liên hệ
               </Text>
-              <Text style={{ margin: "0 0 4px", fontSize: 12, color: B.text, lineHeight: 1.75 }}>
+              <Text style={{ margin: "0 0 8px", fontSize: 13, color: B.text, lineHeight: "1.7" }}>
                 <span style={{ color: B.muted }}>Địa chỉ · </span>
                 {ENTERPRISE_MAIL_SIGN_OFF_ADDRESS}
               </Text>
-              <Text style={{ margin: "0 0 4px", fontSize: 12, color: B.text }}>
+              <Text style={{ margin: "0 0 8px", fontSize: 13, color: B.text, lineHeight: "1.7" }}>
                 <span style={{ color: B.muted }}>Điện thoại · </span>
-                <strong>{SCHOOL_HOTLINE}</strong>
+                <strong style={{ color: B.headerTitle }}>{SCHOOL_HOTLINE}</strong>
               </Text>
-              <Text style={{ margin: "0 0 4px", fontSize: 12, color: B.text }}>
+              <Text style={{ margin: "0 0 8px", fontSize: 13, color: B.text, lineHeight: "1.7" }}>
                 <span style={{ color: B.muted }}>Email · </span>
                 <Link href={`mailto:${DEFAULT_SUPPORT_EMAIL}`} style={{ color: B.link, textDecoration: "underline" }}>
                   {DEFAULT_SUPPORT_EMAIL}
                 </Link>
               </Text>
-              <Text style={{ margin: 0, fontSize: 12, color: B.text }}>
+              <Text style={{ margin: 0, fontSize: 13, color: B.text, lineHeight: "1.7" }}>
                 <span style={{ color: B.muted }}>Website · </span>
                 <Link href={SCHOOL_WEBSITE} style={{ color: B.link, textDecoration: "underline" }}>
                   {SCHOOL_WEBSITE}
                 </Link>
               </Text>
             </Section>
-            <Section style={{ backgroundColor: B.footerNote, padding: "12px 28px 14px", borderTop: `1px solid ${B.rule}` }}>
-              <Text style={{ margin: 0, fontSize: 11, color: B.muted, lineHeight: 1.55, fontStyle: "italic" }}>
-                Email tự động từ {MAIL_PRODUCT_NAME} — {SCHOOL_FULL_NAME}. Vui lòng không trả lời trực tiếp thư này.
+            <Section
+              style={{
+                backgroundColor: B.footerNote,
+                padding: "14px 28px 16px",
+                borderTop: `1px solid ${B.rule}`,
+                lineHeight: "1.65"
+              }}
+            >
+              <Text style={{ margin: "0 0 8px", fontSize: 12, color: B.muted, lineHeight: "1.6" }}>
+                Thư được gửi tự động từ <strong style={{ color: B.text }}>{MAIL_PRODUCT_NAME}</strong>.
+              </Text>
+              <Text style={{ margin: 0, fontSize: 12, color: B.muted, lineHeight: "1.6" }}>
+                Vui lòng không trả lời trực tiếp hộp thư này. Mọi thắc mắc xin liên hệ theo thông tin phía trên — {SCHOOL_FULL_NAME}.
               </Text>
             </Section>
           </Container>

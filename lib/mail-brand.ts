@@ -4,17 +4,22 @@
  */
 export const MAIL_BRAND = {
   accentBar: "#c9a227",
-  headerStrip: "#f7f9fc",
-  headerTitle: "#0c1f3f",
+  headerStrip: "#f0f5fb",
+  headerTitle: "#0a2540",
   headerKicker: "#005bac",
-  headerSubtitle: "#556575",
+  headerSubtitle: "#4a5d78",
 
-  pageBg: "#eef1f5",
-  cardBorder: "#c5ced9",
-  rule: "#e2e8f0",
+  pageBg: "#e8edf3",
+  cardBorder: "#b8c5d8",
+  rule: "#dce3ed",
 
-  footerStrip: "#f8fafc",
-  footerNote: "#f1f5f9",
+  /** Nội dung thư — tách nền nhẹ, dễ đọc */
+  contentBg: "#fafcfe",
+  contentText: "#334155",
+  stripe: "#005bac",
+
+  footerStrip: "#f4f7fb",
+  footerNote: "#eef2f7",
 
   text: "#1e293b",
   muted: "#64748b",
