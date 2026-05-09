@@ -10,7 +10,7 @@ type Props = {
 export default function BaoCaoThucTapSupervisorSection({ supervisor }: Props) {
   return (
     <section className={adminStyles.detailCard} style={{ padding: "20px 22px", marginTop: 16, maxWidth: "none" }}>
-      <div className={adminStyles.detailSectionTitle}>Thông tin GVHD</div>
+      <div className={adminStyles.detailSectionTitle}>Thông tin Giảng viên hướng dẫn</div>
       {supervisor ? (
         <table className={adminStyles.viewModalDetailTable}>
           <tbody>
@@ -37,7 +37,7 @@ export default function BaoCaoThucTapSupervisorSection({ supervisor }: Props) {
           </tbody>
         </table>
       ) : (
-        <p className={styles.modulePlaceholder}>Chưa được phân công GVHD.</p>
+        <p className={styles.modulePlaceholder}>Chưa được phân công giảng viên hướng dẫn.</p>
       )}
     </section>
   );

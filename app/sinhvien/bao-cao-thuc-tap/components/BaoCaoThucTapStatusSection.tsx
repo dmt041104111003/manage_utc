@@ -62,7 +62,7 @@ export default function BaoCaoThucTapStatusSection({
             className={adminStyles.btn}
             disabled={!canEditReport || busy}
             onClick={canEditReport ? onOpenEdit : undefined}
-            title={!canEditReport ? "Chỉ sửa được khi GVHD từ chối duyệt" : undefined}
+            title={!canEditReport ? "Chỉ sửa được khi giảng viên hướng dẫn từ chối duyệt" : undefined}
           >
             Sửa BCTT
           </button>

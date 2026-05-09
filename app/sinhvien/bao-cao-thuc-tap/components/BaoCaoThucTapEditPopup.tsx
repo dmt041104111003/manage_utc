@@ -67,7 +67,7 @@ export default function BaoCaoThucTapEditPopup({
             }}
           >
             <div style={{ fontSize: 12, fontWeight: 700, color: "#dc2626", marginBottom: 4 }}>
-              Lý do GVHD từ chối:
+              Lý do giảng viên hướng dẫn từ chối:
             </div>
             <div style={{ fontSize: 13, color: "#111827", whiteSpace: "pre-wrap" }}>
               {report.supervisorRejectReason}

@@ -179,7 +179,9 @@ export default function SinhvienBaoCaoThucTapPage() {
     <main className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Theo dõi tiến độ thực tập</h1>
-        <p className={styles.subtitle}>Theo dõi GVHD, trạng thái thực tập và lịch sử thay đổi trạng thái (không cập nhật trạng thái).</p>
+        <p className={styles.subtitle}>
+          Theo dõi Giảng viên hướng dẫn, trạng thái thực tập và lịch sử thay đổi trạng thái (không cập nhật trạng thái).
+        </p>
       </header>
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}

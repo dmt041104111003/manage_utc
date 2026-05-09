@@ -5,13 +5,11 @@ import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
-import type { Province, SinhVienHoSoDraft, SinhVienHoSoProfile, StudentAccount, SupervisorInfo, Ward } from "@/lib/types/sinhvien-ho-so";
+import type { Province, SinhVienHoSoDraft, SinhVienHoSoProfile, Ward } from "@/lib/types/sinhvien-ho-so";
 import {
   CV_ERROR_INVALID_MIME,
-  SINHVIEN_HO_SO_LOAD_ACCOUNT_ERROR_DEFAULT,
   SINHVIEN_HO_SO_LOAD_PROFILE_ERROR_DEFAULT,
   SINHVIEN_HO_SO_PROFILE_ENDPOINT,
-  SINHVIEN_HO_SO_TAI_KHOAN_ENDPOINT,
   SINHVIEN_HO_SO_SUBMIT_ERROR_DEFAULT
 } from "@/lib/constants/sinhvien-ho-so";
 import {
@@ -23,16 +21,10 @@ import {
   mapProfileToDraft,
   validateSinhVienHoSoDraft
 } from "@/lib/utils/sinhvien-ho-so";
-import SinhVienAccountInfo from "./components/SinhVienAccountInfo";
-import SinhVienSupervisorInfo from "./components/SinhVienSupervisorInfo";
 import SinhVienProfileEditSection from "./components/SinhVienProfileEditSection";
 
 export default function SinhVienHoSoPage() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [toast, setToast] = useState("");
-  const [student, setStudent] = useState<StudentAccount | null>(null);
-  const [supervisor, setSupervisor] = useState<SupervisorInfo>(null);
 
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState("");
@@ -66,26 +58,6 @@ export default function SinhVienHoSoPage() {
     setCvBase64(draft.cvBase64);
     setFieldErrors({});
   };
-
-  useEffect(() => {
-    const run = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await fetch(SINHVIEN_HO_SO_TAI_KHOAN_ENDPOINT);
-        const data = await res.json();
-        if (!res.ok || !data?.success)
-          throw new Error(data?.message || SINHVIEN_HO_SO_LOAD_ACCOUNT_ERROR_DEFAULT);
-        setStudent(data.student ?? null);
-        setSupervisor(data.supervisor ?? null);
-      } catch (e: any) {
-        setError(e?.message || SINHVIEN_HO_SO_LOAD_ACCOUNT_ERROR_DEFAULT);
-      } finally {
-        setLoading(false);
-      }
-    };
-    void run();
-  }, []);
 
   useEffect(() => {
     void (async () => {
@@ -210,14 +182,13 @@ export default function SinhVienHoSoPage() {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Tài khoản</h1>
+        <h1 className={styles.title}>Hồ sơ cá nhân</h1>
       </header>
 
-      {error ? <p className={adminStyles.error}>{error}</p> : null}
-      {loading || profileLoading ? <p className={styles.modulePlaceholder}>Đang tải…</p> : null}
+      {profileLoading ? <p className={styles.modulePlaceholder}>Đang tải…</p> : null}
       {profileError ? <p className={adminStyles.error}>{profileError}</p> : null}
 
-      {!loading && !profileLoading && student && profile ? (
+      {!profileLoading && profile ? (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -226,13 +197,7 @@ export default function SinhVienHoSoPage() {
           noValidate
         >
           <section className={styles.card} style={{ padding: "18px 22px" }}>
-            <h2 className={styles.panelTitle}>Thông tin tài khoản</h2>
-            <SinhVienAccountInfo student={student} />
-
-            <h2 className={styles.panelTitle} style={{ marginTop: 20 }}>Thông tin GVHD</h2>
-            <SinhVienSupervisorInfo supervisor={supervisor} />
-
-            <h2 className={styles.panelTitle} style={{ marginTop: 20 }}>Hồ sơ sinh viên</h2>
+            <h2 className={styles.panelTitle}>Hồ sơ sinh viên</h2>
             <SinhVienProfileEditSection
               isEditing={isEditing}
               saving={saving}

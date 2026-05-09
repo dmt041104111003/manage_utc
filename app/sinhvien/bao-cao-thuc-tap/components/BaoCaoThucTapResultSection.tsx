@@ -13,11 +13,11 @@ export default function BaoCaoThucTapResultSection({ report, reportFileLink }: P
       <table className={adminStyles.viewModalDetailTable}>
         <tbody>
           <tr>
-            <th scope="row">Đánh giá GVHD</th>
+            <th scope="row">Đánh giá Giảng viên hướng dẫn</th>
             <td style={{ whiteSpace: "pre-wrap" }}>{report?.supervisorEvaluation ?? "—"}</td>
           </tr>
           <tr>
-            <th scope="row">Điểm GVHD</th>
+            <th scope="row">Điểm Giảng viên hướng dẫn</th>
             <td>{report?.supervisorPoint ?? "—"}</td>
           </tr>
           <tr>

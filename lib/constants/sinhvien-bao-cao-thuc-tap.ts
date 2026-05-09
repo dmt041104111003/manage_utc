@@ -8,7 +8,7 @@ export const SINHVIEN_BAO_CAO_THUC_TAP_SUBMIT_EDIT_ERROR_DEFAULT = "Sửa BCTT t
 
 export const SINHVIEN_BAO_CAO_THUC_TAP_SUBMIT_NEW_SUCCESS_DEFAULT = "Nộp BCTT thành công.";
 export const SINHVIEN_BAO_CAO_THUC_TAP_SUBMIT_EDIT_SUCCESS_DEFAULT =
-  "Đã sửa BCTT. Đang chờ GVHD duyệt.";
+  "Đã sửa BCTT. Đang chờ giảng viên hướng dẫn duyệt.";
 
 export const BCTT_ALLOWED_MIMES = [
   "application/pdf",
