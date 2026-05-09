@@ -102,6 +102,10 @@ export async function GET(request: Request) {
       }
     }
 
+    const degreeMap = ADMIN_QUAN_LY_SINH_VIEN_DEGREE_LABEL as Record<string, string>;
+    const genderMap = ADMIN_QUAN_LY_SINH_VIEN_GENDER_LABEL as Record<string, string>;
+    const statusMap = ADMIN_QUAN_LY_SINH_VIEN_INTERNSHIP_STATUS_LABEL as Record<string, string>;
+
     const dataRows = rows.map((sp: any) => {
       const sup = supervisorByStudent.get(String(sp.id));
       const u = sup?.supervisorAssignment?.supervisorProfile?.user;
@@ -113,14 +117,14 @@ export async function GET(request: Request) {
         String(sp.className ?? ""),
         String(sp.faculty ?? ""),
         String(sp.cohort ?? ""),
-        ADMIN_QUAN_LY_SINH_VIEN_DEGREE_LABEL[sp.degree] ?? String(sp.degree ?? ""),
+        degreeMap[String(sp.degree ?? "")] ?? String(sp.degree ?? ""),
         String(sp.user?.phone ?? ""),
         String(sp.user?.email ?? ""),
         birthDateYmd(sp.birthDate),
-        ADMIN_QUAN_LY_SINH_VIEN_GENDER_LABEL[sp.gender] ?? String(sp.gender ?? ""),
+        genderMap[String(sp.gender ?? "")] ?? String(sp.gender ?? ""),
         String(sp.permanentProvinceName ?? ""),
         String(sp.permanentWardName ?? ""),
-        ADMIN_QUAN_LY_SINH_VIEN_INTERNSHIP_STATUS_LABEL[sp.internshipStatus] ?? String(sp.internshipStatus ?? ""),
+        statusMap[String(sp.internshipStatus ?? "")] ?? String(sp.internshipStatus ?? ""),
         String(u?.fullName ?? ""),
         String(u?.email ?? ""),
         String(u?.phone ?? ""),
