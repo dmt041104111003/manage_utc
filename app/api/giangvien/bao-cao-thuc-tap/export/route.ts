@@ -44,6 +44,8 @@ export async function GET(request: Request) {
       );
     }
 
+    const degreeLookup = degreeLabel as Record<string, string>;
+
     const dataRows = items.map((row: any) => {
       const rep = row.report;
       const ent = row.enterprise;
@@ -53,7 +55,7 @@ export async function GET(request: Request) {
         String(row.className ?? ""),
         String(row.faculty ?? ""),
         String(row.cohort ?? ""),
-        degreeLabel[row.degree] ?? String(row.degree ?? ""),
+        degreeLookup[String(row.degree ?? "")] ?? String(row.degree ?? ""),
         String(row.phone ?? ""),
         String(row.email ?? ""),
         String(row.statusText ?? ""),

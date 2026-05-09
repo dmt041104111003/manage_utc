@@ -77,17 +77,20 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
 
   const profiles = [...byStudentId.values()].sort((a, b) => String(a.msv).localeCompare(String(b.msv), "vi"));
 
+  const degreeMap = ADMIN_QUAN_LY_SINH_VIEN_DEGREE_LABEL as Record<string, string>;
+  const genderMap = ADMIN_QUAN_LY_SINH_VIEN_GENDER_LABEL as Record<string, string>;
+
   const dataRows = profiles.map((sp) => [
     String(sp.msv ?? ""),
     String(sp.user?.fullName ?? ""),
     String(sp.className ?? ""),
     String(sp.faculty ?? ""),
     String(sp.cohort ?? ""),
-    ADMIN_QUAN_LY_SINH_VIEN_DEGREE_LABEL[sp.degree] ?? String(sp.degree ?? ""),
+    degreeMap[String(sp.degree ?? "")] ?? String(sp.degree ?? ""),
     String(sp.user?.phone ?? ""),
     String(sp.user?.email ?? ""),
     birthDateYmd(sp.birthDate),
-    ADMIN_QUAN_LY_SINH_VIEN_GENDER_LABEL[sp.gender] ?? String(sp.gender ?? ""),
+    genderMap[String(sp.gender ?? "")] ?? String(sp.gender ?? ""),
     String(sp.permanentProvinceName ?? ""),
     String(sp.permanentWardName ?? "")
   ]);

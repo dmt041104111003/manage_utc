@@ -103,6 +103,8 @@ export async function GET(request: Request) {
       }
     }
 
+    const degreeMap = ADMIN_QUAN_LY_SINH_VIEN_DEGREE_LABEL as Record<string, string>;
+
     const dataRows = rows.map((r: any) => {
       const internshipStatus = r.internshipStatus as InternshipStatus;
       const reportReviewStatus = r.internshipReport?.reviewStatus ?? null;
@@ -125,7 +127,7 @@ export async function GET(request: Request) {
         String(r.className ?? ""),
         String(r.faculty ?? ""),
         String(r.cohort ?? ""),
-        ADMIN_QUAN_LY_SINH_VIEN_DEGREE_LABEL[r.degree] ?? String(r.degree ?? ""),
+        degreeMap[String(r.degree ?? "")] ?? String(r.degree ?? ""),
         String(r.user?.phone ?? ""),
         String(r.user?.email ?? ""),
         statusLabel,
