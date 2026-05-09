@@ -4,13 +4,12 @@ import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 
 import type { OverviewPayload } from "@/lib/types/admin-dashboard";
-import { formatDateShort } from "@/lib/utils/format-date-short";
 import {
   BarChart,
   DonutChart,
   LineChart,
   ProgressColumnChart,
-  TopFieldsCard
+  TopFacultiesCard
 } from "../components/AdminDashboardCharts";
 
 export default function AdminDashboardPage() {
@@ -30,14 +29,11 @@ export default function AdminDashboardPage() {
         const qs = new URLSearchParams();
         if (faculty) qs.set("faculty", faculty);
         if (batchId) qs.set("batchId", batchId);
-        const res = await fetch(`/api/admin/dashboard/overview?${qs.toString()}`, {
-          method: "GET"
-        });
+        const res = await fetch(`/api/admin/dashboard/overview?${qs.toString()}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as OverviewPayload;
         if (cancelled) return;
         setPayload(json);
-
         setFaculty(json.selectedFaculty ?? "all");
         setBatchId(json.selectedBatchId ?? "all");
       } catch (e) {
@@ -48,22 +44,18 @@ export default function AdminDashboardPage() {
       }
     }
     void load();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [faculty, batchId]);
 
   const faculties = payload?.faculties ?? [];
   const batches = payload?.batches ?? [];
 
-  const donutSegments = payload?.donut.segments ?? [];
-  const donutTotal = payload?.donut.total ?? 0;
-
-  const latestJobs = payload?.latestJobs ?? [];
+  const applicationStatusDonut = payload?.applicationStatusDonut ?? { segments: [], total: 0 };
+  const jobStatusDonut = payload?.jobStatusDonut ?? { segments: [], total: 0 };
   const enterprisesByField = payload?.enterprisesByField ?? { labels: [], values: [] };
   const progress = payload?.progress ?? { labels: [], values: [] };
   const lineJobPosts = payload?.lineJobPosts ?? { labels: [], series: [] };
-  const topFields = payload?.topFields ?? { top: [], bottom: [] };
+  const topFaculties = payload?.topFaculties ?? { top: [], bottom: [] };
 
   return (
     <main className={styles.page}>
@@ -82,9 +74,7 @@ export default function AdminDashboardPage() {
           >
             <option value="all">Tất cả</option>
             {faculties.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
+              <option key={f} value={f}>{f}</option>
             ))}
           </select>
         </div>
@@ -98,9 +88,7 @@ export default function AdminDashboardPage() {
             disabled={loading || batches.length === 0}
           >
             {batches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
+              <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
         </div>
@@ -111,18 +99,30 @@ export default function AdminDashboardPage() {
 
       {!loading && payload ? (
         <section className={styles.overviewGrid}>
+          {/* Row 1: Two donuts */}
           <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Tỷ lệ sinh viên đã thực tập theo doanh nghiệp liên kết (không tính tự túc)</h2>
+            <h2 className={styles.panelTitle}>Trạng thái hồ sơ ứng tuyển</h2>
             <div className={styles.chartPadding}>
-              <DonutChart segments={donutSegments} />
-              <div className={styles.muted} style={{ marginTop: 10 }}>
-                Tổng: {donutTotal}
+              <DonutChart segments={applicationStatusDonut.segments} />
+              <div className={styles.muted} style={{ marginTop: 8, fontSize: 13 }}>
+                Tổng: {applicationStatusDonut.total} hồ sơ
               </div>
             </div>
           </article>
 
           <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Số lượng doanh nghiệp liên kết theo lĩnh vực</h2>
+            <h2 className={styles.panelTitle}>Trạng thái tin tuyển dụng</h2>
+            <div className={styles.chartPadding}>
+              <DonutChart segments={jobStatusDonut.segments} />
+              <div className={styles.muted} style={{ marginTop: 8, fontSize: 13 }}>
+                Tổng: {jobStatusDonut.total} tin
+              </div>
+            </div>
+          </article>
+
+          {/* Row 2: Two bars */}
+          <article className={styles.card}>
+            <h2 className={styles.panelTitle}>Số lượng doanh nghiệp liên kết theo ngành/khoa</h2>
             <div className={styles.chartPadding}>
               <BarChart labels={enterprisesByField.labels} values={enterprisesByField.values} />
             </div>
@@ -135,55 +135,27 @@ export default function AdminDashboardPage() {
             </div>
           </article>
 
+          {/* Row 3: Line chart full width */}
           <article className={styles.card} style={{ gridColumn: "1 / -1" }}>
-            <h2 className={styles.panelTitle}>Thống kê tổng số bài đăng tuyển dụng của từng doanh nghiệp</h2>
+            <h2 className={styles.panelTitle}>Thống kê tổng số bài đăng tuyển dụng theo doanh nghiệp</h2>
             <div className={styles.chartPadding}>
               <LineChart labels={lineJobPosts.labels} series={lineJobPosts.series} />
             </div>
           </article>
 
-          <article className={styles.card} style={{ gridColumn: "1 / -1" }}>
-            <h2 className={styles.panelTitle}>5 tin tuyển dụng mới nhất</h2>
-            <div className={styles.tableWrap}>
-              {latestJobs.length === 0 ? (
-                <div className={styles.modulePlaceholder}>Chưa có dữ liệu.</div>
-              ) : (
-                <table className={styles.dataTable}>
-                  <thead>
-                    <tr>
-                      <th>Tiêu đề</th>
-                      <th>Doanh nghiệp</th>
-                      <th>Đợt</th>
-                      <th>Deadline</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {latestJobs.map((j) => (
-                      <tr key={j.id}>
-                        <td>
-                          <div style={{ fontWeight: 600, color: "#111827" }}>{j.title}</div>
-                          <div className={styles.modulePlaceholder} style={{ padding: 0, marginTop: 4 }}>
-                            Lĩnh vực: {j.expertise}
-                          </div>
-                        </td>
-                        <td>{j.enterpriseName ?? "—"}</td>
-                        <td>{j.batchName ?? "—"}</td>
-                        <td>{formatDateShort(j.deadlineAt)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </article>
-
+          {/* Row 4: Top/Bottom tables */}
           <div className={styles.topFieldsGrid}>
-            <TopFieldsCard title="Top 5 lĩnh vực/ngành (nhiều ứng tuyển nhất)" items={topFields.top} />
-            <TopFieldsCard title="Top 5 lĩnh vực/ngành (ít ứng tuyển nhất)" items={topFields.bottom} />
+            <TopFacultiesCard
+              title="Top 5 khoa/ngành có ứng tuyển nhiều nhất"
+              items={topFaculties.top}
+            />
+            <TopFacultiesCard
+              title="Top 5 khoa/ngành có ứng tuyển ít nhất"
+              items={topFaculties.bottom}
+            />
           </div>
         </section>
       ) : null}
     </main>
   );
 }
-

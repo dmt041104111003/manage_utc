@@ -1,22 +1,79 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Cell,
+  ResponsiveContainer
+} from "recharts";
 import styles from "../styles/dashboard.module.css";
-import type { LecturerDashboardItem } from "@/lib/types/giangvien-dashboard";
-import {
-  GIANGVIEN_DASHBOARD_DEFAULT_ERROR_MESSAGE
-} from "@/lib/constants/giangvien-dashboard";
-import {
-  fetchLecturerDashboardOverview,
-  getLecturerDashboardErrorMessage
-} from "@/lib/utils/giangvien-dashboard";
-import LecturerDashboardStats from "./components/LecturerDashboardStats";
-import LecturerDashboardTasks from "./components/LecturerDashboardTasks";
+
+type Batch = { id: string; name: string; status: string };
+
+type ChartData = {
+  labels: string[];
+  values: number[];
+};
+
+type OverviewPayload = {
+  success: boolean;
+  batches: Batch[];
+  selectedBatchId: string | null;
+  guidanceStatus: ChartData;
+  internshipStatus: ChartData;
+};
+
+const GUIDANCE_COLORS = ["#2563eb", "#16a34a"];
+const INTERNSHIP_COLORS = [
+  "#6b7280", "#2563eb", "#0ea5e9", "#f59e0b", "#16a34a", "#ef4444"
+];
+
+function StatusBarChart({
+  labels,
+  values,
+  colors
+}: {
+  labels: string[];
+  values: number[];
+  colors: string[];
+}) {
+  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
+
+  const data = labels.map((name, i) => ({ name, value: values[i] ?? 0 }));
+
+  return (
+    <ResponsiveContainer width="100%" height={230}>
+      <BarChart data={data} margin={{ top: 5, right: 16, left: 0, bottom: 56 }}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+        <XAxis
+          dataKey="name"
+          tick={{ fontSize: 11 }}
+          interval={0}
+          angle={-30}
+          textAnchor="end"
+        />
+        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={36} />
+        <Tooltip />
+        <Bar dataKey="value" name="Sinh viên" radius={[4, 4, 0, 0]}>
+          {data.map((_, i) => (
+            <Cell key={`cell-${i}`} fill={colors[i % colors.length]} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
 
 export default function LecturerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<LecturerDashboardItem | null>(null);
+  const [batchId, setBatchId] = useState("all");
+  const [payload, setPayload] = useState<OverviewPayload | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -24,33 +81,76 @@ export default function LecturerDashboardPage() {
       setLoading(true);
       setError(null);
       try {
-        const json = await fetchLecturerDashboardOverview();
+        const qs = new URLSearchParams();
+        if (batchId && batchId !== "all") qs.set("batchId", batchId);
+        const res = await fetch(`/api/giangvien/dashboard/overview?${qs.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = (await res.json()) as OverviewPayload;
         if (cancelled) return;
-        setData(json.item);
+        setPayload(json);
+        if (json.selectedBatchId && batchId === "all") setBatchId(json.selectedBatchId);
       } catch (e) {
         if (cancelled) return;
-        setError(getLecturerDashboardErrorMessage(e));
+        setError(e instanceof Error ? e.message : "Không thể tải dữ liệu.");
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
     void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    return () => { cancelled = true; };
+  }, [batchId]);
+
+  const batches = payload?.batches ?? [];
+  const guidanceStatus = payload?.guidanceStatus ?? { labels: [], values: [] };
+  const internshipStatus = payload?.internshipStatus ?? { labels: [], values: [] };
 
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Dashboard Giảng viên</h1>
-        <p className={styles.subtitle}>Theo dõi tiến độ thực tập của sinh viên phụ trách.</p>
+        <h1 className={styles.title}>Tổng quan Giảng viên hướng dẫn</h1>
       </header>
 
-      {error ? <p className={styles.modulePlaceholder}>Lỗi tải dữ liệu: {error}</p> : null}
+      <section className={styles.overviewControls}>
+        <div className={styles.overviewControl}>
+          <label>Đợt thực tập</label>
+          <select
+            className={styles.overviewSelect}
+            value={batchId}
+            onChange={(e) => setBatchId(e.target.value)}
+            disabled={loading || batches.length === 0}
+          >
+            {batches.length === 0 && <option value="all">Chưa có đợt thực tập</option>}
+            {batches.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+      </section>
 
-      <LecturerDashboardStats loading={loading} data={data} />
-      <LecturerDashboardTasks loading={loading} data={data} />
+      {error ? <div className={styles.modulePlaceholder}>Lỗi: {error}</div> : null}
+      {loading ? <div className={styles.modulePlaceholder}>Đang tải dữ liệu...</div> : null}
+
+      {!loading && payload ? (
+        <section className={styles.overviewGrid}>
+          <article className={styles.card}>
+            <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái hướng dẫn</h2>
+            <StatusBarChart
+              labels={guidanceStatus.labels}
+              values={guidanceStatus.values}
+              colors={GUIDANCE_COLORS}
+            />
+          </article>
+
+          <article className={styles.card}>
+            <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái thực tập</h2>
+            <StatusBarChart
+              labels={internshipStatus.labels}
+              values={internshipStatus.values}
+              colors={INTERNSHIP_COLORS}
+            />
+          </article>
+        </section>
+      ) : null}
     </main>
   );
 }

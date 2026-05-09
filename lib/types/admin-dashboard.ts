@@ -11,16 +11,10 @@ export type SimpleChartSeries = {
   color: string;
 };
 
-export type LatestJobItem = {
-  id: string;
-  title: string;
-  enterpriseName: string | null;
-  batchName: string | null;
-  createdAt: string | null;
-  deadlineAt: string | null;
-  recruitmentCount: number;
-  expertise: string;
-  taxCode: string | null;
+export type FacultyStatItem = {
+  label: string;
+  applications: number;
+  offered: number;
 };
 
 export type OverviewPayload = {
@@ -28,18 +22,19 @@ export type OverviewPayload = {
   batches: Array<{ id: string; name: string; status: string }>;
   selectedFaculty: string;
   selectedBatchId: string | null;
-  donut: {
+  applicationStatusDonut: {
     segments: DonutSegment[];
     total: number;
-    totalPercentText?: string;
+  };
+  jobStatusDonut: {
+    segments: DonutSegment[];
+    total: number;
   };
   enterprisesByField: { labels: string[]; values: number[] };
   progress: { labels: string[]; values: number[] };
-  latestJobs: LatestJobItem[];
   lineJobPosts: { labels: string[]; series: SimpleChartSeries[] };
-  topFields: {
-    top: Array<{ label: string; count: number }>;
-    bottom: Array<{ label: string; count: number }>;
+  topFaculties: {
+    top: FacultyStatItem[];
+    bottom: FacultyStatItem[];
   };
 };
-
