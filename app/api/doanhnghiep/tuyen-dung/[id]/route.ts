@@ -232,7 +232,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       workTime,
       applicationMethod,
       status: nextStatus,
-      rejectionReason: nextStatus === "REJECTED" ? job.rejectionReason : null,
+      rejectionReason: null,
       stoppedAt: nextStatus === "STOPPED" ? now : null
     }
   });

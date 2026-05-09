@@ -1,4 +1,5 @@
 import type { Gender, StudentDegree, SupervisorDegree } from "./sinhvien-ho-so-shared";
+export type { Gender as StudentGender, StudentDegree, SupervisorDegree } from "./sinhvien-ho-so-shared";
 
 export type StudentAccount = {
   msv: string;
