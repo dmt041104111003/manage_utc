@@ -19,7 +19,7 @@ function tomorrowDateInputValue(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export default function TuyenDungJobFormFields({ form, fieldErrors, disabled, onChange }: Props) {
+export default function TuyenDungJobFormFields({ form, fieldErrors, disabled, onChange, facultyOptions }: Props) {
   const minDeadlineAt = tomorrowDateInputValue();
   const [facultyOpen, setFacultyOpen] = useState(false);
   const facultyRootRef = useRef<HTMLDivElement | null>(null);

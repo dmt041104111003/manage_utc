@@ -4,17 +4,14 @@ import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
-import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
 import type { Province, SinhVienHoSoDraft, SinhVienHoSoProfile, Ward } from "@/lib/types/sinhvien-ho-so";
 import {
-  CV_ERROR_INVALID_MIME,
   SINHVIEN_HO_SO_LOAD_PROFILE_ERROR_DEFAULT,
   SINHVIEN_HO_SO_PROFILE_ENDPOINT,
   SINHVIEN_HO_SO_SUBMIT_ERROR_DEFAULT
 } from "@/lib/constants/sinhvien-ho-so";
 import {
   buildSinhVienHoSoPatchPayload,
-  getCvFileValidationError,
   getSinhVienHoSoSubmitErrorMessage,
   getSinhVienHoSoSubmitSuccessMessage,
   isCvMimeAllowed,
@@ -37,7 +34,8 @@ export default function SinhVienHoSoPage() {
   const [intro, setIntro] = useState("");
   const [cvFileName, setCvFileName] = useState<string | null>(null);
   const [cvMime, setCvMime] = useState<string | null>(null);
-  const [cvBase64, setCvBase64] = useState<string | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [removeCv, setRemoveCv] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -55,7 +53,8 @@ export default function SinhVienHoSoPage() {
     setIntro(draft.intro);
     setCvFileName(draft.cvFileName);
     setCvMime(draft.cvMime);
-    setCvBase64(draft.cvBase64);
+    setCvFile(null);
+    setRemoveCv(false);
     setFieldErrors({});
   };
 
@@ -110,7 +109,7 @@ export default function SinhVienHoSoPage() {
       intro,
       cvFileName,
       cvMime,
-      cvBase64
+      cvFile
     };
     const { isValid, errors } = validateSinhVienHoSoDraft(draft);
     setFieldErrors(errors);
@@ -119,14 +118,15 @@ export default function SinhVienHoSoPage() {
 
   const onPickCv = async (file: File | null) => {
     if (!file) return;
-    const payload = await readFileAsBase64Payload(file);
-    if (!isCvMimeAllowed(payload.mime)) {
-      setFieldErrors((p) => ({ ...p, cv: getCvFileValidationError(payload.mime) ?? CV_ERROR_INVALID_MIME }));
+    const mime = file.type || "";
+    if (!isCvMimeAllowed(mime)) {
+      setFieldErrors((p) => ({ ...p, cv: "File CV không hợp lệ. Chỉ hỗ trợ .pdf, .doc, .docx." }));
       return;
     }
     setCvFileName(file.name);
-    setCvMime(payload.mime);
-    setCvBase64(payload.base64);
+    setCvMime(mime);
+    setCvFile(file);
+    setRemoveCv(false);
     setFieldErrors((p) => ({ ...p, cv: "" }));
   };
 
@@ -135,20 +135,26 @@ export default function SinhVienHoSoPage() {
     if (!validateProfile()) return;
     setSaving(true);
     try {
-      const res = await fetch(SINHVIEN_HO_SO_PROFILE_ENDPOINT, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildSinhVienHoSoPatchPayload({
-          phone,
-          email,
-          currentProvinceCode,
-          currentWardCode,
-          intro,
-          cvFileName,
-          cvMime,
-          cvBase64
-        }))
-      });
+      const payload = buildSinhVienHoSoPatchPayload({
+        phone,
+        email,
+        currentProvinceCode,
+        currentWardCode,
+        intro,
+        cvFileName,
+        cvMime,
+        cvFile
+      } as any);
+      const fd = new FormData();
+      fd.set("phone", payload.phone);
+      fd.set("email", payload.email);
+      fd.set("currentProvinceCode", payload.currentProvinceCode);
+      fd.set("currentWardCode", payload.currentWardCode);
+      fd.set("intro", payload.intro);
+      if (cvFile) fd.set("cv", cvFile);
+      if (removeCv) fd.set("removeCv", "1");
+
+      const res = await fetch(SINHVIEN_HO_SO_PROFILE_ENDPOINT, { method: "PATCH", body: fd });
       const data = await res.json();
       if (!res.ok || !data?.success) {
         if (data?.errors) setFieldErrors(data.errors);
@@ -209,7 +215,6 @@ export default function SinhVienHoSoPage() {
               intro={intro}
               cvFileName={cvFileName}
               cvMime={cvMime}
-              cvBase64={cvBase64}
               provinces={provinces}
               wards={wards}
               wardLoading={wardLoading}

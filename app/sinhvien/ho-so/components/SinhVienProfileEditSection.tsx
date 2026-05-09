@@ -1,7 +1,15 @@
 import type { SinhVienHoSoProfile, Province, Ward } from "@/lib/types/sinhvien-ho-so";
-import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import formStyles from "../../../auth/styles/register.module.css";
+
+async function openStudentCvPreview() {
+  const res = await fetch("/api/files/sinhvien/cv");
+  if (!res.ok) return;
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank", "noopener,noreferrer");
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 type Props = {
   isEditing: boolean;
@@ -14,7 +22,6 @@ type Props = {
   intro: string;
   cvFileName: string | null;
   cvMime: string | null;
-  cvBase64: string | null;
   provinces: Province[];
   wards: Ward[];
   wardLoading: boolean;
@@ -40,7 +47,6 @@ export default function SinhVienProfileEditSection({
   intro,
   cvFileName,
   cvMime,
-  cvBase64,
   provinces,
   wards,
   wardLoading,
@@ -143,13 +149,7 @@ export default function SinhVienProfileEditSection({
           {cvFileName ? (
             <p style={{ marginTop: 6, fontSize: 13, color: "#475467" }}>
               Đã chọn:{" "}
-              {cvBase64 && cvMime ? (
-                <a className={adminStyles.detailLink} href={dataUrlFromBase64(cvMime, cvBase64)} download={cvFileName || "cv"}>
-                  {cvFileName}
-                </a>
-              ) : (
-                cvFileName
-              )}
+              {cvFileName}
             </p>
           ) : null}
           {fieldErrors.cv ? <p className={formStyles.error}>{fieldErrors.cv}</p> : null}
@@ -190,11 +190,18 @@ export default function SinhVienProfileEditSection({
           <tr>
             <th scope="row">File CV đính kèm</th>
             <td>
-              {cvBase64 && cvMime ? (
-                <a className={adminStyles.detailLink} href={dataUrlFromBase64(cvMime, cvBase64)} download={cvFileName || "cv"}>
-                  {cvFileName || "Tải CV"}
-                </a>
-              ) : "—"}
+              {cvFileName ? (
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button type="button" className={adminStyles.textLinkBtn} onClick={() => void openStudentCvPreview()}>
+                    Xem CV
+                  </button>
+                  <a className={adminStyles.detailLink} href="/api/files/sinhvien/cv?download=1">
+                    Tải CV
+                  </a>
+                </div>
+              ) : (
+                "—"
+              )}
             </td>
           </tr>
         </tbody>

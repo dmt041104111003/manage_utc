@@ -174,7 +174,7 @@ sequenceDiagram
 ## 2. Tra cứu & ứng tuyển (`/sinhvien/tra-cuu-ung-tuyen`)
 
 ### Chức năng
-- Xem danh sách tin tuyển dụng đang hoạt động (lọc theo từ khóa, loại công việc, ngành)
+- Xem danh sách tin tuyển dụng đang hoạt động (lọc theo từ khóa, loại công việc, địa điểm Tỉnh/Thành)
 - Xem chi tiết tin tuyển dụng
 - Nộp hồ sơ ứng tuyển (chỉ khi `internshipStatus = NOT_STARTED`)
 
@@ -203,13 +203,14 @@ sequenceDiagram
     Note over SV,DB: ── Danh sách tin tuyển dụng ──
     SV->>ListPage: Mở /sinhvien/tra-cuu-ung-tuyen
     ListPage->>ListAPI: GET /api/sinhvien/tra-cuu-ung-tuyen<br/>?q=&workType=&field=
-    ListAPI->>DB: jobPost.findMany(ACTIVE, deadline≥now, enterprise APPROVED)<br/>+ studentProfile(internshipStatus)<br/>+ jobApplication.findMany(hasApplied)
+    Note over ListAPI,DB: Filter theo Khoa SV (faculty):<br/>· allowedFaculties rỗng → thấy tất cả<br/>· hoặc allowedFaculties chứa faculty của SV
+    ListAPI->>DB: studentProfile.findFirst(faculty, internshipStatus)<br/>jobPost.findMany(ACTIVE, deadline≥now, enterprise APPROVED, faculty filter)<br/>+ jobApplication.findMany(hasApplied)
     DB-->>ListAPI: jobs + internshipStatus
     ListAPI-->>ListPage: { success, internshipStatus, canApply, items[] }
     ListPage->>Grid: Render danh sách tin
 
     SV->>Toolbar: Nhập từ khóa / chọn bộ lọc → "Tìm kiếm"
-    Toolbar->>ListPage: onSearch({ q, workType, field })
+    Toolbar->>ListPage: onSearch({ q, workType, province })
     ListPage->>ListAPI: GET ... với query params mới
     ListAPI-->>ListPage: items[] đã lọc
 
@@ -259,7 +260,8 @@ sequenceDiagram
 ### Chức năng
 - Xem danh sách hồ sơ đã nộp kèm trạng thái
 - Lọc theo trạng thái (`Chờ xem xét`, `Mời phỏng vấn`, `Trúng tuyển`, `Từ chối`)
-- Phản hồi lời mời phỏng vấn / thực tập từ email (Xác nhận / Từ chối)
+- Xem chi tiết lời mời phỏng vấn / trúng tuyển (popup) từ cột **Thao tác**
+- Phản hồi lời mời phỏng vấn / thực tập (Xác nhận / Từ chối) từ cột **Thao tác**
 - Sau khi phản hồi: cả 2 nút đều bị vô hiệu hoá (1 lần duy nhất)
 
 ### Trạng thái & luồng phản hồi
@@ -325,7 +327,7 @@ sequenceDiagram
 
 | Route | Method | Body | Prisma | Email |
 |-------|--------|------|--------|-------|
-| `/api/sinhvien/ung-tuyen` | GET | `?status=` | `jobApplication.findMany` + `jobPost` + enterprise | Không |
+| `/api/sinhvien/ung-tuyen` | GET | `?status=` | `jobApplication.findMany` + `jobPost` + enterprise + `history` (lấy `interviewLocation/responseDeadline` từ `history`) | Không |
 | `/api/sinhvien/ung-tuyen/[id]` | PATCH | `{ action }` | `jobApplication.update` + (nếu CONFIRM_INTERNSHIP) `$transaction` cập nhật `internshipStatus=DOING` + `internshipStatusHistory.create` | Có: DN + SV |
 
 ### Email gửi đi khi phản hồi

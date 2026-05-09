@@ -12,6 +12,15 @@ import {
 import { formatDateTimeVi } from "@/lib/utils/doanhnghiep-ung-vien-detail";
 import adminStyles from "../../../../admin/styles/dashboard.module.css";
 
+async function openCvPreview(applicationId: string) {
+  const res = await fetch(`/api/files/job-application/${applicationId}/cv`);
+  if (!res.ok) return;
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank", "noopener,noreferrer");
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export type Props = {
   viewTarget: Applicant | null;
   busy: boolean;
@@ -134,10 +143,15 @@ export default function ApplicantDetailPopup({
           <tr>
             <th scope="row">File CV đính kèm</th>
             <td>
-              {viewTarget.cvUrl ? (
-                <a className={adminStyles.detailLink} href={viewTarget.cvUrl} target="_blank" rel="noopener noreferrer">
-                  Tải CV
-                </a>
+              {viewTarget.cvPublicId ? (
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button type="button" className={adminStyles.textLinkBtn} onClick={() => openCvPreview(viewTarget.id)}>
+                    Xem CV
+                  </button>
+                  <a className={adminStyles.detailLink} href={`/api/files/job-application/${viewTarget.id}/cv?download=1`}>
+                    Tải CV
+                  </a>
+                </div>
               ) : (
                 "—"
               )}

@@ -60,7 +60,7 @@ export function fetchSinhVienHoSoProfileForApply(): Promise<SinhVienApplyProfile
         intro: item.intro ?? null,
         cvFileName: item.cvFileName ?? null,
         cvMime: item.cvMime ?? null,
-        cvBase64: item.cvBase64 ?? null
+        hasCv: Boolean(item.hasCv)
       } satisfies SinhVienApplyProfile;
     })
     .catch(() => {
@@ -84,7 +84,8 @@ export function validateSinhVienApplyDraft(draft: SinhVienApplyDraft): { isValid
   if (!PHONE_PATTERN.test(draft.phone.trim())) next.phone = SINHVIEN_TRA_CUU_UNG_TUYEN_VALIDATE_ERROR_PHONE;
   if (!AUTH_EMAIL_REGISTER_PATTERN.test(draft.email.trim().toLowerCase())) next.email = SINHVIEN_TRA_CUU_UNG_TUYEN_VALIDATE_ERROR_EMAIL;
   if (!draft.intro.trim()) next.intro = SINHVIEN_TRA_CUU_UNG_TUYEN_VALIDATE_ERROR_INTRO;
-  if (!draft.cvBase64 || !draft.cvMime || !draft.cvFileName || draft.removeCv) next.cv = SINHVIEN_TRA_CUU_UNG_TUYEN_CV_ERROR_REQUIRED;
+  const hasCv = Boolean(draft.cvFile) || (draft.hasExistingCv && !draft.removeCv);
+  if (!hasCv || !draft.cvMime || !draft.cvFileName) next.cv = SINHVIEN_TRA_CUU_UNG_TUYEN_CV_ERROR_REQUIRED;
 
   return { isValid: Object.keys(next).length === 0, errors: next };
 }
@@ -93,18 +94,12 @@ export function buildSinhVienTraCuuUngTuyenApplyPayload(draft: Draft): {
   phone: string;
   email: string;
   intro: string;
-  cvFileName: string | null;
-  cvMime: string | null;
-  cvBase64: string | null;
   removeCv: boolean;
 } {
   return {
     phone: draft.phone.trim(),
     email: draft.email.trim().toLowerCase(),
     intro: draft.intro.trim(),
-    cvFileName: draft.cvFileName,
-    cvMime: draft.cvMime,
-    cvBase64: draft.cvBase64,
     removeCv: draft.removeCv
   };
 }

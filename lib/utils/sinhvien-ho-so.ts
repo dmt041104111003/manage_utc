@@ -36,7 +36,7 @@ export function mapProfileToDraft(profile: SinhVienHoSoProfileType | null): Sinh
     intro: String(profile?.intro ?? ""),
     cvFileName: profile?.cvFileName ?? null,
     cvMime: profile?.cvMime ?? null,
-    cvBase64: profile?.cvBase64 ?? null
+    cvFile: null
   };
 }
 
@@ -49,7 +49,7 @@ export function validateSinhVienHoSoDraft(draft: SinhVienHoSoDraftType): { isVal
   if (!draft.currentWardCode) next.currentWardCode = CURRENT_WARD_CODE_ERROR;
   if (!draft.intro.trim()) next.intro = INTRO_ERROR_REQUIRED;
   if (draft.intro.trim().length > 3000) next.intro = INTRO_ERROR_MAX_LENGTH;
-  if (!draft.cvBase64) next.cv = CV_ERROR_REQUIRED;
+  if (!draft.cvFile && !draft.cvFileName) next.cv = CV_ERROR_REQUIRED;
 
   return { isValid: Object.keys(next).length === 0, errors: next };
 }
@@ -70,19 +70,13 @@ export function buildSinhVienHoSoPatchPayload(draft: SinhVienHoSoDraftType): {
   currentProvinceCode: string;
   currentWardCode: string;
   intro: string;
-  cvFileName?: string;
-  cvMime?: string;
-  cvBase64?: string;
 } {
   return {
     phone: draft.phone.trim(),
     email: draft.email.trim(),
     currentProvinceCode: draft.currentProvinceCode,
     currentWardCode: draft.currentWardCode,
-    intro: draft.intro.trim(),
-    cvFileName: draft.cvFileName || undefined,
-    cvMime: draft.cvMime || undefined,
-    cvBase64: draft.cvBase64 || undefined
+    intro: draft.intro.trim()
   };
 }
 

@@ -210,7 +210,9 @@ model JobApplication {
 
   status JobApplicationStatus @default(PENDING_REVIEW)
   coverLetter String?
-  cvUrl String?
+  cvPublicId String?
+  cvFileName String?
+  cvMime String?
 
   interviewAt DateTime?
 
@@ -255,7 +257,7 @@ model StudentProfile {
   intro String?
   cvFileName String?
   cvMime String?
-  cvBase64 String?
+  cvPublicId String?
 
   internshipStatus StudentInternshipStatus @default(NOT_STARTED)
 

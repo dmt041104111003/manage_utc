@@ -162,6 +162,7 @@ sequenceDiagram
 - Xem chi tiết, chỉnh sửa tin (khi đang ở trạng thái cho phép)
 - Dừng hoạt động tin
 - Xoá tin (khi chưa có ứng viên)
+- Chọn **Ngành/Khoa (allowedFaculties)** cho tin: chỉ SV thuộc khoa được chọn mới thấy tin (rỗng → SV nào cũng thấy)
 
 ### Trạng thái tin tuyển dụng (`JobStatus`)
 
@@ -230,6 +231,7 @@ sequenceDiagram
         Page->>Page: resetFormForAdd() → buildJobFormForAdd(me)
         Page->>AddPop: addOpen = true → mở popup
         DN->>AddPop: Điền thông tin tin tuyển dụng
+        Note over AddPop: Field "Vị trí tuyển dụng" (thay cho "Chuyên môn")<br/>Multi-select combobox "Ngành/Khoa" → allowedFaculties[]
         Page->>Page: validateForm() [lib/utils/doanhnghiep-tuyen-dung.ts]
         Page->>ListAPI: POST /api/doanhnghiep/tuyen-dung<br/>buildJobCreatePayload(form)
         ListAPI->>DB: user.findUnique + internshipBatch.findFirst(OPEN)<br/>jobPost.create

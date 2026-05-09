@@ -218,7 +218,7 @@ flowchart TD
 - **Chủ đề:** `[Phòng Đào tạo – Tên trường] - Thông báo phê duyệt tài khoản kết nối thực tập thành công`
 - **Nội dung:**
   - Thông báo hồ sơ đã được phê duyệt
-  - Bảng thông tin đăng nhập: URL hệ thống, email đăng nhập, mật khẩu tạm = MST
+  - Bảng thông tin đăng nhập: Truy cập hệ thống để xem thông tin chi tiết, email đăng nhập, mật khẩu tạm = MST
   - Callout `success`: yêu cầu đổi MK ngay lần đầu đăng nhập
   - Thông tin liên hệ hỗ trợ (email + hotline)
 

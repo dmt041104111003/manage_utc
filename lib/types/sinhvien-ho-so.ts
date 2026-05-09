@@ -36,7 +36,7 @@ export type SinhVienHoSoProfile = {
   intro?: string | null;
   cvFileName?: string | null;
   cvMime?: string | null;
-  cvBase64?: string | null;
+  hasCv?: boolean;
 };
 
 export type SinhVienHoSoDraft = {
@@ -47,6 +47,6 @@ export type SinhVienHoSoDraft = {
   intro: string;
   cvFileName: string | null;
   cvMime: string | null;
-  cvBase64: string | null;
+  cvFile: File | null;
 };
 

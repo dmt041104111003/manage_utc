@@ -1,4 +1,3 @@
-import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
 import { SINHVIEN_TRA_CUU_UNG_TUYEN_APPLY_OPEN_TITLE } from "@/lib/constants/sinhvien-tra-cuu-ung-tuyen-detail";
 import FormPopup from "../../../../components/FormPopup";
 import adminStyles from "../../../../admin/styles/dashboard.module.css";
@@ -13,7 +12,6 @@ type Props = {
   intro: string;
   cvFileName: string | null;
   cvMime: string | null;
-  cvBase64: string | null;
   removeCv: boolean;
   fieldErrors: Record<string, string>;
   onPhoneChange: (v: string) => void;
@@ -33,7 +31,6 @@ export default function ApplyFormPopup({
   intro,
   cvFileName,
   cvMime,
-  cvBase64,
   removeCv,
   fieldErrors,
   onPhoneChange,
@@ -120,11 +117,9 @@ export default function ApplyFormPopup({
             ref={cvInputRef}
             onChange={(e) => onChooseCv(e.target.files?.[0] ?? null)}
           />
-          {cvBase64 && cvMime && cvFileName && !removeCv ? (
+          {cvFileName && cvMime && !removeCv ? (
             <div style={{ marginTop: 8, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-              <a className={adminStyles.detailLink} href={dataUrlFromBase64(cvMime, cvBase64)} download={cvFileName}>
-                {cvFileName}
-              </a>
+              <span style={{ fontSize: 13, color: "#475467" }}>{cvFileName}</span>
               <button
                 type="button"
                 className={adminStyles.textLinkBtn}

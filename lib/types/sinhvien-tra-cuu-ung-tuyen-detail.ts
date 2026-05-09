@@ -43,7 +43,7 @@ export type SinhVienApplyProfile = {
   intro: string | null;
   cvFileName: string | null;
   cvMime: string | null;
-  cvBase64: string | null;
+  hasCv: boolean;
 };
 
 export type SinhVienApplyDraft = {
@@ -52,7 +52,8 @@ export type SinhVienApplyDraft = {
   intro: string;
   cvFileName: string | null;
   cvMime: string | null;
-  cvBase64: string | null;
+  cvFile: File | null;
+  hasExistingCv: boolean;
   removeCv: boolean;
 };
 

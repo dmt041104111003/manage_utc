@@ -4,7 +4,7 @@ import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME, AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 import { fetchProvinceList, fetchWardsForProvince } from "@/lib/vn-open-api";
-import { decodeEnterpriseFilePayload } from "@/lib/enterprise-register-files";
+import { uploadCvBytesToCloudinary } from "@/lib/storage/cloudinary";
 
 const PHONE_PATTERN = /^\d{8,12}$/;
 const CV_ALLOWED_MIMES = [
@@ -61,7 +61,7 @@ export async function GET() {
       intro: true,
       cvFileName: true,
       cvMime: true,
-      cvBase64: true
+      cvPublicId: true
     }
   });
   if (!row) return NextResponse.json({ success: false, message: "Không tìm thấy hồ sơ sinh viên." }, { status: 404 });
@@ -85,33 +85,24 @@ export async function GET() {
       intro: row.intro ?? "",
       cvFileName: row.cvFileName ?? null,
       cvMime: row.cvMime ?? null,
-      cvBase64: row.cvBase64 ?? null
+      hasCv: Boolean(row.cvPublicId)
     }
   });
 }
-
-type PatchBody = {
-  phone: string;
-  email: string;
-  currentProvinceCode: string;
-  currentWardCode: string;
-  intro: string;
-  cvFileName?: string;
-  cvMime?: string;
-  cvBase64?: string;
-};
 
 export async function PATCH(request: Request) {
   const auth = await getStudentUserId();
   if (auth.error) return auth.error;
   const userId = auth.userId as string;
-  const body = (await request.json()) as PatchBody;
+  const form = await request.formData();
 
-  const phone = (body.phone || "").trim();
-  const email = (body.email || "").trim().toLowerCase();
-  const currentProvinceCode = (body.currentProvinceCode || "").trim();
-  const currentWardCode = (body.currentWardCode || "").trim();
-  const intro = (body.intro || "").trim();
+  const phone = String(form.get("phone") || "").trim();
+  const email = String(form.get("email") || "").trim().toLowerCase();
+  const currentProvinceCode = String(form.get("currentProvinceCode") || "").trim();
+  const currentWardCode = String(form.get("currentWardCode") || "").trim();
+  const intro = String(form.get("intro") || "").trim();
+  const cvFile = form.get("cv");
+  const removeCv = String(form.get("removeCv") || "") === "1";
 
   const errors: Record<string, string> = {};
   if (!PHONE_PATTERN.test(phone)) errors.phone = "Số điện thoại chỉ gồm số (8–12 ký tự).";
@@ -121,14 +112,14 @@ export async function PATCH(request: Request) {
   if (!intro) errors.intro = "Thư giới thiệu bản thân bắt buộc.";
   if (intro.length > 3000) errors.intro = "Thư giới thiệu bản thân tối đa 3000 ký tự.";
 
-  let cvPatch: { cvFileName: string; cvMime: string; cvBase64: string } | null = null;
-  if (body.cvBase64 || body.cvMime || body.cvFileName) {
-    const decoded = decodeEnterpriseFilePayload(body.cvBase64, body.cvMime, CV_ALLOWED_MIMES);
-    if (!decoded.ok) {
-      errors.cv = decoded.message;
+  let cvPatch: { cvFileName: string; cvMime: string; bytes: Buffer } | null = null;
+  if (cvFile && cvFile instanceof File) {
+    const mime = String(cvFile.type || "");
+    if (!CV_ALLOWED_MIMES.includes(mime as any)) {
+      errors.cv = "File CV không hợp lệ. Chỉ hỗ trợ .pdf, .doc, .docx.";
     } else {
-      const fileName = (body.cvFileName || "cv").trim();
-      cvPatch = { cvFileName: fileName, cvMime: decoded.mime, cvBase64: decoded.base64 };
+      const ab = await cvFile.arrayBuffer();
+      cvPatch = { cvFileName: cvFile.name || "cv", cvMime: mime, bytes: Buffer.from(ab) };
     }
   }
 
@@ -148,6 +139,15 @@ export async function PATCH(request: Request) {
     );
   }
 
+  const cvUpload = cvPatch
+    ? await uploadCvBytesToCloudinary({
+        bytes: cvPatch.bytes,
+        mimeType: cvPatch.cvMime,
+        ownerId: userId,
+        originalName: cvPatch.cvFileName
+      })
+    : null;
+
   await prismaAny.$transaction(async (tx: any) => {
     await tx.user.update({ where: { id: userId }, data: { phone, email } });
     await tx.studentProfile.update({
@@ -158,9 +158,11 @@ export async function PATCH(request: Request) {
         currentWardCode,
         currentWardName: wardName,
         intro,
-        ...(cvPatch
-          ? { cvFileName: cvPatch.cvFileName, cvMime: cvPatch.cvMime, cvBase64: cvPatch.cvBase64 }
-          : {})
+        ...(removeCv
+          ? { cvPublicId: null, cvFileName: null, cvMime: null }
+          : cvPatch
+            ? { cvPublicId: cvUpload?.publicId ?? null, cvFileName: cvPatch.cvFileName, cvMime: cvPatch.cvMime }
+            : {})
       }
     });
   });

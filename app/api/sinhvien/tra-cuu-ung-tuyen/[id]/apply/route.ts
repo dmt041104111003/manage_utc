@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME, AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
-import { decodeEnterpriseFilePayload } from "@/lib/enterprise-register-files";
+import { uploadCvBytesToCloudinary } from "@/lib/storage/cloudinary";
 
 const PHONE_PATTERN = /^\d{8,12}$/;
 const CV_ALLOWED_MIMES = [
@@ -11,16 +11,6 @@ const CV_ALLOWED_MIMES = [
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 ] as const;
-
-type Body = {
-  phone: string;
-  email: string;
-  intro: string;
-  cvFileName?: string;
-  cvMime?: string;
-  cvBase64?: string;
-  removeCv?: boolean;
-};
 
 async function getStudentUserId() {
   const cookieStore = await cookies();
@@ -42,12 +32,13 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   if (auth.error) return auth.error;
   const userId = auth.userId as string;
   const { id } = await ctx.params;
-  const body = (await request.json()) as Body;
+  const form = await request.formData();
 
-  const phone = (body.phone || "").trim();
-  const email = (body.email || "").trim().toLowerCase();
-  const intro = (body.intro || "").trim();
-  const removeCv = Boolean(body.removeCv);
+  const phone = String(form.get("phone") || "").trim();
+  const email = String(form.get("email") || "").trim().toLowerCase();
+  const intro = String(form.get("intro") || "").trim();
+  const cvFile = form.get("cv");
+  const removeCv = String(form.get("removeCv") || "") === "1";
 
   const errors: Record<string, string> = {};
   if (!PHONE_PATTERN.test(phone)) errors.phone = "Số điện thoại chỉ gồm số (8–12 ký tự).";
@@ -55,17 +46,14 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   if (!intro) errors.intro = "Thư giới thiệu bản thân bắt buộc.";
   if (intro.length > 3000) errors.intro = "Thư giới thiệu bản thân tối đa 3000 ký tự.";
 
-  let cvPatch: { cvFileName: string; cvMime: string; cvBase64: string } | null = null;
-  if (body.cvBase64 || body.cvMime || body.cvFileName) {
-    const decoded = decodeEnterpriseFilePayload(body.cvBase64, body.cvMime, CV_ALLOWED_MIMES);
-    if (!decoded.ok) {
-      errors.cv = decoded.message;
+  let cvPatch: { cvFileName: string; cvMime: string; bytes: Buffer } | null = null;
+  if (cvFile && cvFile instanceof File) {
+    const mime = String(cvFile.type || "");
+    if (!CV_ALLOWED_MIMES.includes(mime as any)) {
+      errors.cv = "File CV không hợp lệ. Chỉ hỗ trợ .pdf, .doc, .docx.";
     } else {
-      cvPatch = {
-        cvFileName: (body.cvFileName || "cv").trim(),
-        cvMime: decoded.mime,
-        cvBase64: decoded.base64
-      };
+      const ab = await cvFile.arrayBuffer();
+      cvPatch = { cvFileName: cvFile.name || "cv", cvMime: mime, bytes: Buffer.from(ab) };
     }
   }
   if (Object.keys(errors).length) return NextResponse.json({ success: false, errors }, { status: 400 });
@@ -80,7 +68,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
 
   const profile = await prismaAny.studentProfile.findFirst({
     where: { userId },
-    select: { internshipStatus: true, cvFileName: true, cvMime: true, cvBase64: true }
+    select: { internshipStatus: true, cvFileName: true, cvMime: true, cvPublicId: true }
   });
   if (!profile) return NextResponse.json({ success: false, message: "Không tìm thấy hồ sơ sinh viên." }, { status: 404 });
   if (profile.internshipStatus !== "NOT_STARTED") {
@@ -99,12 +87,22 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     ? cvPatch
     : removeCv
       ? null
-      : profile.cvBase64 && profile.cvMime && profile.cvFileName
-        ? { cvBase64: profile.cvBase64, cvMime: profile.cvMime, cvFileName: profile.cvFileName }
+      : profile.cvPublicId && profile.cvMime && profile.cvFileName
+        ? { cvPublicId: profile.cvPublicId, cvMime: profile.cvMime, cvFileName: profile.cvFileName }
         : null;
   if (!effectiveCv) return NextResponse.json({ success: false, errors: { cv: "Vui lòng đính kèm file CV." } }, { status: 400 });
 
-  const cvUrl = `data:${effectiveCv.cvMime};base64,${effectiveCv.cvBase64}`;
+  const cvUpload =
+    "bytes" in (effectiveCv as any)
+      ? await uploadCvBytesToCloudinary({
+          bytes: (effectiveCv as any).bytes as Buffer,
+          mimeType: effectiveCv.cvMime,
+          ownerId: userId,
+          originalName: effectiveCv.cvFileName
+        })
+      : null;
+  const cvPublicId = cvUpload?.publicId ?? (effectiveCv as any).cvPublicId ?? null;
+
   await prismaAny.$transaction(async (tx: any) => {
     await tx.user.update({ where: { id: userId }, data: { phone, email } });
     await tx.studentProfile.update({
@@ -113,7 +111,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
         intro,
         cvFileName: effectiveCv.cvFileName,
         cvMime: effectiveCv.cvMime,
-        cvBase64: effectiveCv.cvBase64
+        cvPublicId
       }
     });
     await tx.jobApplication.create({
@@ -123,7 +121,9 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
         status: "PENDING_REVIEW",
         response: "PENDING",
         coverLetter: intro,
-        cvUrl,
+        cvPublicId,
+        cvFileName: effectiveCv.cvFileName,
+        cvMime: effectiveCv.cvMime,
         history: [
           {
             action: "APPLIED",

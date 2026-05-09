@@ -17,7 +17,9 @@ export type Applicant = {
   appliedAt: string | null;
   status: JobApplicationStatus;
   coverLetter: string | null;
-  cvUrl: string | null;
+  cvPublicId: string | null;
+  cvFileName: string | null;
+  cvMime: string | null;
   interviewAt: string | null;
   interviewLocation: string | null;
   responseDeadline: string | null;

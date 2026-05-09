@@ -4,7 +4,6 @@ import { use, useEffect, useState } from "react";
 import styles from "../../styles/dashboard.module.css";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../../components/MessagePopup";
-import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
 import type { SinhVienApplyDraft, SinhVienTraCuuUngTuyenJobDetail } from "@/lib/types/sinhvien-tra-cuu-ung-tuyen-detail";
 import {
   SINHVIEN_TRA_CUU_UNG_TUYEN_BACK_LINK_TEXT,
@@ -41,7 +40,8 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
   const [intro, setIntro] = useState("");
   const [cvFileName, setCvFileName] = useState<string | null>(null);
   const [cvMime, setCvMime] = useState<string | null>(null);
-  const [cvBase64, setCvBase64] = useState<string | null>(null);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [hasExistingCv, setHasExistingCv] = useState(false);
   const [removeCv, setRemoveCv] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -66,7 +66,8 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
     setIntro(profile.intro ?? "");
     setCvFileName(profile.cvFileName ?? null);
     setCvMime(profile.cvMime ?? null);
-    setCvBase64(profile.cvBase64 ?? null);
+    setCvFile(null);
+    setHasExistingCv(Boolean(profile.hasCv));
     setRemoveCv(false);
     setFieldErrors({});
   }
@@ -93,16 +94,10 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
       setFieldErrors((prev) => ({ ...prev, cv: guessedError }));
       return;
     }
-    const payload = await readFileAsBase64Payload(file);
-    const payloadError = getCvMimeValidationError(payload.mime);
-    if (payloadError) {
-      setFieldErrors((prev) => ({ ...prev, cv: payloadError }));
-      return;
-    }
     setFieldErrors((prev) => ({ ...prev, cv: "" }));
     setCvFileName(file.name);
-    setCvMime(payload.mime);
-    setCvBase64(payload.base64);
+    setCvMime(guessed);
+    setCvFile(file);
     setRemoveCv(false);
   }
 
@@ -113,7 +108,8 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
       intro,
       cvFileName,
       cvMime,
-      cvBase64,
+      cvFile,
+      hasExistingCv,
       removeCv
     };
 
@@ -123,11 +119,15 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
 
     setBusy(true);
     try {
-      const res = await fetch(buildSinhVienTraCuuUngTuyenApplyUrl(jobId), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildSinhVienTraCuuUngTuyenApplyPayload(draft))
-      });
+      const payload = buildSinhVienTraCuuUngTuyenApplyPayload(draft);
+      const fd = new FormData();
+      fd.set("phone", payload.phone);
+      fd.set("email", payload.email);
+      fd.set("intro", payload.intro);
+      if (cvFile) fd.set("cv", cvFile);
+      if (removeCv) fd.set("removeCv", "1");
+
+      const res = await fetch(buildSinhVienTraCuuUngTuyenApplyUrl(jobId), { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok || !data?.success) {
         if (data?.errors && typeof data.errors === "object") setFieldErrors(data.errors);
@@ -171,7 +171,6 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
           intro={intro}
           cvFileName={cvFileName}
           cvMime={cvMime}
-          cvBase64={cvBase64}
           removeCv={removeCv}
           fieldErrors={fieldErrors}
           onPhoneChange={setPhone}
@@ -180,9 +179,10 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
           onChooseCv={(f) => void onChooseCv(f)}
           onRemoveCv={() => {
             setRemoveCv(true);
-            setCvBase64(null);
+            setCvFile(null);
             setCvMime(null);
             setCvFileName(null);
+            setHasExistingCv(false);
           }}
           onClose={() => setApplyOpen(false)}
           onSubmit={() => void submitApply()}
