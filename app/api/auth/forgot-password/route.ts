@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendMail } from "@/lib/mail";
 import { signPasswordResetToken } from "@/lib/auth/jwt";
 import { AUTH_EMAIL_SIMPLE_PATTERN } from "@/lib/constants/auth/patterns";
-import { SCHOOL_FULL_NAME } from "@/lib/constants/school";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
+import { sendPasswordResetEmail } from "@/lib/mail-password-reset";
 
 type ForgotPayload = {
   email?: string;
@@ -67,20 +66,8 @@ export async function POST(request: Request) {
   const resetPath = `/auth/datlaimatkhau?${qs.toString()}`;
   const resetUrl = `${appUrl}${resetPath}`;
 
-  const subject = `${SCHOOL_FULL_NAME} - Đặt lại mật khẩu`;
-  const text = [
-    `Kính gửi ${user.fullName},`,
-    "",
-    `Bạn vừa yêu cầu đặt lại mật khẩu trên hệ thống ${SCHOOL_FULL_NAME}.`,
-    "",
-    `Mở liên kết sau để đặt mật khẩu mới (hiệu lực 15 phút):`,
-    resetUrl,
-    "",
-    "Nếu không phải bạn, bỏ qua email này."
-  ].join("\n");
-
   try {
-    await sendMail(email, subject, text);
+    await sendPasswordResetEmail(email, user.fullName, user.role, resetUrl);
   } catch (e) {
     console.error("sendMail forgot-password", e);
     return NextResponse.json(
