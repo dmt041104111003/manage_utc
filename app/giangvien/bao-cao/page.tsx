@@ -216,7 +216,7 @@ export default function GiangvienQuanLyBCPage() {
             Đợt thực tập mới nhất: <strong>{latestBatchInternshipStats.batchName ?? "—"}</strong>
           </div>
 
-          <div className={adminStyles.statsGrid6}>
+          <div className={adminStyles.statsGrid8}>
             <DashboardStatSummaryCard
               cardClassName={adminStyles.statCard}
               labelClassName={adminStyles.statLabel}

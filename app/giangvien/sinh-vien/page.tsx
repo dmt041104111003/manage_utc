@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
 import { FiActivity, FiCheckCircle } from "react-icons/fi";
@@ -91,34 +90,31 @@ export default function GiangvienSinhVienPage() {
   }, [q, batchId, guidanceStatus]);
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Sinh viên được phân công</h1>
+    <main className={adminStyles.page}>
+      <header className={adminStyles.header}>
+        <h1 className={adminStyles.title}>Sinh viên được phân công</h1>
       </header>
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
 
       {!loading && latestBatchGuidanceStats.batchId ? (
-        <section className={styles.statsSection} aria-label="Thống kê đợt thực tập mới nhất">
-          <p className={styles.statsSectionTitle}>
-            Đợt thực tập mới nhất:{" "}
-            <span className={styles.statsSectionBatchName}>
-              {latestBatchGuidanceStats.batchName ?? "—"}
-            </span>
-          </p>
-          <div className={styles.statsGrid}>
+        <section aria-label="Thống kê đợt thực tập mới nhất">
+          <div className={adminStyles.statusNote} style={{ marginBottom: 10 }}>
+            Đợt thực tập mới nhất: <strong>{latestBatchGuidanceStats.batchName ?? "—"}</strong>
+          </div>
+          <div className={adminStyles.statsGrid2}>
             <DashboardStatSummaryCard
-              cardClassName={styles.statCard}
-              labelClassName={styles.statCardTitle}
-              valueClassName={styles.statValue}
+              cardClassName={adminStyles.statCard}
+              labelClassName={adminStyles.statLabel}
+              valueClassName={adminStyles.statValue}
               label="Đang thực tập"
               value={latestBatchGuidanceStats.guiding}
               Icon={FiActivity}
             />
             <DashboardStatSummaryCard
-              cardClassName={styles.statCard}
-              labelClassName={styles.statCardTitle}
-              valueClassName={styles.statValue}
+              cardClassName={adminStyles.statCard}
+              labelClassName={adminStyles.statLabel}
+              valueClassName={adminStyles.statValue}
               label="Hoàn thành hướng dẫn thực tập"
               value={latestBatchGuidanceStats.completed}
               Icon={FiCheckCircle}

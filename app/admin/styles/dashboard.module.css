@@ -773,9 +773,60 @@
   border-color: #67e8f9;
 }
 
+/* 8 thẻ: 4 + 4 hai hàng, 8 màu không lặp (vd. GV BCTT) */
+.statsGrid8 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.statsGrid8 > .statCard {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.statsGrid8 > .statCard:nth-child(1) {
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+.statsGrid8 > .statCard:nth-child(2) {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+.statsGrid8 > .statCard:nth-child(3) {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+.statsGrid8 > .statCard:nth-child(4) {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+.statsGrid8 > .statCard:nth-child(5) {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+}
+.statsGrid8 > .statCard:nth-child(6) {
+  background: #cffafe;
+  border-color: #67e8f9;
+}
+.statsGrid8 > .statCard:nth-child(7) {
+  background: #ffedd5;
+  border-color: #fb923c;
+}
+.statsGrid8 > .statCard:nth-child(8) {
+  background: #e0e7ff;
+  border-color: #818cf8;
+}
+
 @media (max-width: 1100px) {
   .statsGrid6 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .statsGrid8 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -828,7 +879,8 @@
     min-width: 0;
   }
 
-  .statsGrid6 {
+  .statsGrid6,
+  .statsGrid8 {
     grid-template-columns: 1fr;
   }
 }
