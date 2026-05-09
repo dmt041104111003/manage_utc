@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
 import MessagePopup from "../../components/MessagePopup";
+import {
+  FiActivity,
+  FiCheckCircle,
+  FiClock,
+  FiLayers,
+  FiUploadCloud,
+  FiXCircle
+} from "react-icons/fi";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { ADMIN_STUDENT_EXCEL_HEADER, ADMIN_STUDENT_EXCEL_SAMPLE_ROWS } from "@/lib/constants/admin-students-excel";
 
@@ -567,30 +576,54 @@ export default function AdminQuanLySinhVienPage() {
             Đợt thực tập mới nhất: <strong>{latestBatchInternshipStats.batchName ?? "—"}</strong>
           </div>
           <div className={styles.statsGrid3}>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Chưa thực tập</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.notStarted}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Đang thực tập</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.doing}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Thực tập tự túc</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.selfFinanced}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Đã nộp BCTT</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.reportSubmitted}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Hoàn thành</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.completed}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Từ chối</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.rejected}</p>
-            </div>
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Chưa thực tập"
+              value={latestBatchInternshipStats.notStarted}
+              Icon={FiClock}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Đang thực tập"
+              value={latestBatchInternshipStats.doing}
+              Icon={FiActivity}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Thực tập tự túc"
+              value={latestBatchInternshipStats.selfFinanced}
+              Icon={FiLayers}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Đã nộp BCTT"
+              value={latestBatchInternshipStats.reportSubmitted}
+              Icon={FiUploadCloud}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Hoàn thành"
+              value={latestBatchInternshipStats.completed}
+              Icon={FiCheckCircle}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Từ chối"
+              value={latestBatchInternshipStats.rejected}
+              Icon={FiXCircle}
+            />
           </div>
         </section>
       ) : null}

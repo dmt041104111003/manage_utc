@@ -699,29 +699,6 @@
   border-color: #fca5a5;
 }
 
-.statCardHead {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.statCardBody {
-  flex: 1;
-  min-width: 0;
-}
-
-.statIcon {
-  flex-shrink: 0;
-}
-
-.statsGrid2 > .statCard:nth-child(1) .statIcon {
-  color: #1d4ed8;
-}
-
-.statsGrid2 > .statCard:nth-child(2) .statIcon {
-  color: #475569;
-}
-
 .statLabel {
   margin: 0;
   font-size: 12px;

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
+import { FiActivity, FiCheckCircle } from "react-icons/fi";
 import type { BatchOption, GuidanceStatus, Row } from "@/lib/types/giangvien-sinh-vien";
 import {
   GIANGVIEN_SINH_VIEN_ENDPOINT
@@ -105,14 +107,22 @@ export default function GiangvienSinhVienPage() {
             </span>
           </p>
           <div className={styles.statsGrid}>
-            <div className={styles.statCard}>
-              <p className={styles.statCardTitle}>Đang thực tập</p>
-              <p className={styles.statValue}>{latestBatchGuidanceStats.guiding}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statCardTitle}>Hoàn thành hướng dẫn thực tập</p>
-              <p className={styles.statValue}>{latestBatchGuidanceStats.completed}</p>
-            </div>
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statCardTitle}
+              valueClassName={styles.statValue}
+              label="Đang thực tập"
+              value={latestBatchGuidanceStats.guiding}
+              Icon={FiActivity}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statCardTitle}
+              valueClassName={styles.statValue}
+              label="Hoàn thành hướng dẫn thực tập"
+              value={latestBatchGuidanceStats.completed}
+              Icon={FiCheckCircle}
+            />
           </div>
         </section>
       ) : null}

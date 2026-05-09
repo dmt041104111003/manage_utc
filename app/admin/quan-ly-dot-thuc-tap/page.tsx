@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { FiLock, FiUnlock } from "react-icons/fi";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
 import styles from "../styles/dashboard.module.css";
 import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
@@ -296,24 +297,22 @@ export default function AdminQuanLyDotThucTapPage() {
       {!loading && batchStatusStats ? (
         <section aria-label="Thống kê trạng thái đợt thực tập">
           <div className={styles.statsGrid2}>
-            <div className={styles.statCard}>
-              <div className={styles.statCardHead}>
-                <FiUnlock className={styles.statIcon} size={22} aria-hidden />
-                <div className={styles.statCardBody}>
-                  <p className={styles.statLabel}>Đợt thực tập đang mở</p>
-                  <p className={styles.statValue}>{batchStatusStats.open}</p>
-                </div>
-              </div>
-            </div>
-            <div className={styles.statCard}>
-              <div className={styles.statCardHead}>
-                <FiLock className={styles.statIcon} size={22} aria-hidden />
-                <div className={styles.statCardBody}>
-                  <p className={styles.statLabel}>Đợt thực tập đã đóng</p>
-                  <p className={styles.statValue}>{batchStatusStats.closed}</p>
-                </div>
-              </div>
-            </div>
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Đợt thực tập đang mở"
+              value={batchStatusStats.open}
+              Icon={FiUnlock}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Đợt thực tập đã đóng"
+              value={batchStatusStats.closed}
+              Icon={FiLock}
+            />
           </div>
         </section>
       ) : null}

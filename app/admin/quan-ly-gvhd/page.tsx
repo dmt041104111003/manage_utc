@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
 import MessagePopup from "../../components/MessagePopup";
+import { FiUserCheck, FiUserX } from "react-icons/fi";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { ADMIN_SUPERVISOR_EXCEL_HEADER, ADMIN_SUPERVISOR_EXCEL_SAMPLE_ROWS } from "@/lib/constants/admin-supervisors-excel";
 
@@ -517,14 +519,22 @@ export default function AdminQuanLyGVHDPage() {
             Đợt thực tập mới nhất: <strong>{latestBatchSupervisorStats.batchName ?? "—"}</strong>
           </div>
           <div className={styles.statsGrid2}>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Giảng viên hướng dẫn đã được phân công</p>
-              <p className={styles.statValue}>{latestBatchSupervisorStats.assigned}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Giảng viên hướng dẫn chưa được phân công</p>
-              <p className={styles.statValue}>{latestBatchSupervisorStats.unassigned}</p>
-            </div>
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Giảng viên hướng dẫn đã được phân công"
+              value={latestBatchSupervisorStats.assigned}
+              Icon={FiUserCheck}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Giảng viên hướng dẫn chưa được phân công"
+              value={latestBatchSupervisorStats.unassigned}
+              Icon={FiUserX}
+            />
           </div>
         </section>
       ) : null}

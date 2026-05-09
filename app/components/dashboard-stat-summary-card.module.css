@@ -1,0 +1,16 @@
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.icon {
+  flex-shrink: 0;
+  color: #64748b;
+  opacity: 0.95;
+}

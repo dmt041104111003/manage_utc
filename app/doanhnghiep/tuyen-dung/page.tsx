@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
 import MessagePopup from "../../components/MessagePopup";
+import { FiClock, FiPauseCircle, FiXCircle, FiZap } from "react-icons/fi";
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
 import type { ApiResponse, JobDetailResponse, JobFormState, JobListItem, JobStatus } from "@/lib/types/doanhnghiep-tuyen-dung";
 import { DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE } from "@/lib/constants/doanhnghiep-tuyen-dung";
@@ -317,10 +319,10 @@ export default function DoanhNghiepTuyenDungPage() {
 
   // Stats computed from ALL items (before status filter)
   const statCards = [
-    { label: "Chờ duyệt",      status: "PENDING"  as const },
-    { label: "Từ chối duyệt",  status: "REJECTED" as const },
-    { label: "Đang hoạt động", status: "ACTIVE"   as const },
-    { label: "Dừng hoạt động", status: "STOPPED"  as const }
+    { label: "Chờ duyệt", status: "PENDING" as const, Icon: FiClock },
+    { label: "Từ chối duyệt", status: "REJECTED" as const, Icon: FiXCircle },
+    { label: "Đang hoạt động", status: "ACTIVE" as const, Icon: FiZap },
+    { label: "Dừng hoạt động", status: "STOPPED" as const, Icon: FiPauseCircle }
   ].map((c) => ({ ...c, count: statusStats[c.status] || 0 }));
 
   return (
@@ -337,10 +339,15 @@ export default function DoanhNghiepTuyenDungPage() {
       {!loading && (
         <div className={styles.statsGrid}>
           {statCards.map((s) => (
-            <div key={s.status} className={styles.statCard}>
-              <p className={styles.statLabel}>{s.label}</p>
-              <p className={styles.statValue}>{s.count}</p>
-            </div>
+            <DashboardStatSummaryCard
+              key={s.status}
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label={s.label}
+              value={s.count}
+              Icon={s.Icon}
+            />
           ))}
         </div>
       )}

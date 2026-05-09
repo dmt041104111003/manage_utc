@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
+import { FiClock, FiGift, FiMic, FiXCircle } from "react-icons/fi";
 import type { JobRow, JobStatus } from "@/lib/types/doanhnghiep-ung-vien";
 import {
   DOANHNGHIEP_UNG_VIEN_ERROR_DEFAULT,
@@ -119,15 +121,20 @@ export default function DoanhNghiepUngVienPage() {
       {!loading && (
         <div className={styles.statsGrid}>
           {[
-            { label: "Chờ xem xét",   count: appStats.PENDING_REVIEW },
-            { label: "Mời phỏng vấn", count: appStats.INTERVIEW_INVITED },
-            { label: "Trúng tuyển",   count: appStats.OFFERED },
-            { label: "Từ chối",       count: appStats.REJECTED + appStats.STUDENT_DECLINED }
+            { label: "Chờ xem xét", count: appStats.PENDING_REVIEW, Icon: FiClock },
+            { label: "Mời phỏng vấn", count: appStats.INTERVIEW_INVITED, Icon: FiMic },
+            { label: "Trúng tuyển", count: appStats.OFFERED, Icon: FiGift },
+            { label: "Từ chối", count: appStats.REJECTED + appStats.STUDENT_DECLINED, Icon: FiXCircle }
           ].map((s) => (
-            <div key={s.label} className={styles.statCard}>
-              <p className={styles.statLabel}>{s.label}</p>
-              <p className={styles.statValue}>{s.count}</p>
-            </div>
+            <DashboardStatSummaryCard
+              key={s.label}
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label={s.label}
+              value={s.count}
+              Icon={s.Icon}
+            />
           ))}
         </div>
       )}

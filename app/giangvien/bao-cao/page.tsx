@@ -4,6 +4,17 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
+import {
+  FiActivity,
+  FiAlertCircle,
+  FiBarChart2,
+  FiCheckCircle,
+  FiClock,
+  FiLayers,
+  FiUploadCloud,
+  FiXCircle
+} from "react-icons/fi";
 import MessagePopup from "../../components/MessagePopup";
 import type { Degree, InternshipStatus, Row } from "@/lib/types/giangvien-bao-cao-thuc-tap";
 import { validateGiangVienBaoCaoApprove } from "@/lib/utils/giangvien-bao-cao-thuc-tap";
@@ -208,38 +219,70 @@ export default function GiangvienQuanLyBCPage() {
           </p>
 
           <div className={styles.statsGrid4}>
-            <div className={styles.statCard}>
-              <p className={styles.statCardTitle}>Chưa thực tập</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.notStarted}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statCardTitle}>Đang thực tập</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.doing}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statCardTitle}>Thực tập tự túc</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.selfFinanced}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statCardTitle}>Đã nộp BCTT</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.reportSubmitted}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statCardTitle}>Từ chối duyệt BCTT</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.reportRejected}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statCardTitle}>Đã hoàn thành BCTT</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.reportApproved}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statCardTitle}>Hoàn thành thực tập</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.internshipCompleted}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statCardTitle}>Chưa hoàn thành BCTT</p>
-              <p className={styles.statValue}>{latestBatchInternshipStats.reportNotCompleted}</p>
-            </div>
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statCardTitle}
+              valueClassName={styles.statValue}
+              label="Chưa thực tập"
+              value={latestBatchInternshipStats.notStarted}
+              Icon={FiClock}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statCardTitle}
+              valueClassName={styles.statValue}
+              label="Đang thực tập"
+              value={latestBatchInternshipStats.doing}
+              Icon={FiActivity}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statCardTitle}
+              valueClassName={styles.statValue}
+              label="Thực tập tự túc"
+              value={latestBatchInternshipStats.selfFinanced}
+              Icon={FiLayers}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statCardTitle}
+              valueClassName={styles.statValue}
+              label="Đã nộp BCTT"
+              value={latestBatchInternshipStats.reportSubmitted}
+              Icon={FiUploadCloud}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statCardTitle}
+              valueClassName={styles.statValue}
+              label="Từ chối duyệt BCTT"
+              value={latestBatchInternshipStats.reportRejected}
+              Icon={FiXCircle}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statCardTitle}
+              valueClassName={styles.statValue}
+              label="Đã hoàn thành BCTT"
+              value={latestBatchInternshipStats.reportApproved}
+              Icon={FiCheckCircle}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statCardTitle}
+              valueClassName={styles.statValue}
+              label="Hoàn thành thực tập"
+              value={latestBatchInternshipStats.internshipCompleted}
+              Icon={FiBarChart2}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statCardTitle}
+              valueClassName={styles.statValue}
+              label="Chưa hoàn thành BCTT"
+              value={latestBatchInternshipStats.reportNotCompleted}
+              Icon={FiAlertCircle}
+            />
           </div>
         </section>
       ) : null}

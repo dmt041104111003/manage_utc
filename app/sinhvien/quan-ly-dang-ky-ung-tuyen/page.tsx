@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
+import type { IconType } from "react-icons";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
+import { FiClock, FiGift, FiMic, FiXCircle } from "react-icons/fi";
 import MessagePopup from "../../components/MessagePopup";
 import type {
   RespondAction,
@@ -25,14 +28,31 @@ import QuanLyUngTuyenTableSection from "./components/QuanLyUngTuyenTableSection"
 type StatCard = {
   label: string;
   count: number;
+  Icon: IconType;
 };
 
 function computeStats(rows: SinhVienQuanLyDangKyUngTuyenRow[]): StatCard[] {
   return [
-    { label: "Chờ xem xét",   count: rows.filter((r) => r.status === "PENDING_REVIEW").length },
-    { label: "Mời phỏng vấn", count: rows.filter((r) => r.status === "INTERVIEW_INVITED").length },
-    { label: "Trúng tuyển",   count: rows.filter((r) => r.status === "OFFERED").length },
-    { label: "Từ chối",       count: rows.filter((r) => r.status === "REJECTED" || r.status === "STUDENT_DECLINED").length }
+    {
+      label: "Chờ xem xét",
+      count: rows.filter((r) => r.status === "PENDING_REVIEW").length,
+      Icon: FiClock
+    },
+    {
+      label: "Mời phỏng vấn",
+      count: rows.filter((r) => r.status === "INTERVIEW_INVITED").length,
+      Icon: FiMic
+    },
+    {
+      label: "Trúng tuyển",
+      count: rows.filter((r) => r.status === "OFFERED").length,
+      Icon: FiGift
+    },
+    {
+      label: "Từ chối",
+      count: rows.filter((r) => r.status === "REJECTED" || r.status === "STUDENT_DECLINED").length,
+      Icon: FiXCircle
+    }
   ];
 }
 
@@ -134,10 +154,15 @@ export default function SinhVienQuanLyUngTuyenPage() {
       {!loading && (
         <div className={styles.statsGrid}>
           {stats.map((stat) => (
-            <div key={stat.label} className={styles.statCard}>
-              <p className={styles.statLabel}>{stat.label}</p>
-              <p className={styles.statValue}>{stat.count}</p>
-            </div>
+            <DashboardStatSummaryCard
+              key={stat.label}
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label={stat.label}
+              value={stat.count}
+              Icon={stat.Icon}
+            />
           ))}
         </div>
       )}

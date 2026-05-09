@@ -21,7 +21,9 @@ import {
 import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import MessagePopup from "../../components/MessagePopup";
 import Pagination from "../../components/Pagination";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
 import styles from "../styles/dashboard.module.css";
+import { FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi";
 import AdminEnterpriseToolbar from "./components/AdminEnterpriseToolbar";
 import AdminEnterpriseTable from "./components/AdminEnterpriseTable";
 const AdminEnterpriseStatusPopup = dynamic(() => import("./components/AdminEnterpriseStatusPopup"), { ssr: false });
@@ -277,18 +279,30 @@ export default function AdminQuanLyDoanhNghiepPage() {
       {!loading && enterpriseStatusStats ? (
         <section aria-label="Thống kê trạng thái doanh nghiệp" style={{ marginBottom: 8 }}>
           <div className={styles.statsGrid3}>
-            <div className={`${styles.statCard} ${styles.statCardTintPending}`}>
-              <p className={styles.statLabel}>DN chờ phê duyệt</p>
-              <p className={styles.statValue}>{enterpriseStatusStats.pending}</p>
-            </div>
-            <div className={`${styles.statCard} ${styles.statCardTintApproved}`}>
-              <p className={styles.statLabel}>DN đã phê duyệt</p>
-              <p className={styles.statValue}>{enterpriseStatusStats.approved}</p>
-            </div>
-            <div className={`${styles.statCard} ${styles.statCardTintRejected}`}>
-              <p className={styles.statLabel}>DN bị từ chối</p>
-              <p className={styles.statValue}>{enterpriseStatusStats.rejected}</p>
-            </div>
+            <DashboardStatSummaryCard
+              cardClassName={`${styles.statCard} ${styles.statCardTintPending}`}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="DN chờ phê duyệt"
+              value={enterpriseStatusStats.pending}
+              Icon={FiClock}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={`${styles.statCard} ${styles.statCardTintApproved}`}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="DN đã phê duyệt"
+              value={enterpriseStatusStats.approved}
+              Icon={FiCheckCircle}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={`${styles.statCard} ${styles.statCardTintRejected}`}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="DN bị từ chối"
+              value={enterpriseStatusStats.rejected}
+              Icon={FiXCircle}
+            />
           </div>
         </section>
       ) : null}

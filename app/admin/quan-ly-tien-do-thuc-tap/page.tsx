@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
 import MessagePopup from "../../components/MessagePopup";
+import {
+  FiActivity,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiClock,
+  FiFileText,
+  FiLayers
+} from "react-icons/fi";
 
 import type { Detail, ListRow } from "@/lib/types/admin-quan-ly-tien-do-thuc-tap";
 import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
@@ -159,30 +168,54 @@ export default function AdminTienDoThucTapPage() {
       {!loading && progressStats ? (
         <section aria-label="Thống kê trạng thái thực tập">
           <div className={styles.statsGrid3}>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Chưa thực tập</p>
-              <p className={styles.statValue}>{progressStats.notStarted}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Đang thực tập</p>
-              <p className={styles.statValue}>{progressStats.doing}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Thực tập tự túc</p>
-              <p className={styles.statValue}>{progressStats.selfFinanced}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Đã hoàn thành BCTT</p>
-              <p className={styles.statValue}>{progressStats.approvedReport}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Hoàn thành thực tập</p>
-              <p className={styles.statValue}>{progressStats.completed}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Chưa hoàn thành thực tập</p>
-              <p className={styles.statValue}>{progressStats.notCompletedInternship}</p>
-            </div>
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Chưa thực tập"
+              value={progressStats.notStarted}
+              Icon={FiClock}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Đang thực tập"
+              value={progressStats.doing}
+              Icon={FiActivity}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Thực tập tự túc"
+              value={progressStats.selfFinanced}
+              Icon={FiLayers}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Đã hoàn thành BCTT"
+              value={progressStats.approvedReport}
+              Icon={FiFileText}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Hoàn thành thực tập"
+              value={progressStats.completed}
+              Icon={FiCheckCircle}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Chưa hoàn thành thực tập"
+              value={progressStats.notCompletedInternship}
+              Icon={FiAlertCircle}
+            />
           </div>
         </section>
       ) : null}

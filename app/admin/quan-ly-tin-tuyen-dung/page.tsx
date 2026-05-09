@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
 import MessagePopup from "../../components/MessagePopup";
+import { FiClock, FiPauseCircle, FiXCircle, FiZap } from "react-icons/fi";
 
 import type { ApiResponse, InternshipBatchRow, JobDetailResponse, JobListItem, StatusAction } from "@/lib/types/admin-quan-ly-tin-tuyen-dung";
 import { inferDefaultAction } from "@/lib/utils/admin-quan-ly-tin-tuyen-dung";
@@ -215,22 +217,38 @@ export default function AdminQuanLyTinTuyenDungPage() {
       {!loading && statusStats ? (
         <section aria-label="Thống kê trạng thái tin tuyển dụng">
           <div className={styles.statsGrid4}>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Chờ duyệt</p>
-              <p className={styles.statValue}>{statusStats.pending}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Từ chối duyệt</p>
-              <p className={styles.statValue}>{statusStats.rejected}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Đang hoạt động</p>
-              <p className={styles.statValue}>{statusStats.active}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Dừng hoạt động</p>
-              <p className={styles.statValue}>{statusStats.stopped}</p>
-            </div>
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Chờ duyệt"
+              value={statusStats.pending}
+              Icon={FiClock}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Từ chối duyệt"
+              value={statusStats.rejected}
+              Icon={FiXCircle}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Đang hoạt động"
+              value={statusStats.active}
+              Icon={FiZap}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Dừng hoạt động"
+              value={statusStats.stopped}
+              Icon={FiPauseCircle}
+            />
           </div>
         </section>
       ) : null}

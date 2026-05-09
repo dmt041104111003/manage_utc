@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
+import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
 import MessagePopup from "../../components/MessagePopup";
+import { FiPauseCircle, FiUserCheck } from "react-icons/fi";
 
 import type { AccountRow, AccountStatus, Role } from "@/lib/types/admin-quan-ly-tai-khoan";
 import { ADMIN_QUAN_LY_TAI_KHOAN_PAGE_SIZE, roleLabel } from "@/lib/constants/admin-quan-ly-tai-khoan";
@@ -184,14 +186,22 @@ export default function AdminQuanLyTaiKhoanPage() {
             Đợt thực tập mới nhất: <strong>{latestBatchAccountStats.batchName ?? "—"}</strong>
           </div>
           <div className={styles.statsGrid2}>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Tài khoản đang hoạt động</p>
-              <p className={styles.statValue}>{latestBatchAccountStats.active}</p>
-            </div>
-            <div className={styles.statCard}>
-              <p className={styles.statLabel}>Tài khoản dừng hoạt động</p>
-              <p className={styles.statValue}>{latestBatchAccountStats.stopped}</p>
-            </div>
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Tài khoản đang hoạt động"
+              value={latestBatchAccountStats.active}
+              Icon={FiUserCheck}
+            />
+            <DashboardStatSummaryCard
+              cardClassName={styles.statCard}
+              labelClassName={styles.statLabel}
+              valueClassName={styles.statValue}
+              label="Tài khoản dừng hoạt động"
+              value={latestBatchAccountStats.stopped}
+              Icon={FiPauseCircle}
+            />
           </div>
         </section>
       ) : null}
