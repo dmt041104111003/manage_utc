@@ -9,7 +9,7 @@ import { FiClock, FiPauseCircle, FiXCircle, FiZap } from "react-icons/fi";
 
 import type { ApiResponse, InternshipBatchRow, JobDetailResponse, JobListItem, StatusAction } from "@/lib/types/admin-quan-ly-tin-tuyen-dung";
 import { inferDefaultAction } from "@/lib/utils/admin-quan-ly-tin-tuyen-dung";
-import { deleteCacheByPrefix, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
+import { deleteCacheByPrefix, getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 import AdminTinTuyenDungToolbar from "./components/AdminTinTuyenDungToolbar";
 import AdminTinTuyenDungTableSection from "./components/AdminTinTuyenDungTableSection";
@@ -17,16 +17,46 @@ const AdminTinTuyenDungViewPopup = dynamic(() => import("./components/AdminTinTu
 const AdminTinTuyenDungStatusPopup = dynamic(() => import("./components/AdminTinTuyenDungStatusPopup"), { ssr: false });
 const AdminTinTuyenDungDeletePopup = dynamic(() => import("./components/AdminTinTuyenDungDeletePopup"), { ssr: false });
 
+function jobPostsListCacheKey(
+  q: string,
+  batchId: string,
+  expertise: string,
+  status: string
+) {
+  const params = new URLSearchParams();
+  if (q.trim()) params.set("q", q.trim());
+  if (batchId !== "all") params.set("batchId", batchId);
+  if (expertise !== "all") params.set("expertise", expertise);
+  if (status !== "all") params.set("status", status);
+  return `admin:job-posts:list:/api/admin/job-posts?${params.toString()}`;
+}
+
+const JOB_POSTS_LIST_INITIAL_KEY = jobPostsListCacheKey("", "all", "all", "all");
+
+function readJobPostsListFromCache(key: string) {
+  const data = getCachedValue<{
+    items?: JobListItem[];
+    expertises?: string[];
+    statusStats?: { pending: number; rejected: number; active: number; stopped: number } | null;
+  }>(key);
+  return {
+    items: (Array.isArray(data?.items) ? data.items : []) as JobListItem[],
+    expertises: Array.isArray(data?.expertises) ? data.expertises : [],
+    statusStats: (data as { statusStats?: { pending: number; rejected: number; active: number; stopped: number } | null })?.statusStats ?? null
+  };
+}
+
 export default function AdminQuanLyTinTuyenDungPage() {
-  const [loading, setLoading] = useState(true);
+  const seeded = readJobPostsListFromCache(JOB_POSTS_LIST_INITIAL_KEY);
+  const [loading, setLoading] = useState(() => !hasCachedValue(JOB_POSTS_LIST_INITIAL_KEY));
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
 
-  const [items, setItems] = useState<JobListItem[]>([]);
-  const [statusStats, setStatusStats] = useState<{ pending: number; rejected: number; active: number; stopped: number } | null>(null);
+  const [items, setItems] = useState<JobListItem[]>(seeded.items);
+  const [statusStats, setStatusStats] = useState<{ pending: number; rejected: number; active: number; stopped: number } | null>(seeded.statusStats);
 
   const [batches, setBatches] = useState<InternshipBatchRow[]>([]);
-  const [expertises, setExpertises] = useState<string[]>([]);
+  const [expertises, setExpertises] = useState<string[]>(seeded.expertises);
   const [loadingBatches, setLoadingBatches] = useState(false);
 
   const [searchQ, setSearchQ] = useState("");
@@ -84,7 +114,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
       if (searchExpertise !== "all") params.set("expertise", searchExpertise);
       if (searchStatus !== "all") params.set("status", searchStatus);
       const url = `/api/admin/job-posts?${params.toString()}`;
-      const cacheKey = `admin:job-posts:list:${url}`;
+      const cacheKey = jobPostsListCacheKey(searchQ, searchBatchId, searchExpertise, searchStatus);
       if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       setPage(1);
@@ -111,10 +141,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
   };
 
   useEffect(() => {
-    void (async () => {
-      await loadBatches();
-      await load();
-    })();
+    void Promise.all([loadBatches(), load()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -217,7 +244,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
 
       {error ? <p className={styles.error}>{error}</p> : null}
 
-      {!loading && statusStats ? (
+      {statusStats ? (
         <section aria-label="Thống kê trạng thái tin tuyển dụng">
           <div className={styles.statsGrid4}>
             <DashboardStatSummaryCard
