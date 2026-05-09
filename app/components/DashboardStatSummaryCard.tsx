@@ -24,7 +24,9 @@ export function DashboardStatSummaryCard({
   return (
     <div className={cardClassName}>
       <div className={summaryStyles.head}>
-        <Icon className={summaryStyles.icon} size={22} aria-hidden />
+        <span className={summaryStyles.iconCell} aria-hidden>
+          <Icon className={summaryStyles.icon} size={28} />
+        </span>
         <div className={summaryStyles.body}>
           <p className={labelClassName}>{label}</p>
           <p className={valueClassName}>{value}</p>

@@ -97,7 +97,7 @@
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid #dbe4f0;
   border-radius: 14px;
-  padding: 16px 18px;
+  padding: 18px 20px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 
@@ -121,19 +121,20 @@
 
 .statLabel {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #667085;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  line-height: 1.35;
 }
 
 .statValue {
-  margin: 8px 0 0;
-  font-size: 24px;
+  margin: 10px 0 0;
+  font-size: 26px;
   font-weight: 700;
   color: #0f172a;
-  line-height: 1;
+  line-height: 1.05;
 }
 
 @media (max-width: 900px) {
