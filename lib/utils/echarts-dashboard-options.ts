@@ -3,6 +3,14 @@ import type { DonutSegment, SimpleChartSeries } from "@/lib/types/admin-dashboar
 import { formatChartInt } from "@/lib/constants/recharts-dashboard-ui";
 import { darkenHex, withAlpha } from "@/lib/utils/chart-colors";
 
+/** Trùng `app/globals.css` — canvas ECharts không kế thừa font document, phải set để tiếng Việt không bị fallback lệch từng ký tự */
+const CHART_FONT_FAMILY =
+  'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Roboto, Arial, "Noto Sans", sans-serif';
+
+/** Dùng trong HTML tooltip (attribute style="...") */
+const CHART_FONT_INLINE_CSS =
+  "font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Tahoma,Roboto,Arial,'Noto Sans',sans-serif;";
+
 const CHART_MOTION = {
   animation: true,
   animationDuration: 900,
@@ -12,7 +20,7 @@ const CHART_MOTION = {
 };
 
 const AXIS = {
-  axisLabel: { color: "#64748b", fontSize: 11, fontWeight: 500 },
+  axisLabel: { color: "#64748b", fontSize: 11, fontWeight: 500, fontFamily: CHART_FONT_FAMILY },
   axisLine: { lineStyle: { color: "#cbd5e1" } },
   splitLine: { lineStyle: { color: "#e2e8f0", type: [4, 6] as [number, number] } }
 };
@@ -22,9 +30,9 @@ const TOOLTIP_CARD = {
   borderWidth: 0,
   borderRadius: 14,
   padding: [14, 18] as [number, number],
-  textStyle: { color: "#1e293b", fontSize: 13, fontWeight: 500 },
+  textStyle: { color: "#1e293b", fontSize: 13, fontWeight: 500, fontFamily: CHART_FONT_FAMILY },
   extraCssText:
-    "box-shadow:0 20px 50px rgba(15,23,42,0.14);border:1px solid rgba(226,232,240,0.95);backdrop-filter:blur(8px);"
+    `box-shadow:0 20px 50px rgba(15,23,42,0.14);border:1px solid rgba(226,232,240,0.95);backdrop-filter:blur(8px);font-family:${CHART_FONT_FAMILY};`
 };
 
 const TOOLTIP_AXIS = {
@@ -49,7 +57,7 @@ const LEGEND_BOTTOM = {
   icon: "circle",
   itemWidth: 10,
   itemHeight: 10,
-  textStyle: { color: "#475569", fontSize: 12, fontWeight: 500 }
+  textStyle: { color: "#475569", fontSize: 12, fontWeight: 500, fontFamily: CHART_FONT_FAMILY }
 };
 
 function linearGradient(c0: string, c1: string): { type: "linear"; x: number; y: number; x2: number; y2: number; colorStops: { offset: number; color: string }[] } {
@@ -81,15 +89,16 @@ export function buildDonutChartOption(segments: DonutSegment[]): EChartsOption {
 
   return {
     ...CHART_MOTION,
+    textStyle: { fontFamily: CHART_FONT_FAMILY },
     tooltip: {
       ...TOOLTIP_ITEM,
       formatter: (p: unknown) => {
         const x = p as { name?: string; value?: number; percent?: number };
         const pct =
           typeof x.percent === "number" ? `${x.percent.toFixed(1)}%` : "";
-        return `<div style="font-weight:700;margin-bottom:6px;color:#0f172a">${x.name ?? ""}</div>` +
-          `<div style="font-size:22px;font-weight:800;color:#1d4ed8;line-height:1.1">${formatChartInt(x.value)}</div>` +
-          (pct ? `<div style="margin-top:6px;font-size:12px;color:#64748b">${pct} tổng vòng</div>` : "");
+        return `<div style="${CHART_FONT_INLINE_CSS}font-weight:700;margin-bottom:6px;color:#0f172a">${x.name ?? ""}</div>` +
+          `<div style="${CHART_FONT_INLINE_CSS}font-size:22px;font-weight:800;color:#1d4ed8;line-height:1.1">${formatChartInt(x.value)}</div>` +
+          (pct ? `<div style="${CHART_FONT_INLINE_CSS}margin-top:6px;font-size:12px;color:#64748b">${pct} tổng vòng</div>` : "");
       }
     },
     legend: { ...LEGEND_BOTTOM, bottom: 6, left: "center" },
@@ -107,7 +116,8 @@ export function buildDonutChartOption(segments: DonutSegment[]): EChartsOption {
               text: "TỔNG",
               fontSize: 11,
               fontWeight: 600,
-              fill: "#64748b"
+              fill: "#64748b",
+              fontFamily: CHART_FONT_FAMILY
             }
           },
           {
@@ -118,7 +128,8 @@ export function buildDonutChartOption(segments: DonutSegment[]): EChartsOption {
               text: formatChartInt(total),
               fontSize: 26,
               fontWeight: 700,
-              fill: "#0f172a"
+              fill: "#0f172a",
+              fontFamily: CHART_FONT_FAMILY
             }
           }
         ]
@@ -136,6 +147,7 @@ export function buildDonutChartOption(segments: DonutSegment[]): EChartsOption {
           scaleSize: 6,
           itemStyle: { shadowBlur: 28, shadowColor: "rgba(15,23,42,0.22)" }
         },
+        label: { show: false },
         data
       }
     ]
@@ -162,6 +174,7 @@ export function buildSingleBarChartOption(
 
   return {
     ...CHART_MOTION,
+    textStyle: { fontFamily: CHART_FONT_FAMILY },
     tooltip: {
       ...TOOLTIP_AXIS_BAR,
       formatter: (params: unknown) => {
@@ -169,7 +182,10 @@ export function buildSingleBarChartOption(
         const p = Array.isArray(arr) ? arr[0] : (params as { name?: string; value?: number });
         const name = p?.name ?? "";
         const v = p?.value ?? 0;
-        return `${name}<br/><b>${formatChartInt(v)}</b> ${opts?.valueLabel ?? ""}`.trim();
+        const unit = (opts?.valueLabel ?? "").trim();
+        return `<div style="${CHART_FONT_INLINE_CSS}color:#0f172a">${name}</div>` +
+          `<div style="${CHART_FONT_INLINE_CSS}margin-top:6px;font-size:18px;font-weight:800;color:#1d4ed8">${formatChartInt(v)}</div>` +
+          (unit ? `<div style="${CHART_FONT_INLINE_CSS}margin-top:4px;font-size:12px;color:#64748b">${unit}</div>` : "");
       }
     },
     grid: { left: 8, right: 16, top: 20, bottom: 56, containLabel: true },
@@ -222,12 +238,17 @@ export function buildPerBarColorChartOption(
 
   return {
     ...CHART_MOTION,
+    textStyle: { fontFamily: CHART_FONT_FAMILY },
     tooltip: {
       ...TOOLTIP_AXIS_BAR,
       formatter: (params: unknown) => {
         const arr = params as { name?: string; value?: number }[];
         const p = Array.isArray(arr) ? arr[0] : (params as { name?: string; value?: number });
-        return `${p?.name ?? ""}<br/><b>${formatChartInt(p?.value)}</b> ${valueAxisName}`;
+        const name = p?.name ?? "";
+        const val = formatChartInt(p?.value);
+        return `<div style="${CHART_FONT_INLINE_CSS}color:#0f172a;font-weight:600">${name}</div>` +
+          `<div style="${CHART_FONT_INLINE_CSS}margin-top:6px;font-size:18px;font-weight:800;color:#1d4ed8">${val}</div>` +
+          `<div style="${CHART_FONT_INLINE_CSS}margin-top:4px;font-size:12px;color:#64748b">${valueAxisName}</div>`;
       }
     },
     grid: { left: 8, right: 16, top: 20, bottom: 56, containLabel: true },
@@ -287,6 +308,7 @@ export function buildLineMultiSeriesOption(labels: string[], series: SimpleChart
 
   return {
     ...CHART_MOTION,
+    textStyle: { fontFamily: CHART_FONT_FAMILY },
     tooltip: {
       ...TOOLTIP_AXIS,
       formatter: (params: unknown) => {
@@ -294,8 +316,13 @@ export function buildLineMultiSeriesOption(labels: string[], series: SimpleChart
         let html = "";
         for (const raw of list) {
           const p = raw as { seriesName?: string; value?: number; marker?: string; name?: string };
-          if (!html) html += `<b>${p.name ?? ""}</b><br/>`;
-          html += `${p.marker ?? ""} ${p.seriesName ?? ""}: <b>${formatChartInt(p.value)}</b><br/>`;
+          if (!html) {
+            html += `<div style="${CHART_FONT_INLINE_CSS}font-weight:700;color:#0f172a;margin-bottom:8px">${p.name ?? ""}</div>`;
+          }
+          html +=
+            `<div style="${CHART_FONT_INLINE_CSS}margin-top:4px;color:#334155">${p.marker ?? ""} ` +
+            `<span style="font-weight:600">${p.seriesName ?? ""}</span>: ` +
+            `<b style="color:#1d4ed8">${formatChartInt(p.value)}</b></div>`;
         }
         return html;
       }
@@ -340,6 +367,7 @@ export function buildGroupedBarChartOption(
 
   return {
     ...CHART_MOTION,
+    textStyle: { fontFamily: CHART_FONT_FAMILY },
     tooltip: {
       ...TOOLTIP_AXIS_BAR,
       formatter: (params: unknown) => {
@@ -347,8 +375,13 @@ export function buildGroupedBarChartOption(
         let html = "";
         for (const raw of list) {
           const p = raw as { seriesName?: string; value?: number; marker?: string; name?: string };
-          if (!html) html += `<b>${p.name ?? ""}</b><br/>`;
-          html += `${p.marker ?? ""} ${p.seriesName ?? ""}: <b>${formatChartInt(p.value)}</b><br/>`;
+          if (!html) {
+            html += `<div style="${CHART_FONT_INLINE_CSS}font-weight:700;color:#0f172a;margin-bottom:8px">${p.name ?? ""}</div>`;
+          }
+          html +=
+            `<div style="${CHART_FONT_INLINE_CSS}margin-top:4px;color:#334155">${p.marker ?? ""} ` +
+            `<span style="font-weight:600">${p.seriesName ?? ""}</span>: ` +
+            `<b style="color:#1d4ed8">${formatChartInt(p.value)}</b></div>`;
         }
         return html;
       }
