@@ -96,7 +96,7 @@ export default function DoanhNghiepTuyenDungPage() {
       url.searchParams.set("page", String(nextPage));
       url.searchParams.set("pageSize", String(DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE));
       const cacheKey = `enterprise:tuyen-dung:list:${url.toString()}`;
-      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,

@@ -158,7 +158,7 @@ export default function AdminQuanLySinhVienPage() {
       params.set("pageSize", String(ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE));
       const url = `/api/admin/students?${params.toString()}`;
       const cacheKey = `admin:students:list:${url}`;
-      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,

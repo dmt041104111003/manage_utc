@@ -94,12 +94,14 @@ export default function AdminQuanLyDoanhNghiepPage() {
     })();
   };
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { force?: boolean; silent?: boolean }) => {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
       const params = buildAdminEnterprisesListQueryParams(appliedQ, appliedStatus);
       const url = `/api/admin/enterprises?${params.toString()}`;
       const cacheKey = `admin:enterprises:list:${url}`;
-      if (!hasCachedValue(cacheKey)) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,
@@ -108,7 +110,8 @@ export default function AdminQuanLyDoanhNghiepPage() {
           const payload = await res.json();
           if (!res.ok || payload?.success === false) throw new Error(payload.message || ADMIN_ENTERPRISE_MSG.listLoadFail);
           return payload;
-        }
+        },
+        { force }
       );
       setItems(data.items as AdminEnterpriseListItem[]);
       setEnterpriseStatusStats(data.enterpriseStatusStats ?? null);
@@ -117,7 +120,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
       setItems([]);
       setEnterpriseStatusStats(null);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [appliedQ, appliedStatus]);
 
@@ -185,7 +188,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
         return;
       }
       setToast(String(data.message));
-      await load();
+      await load({ force: true });
       window.dispatchEvent(new Event(ADMIN_PENDING_ENTERPRISES_CHANGED_EVENT));
     } catch {
       setToast(ADMIN_ENTERPRISE_MSG.serverUnreachable);
@@ -210,7 +213,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
         if (!res.ok) throw new Error(data.message || ADMIN_ENTERPRISE_MSG.approveFail);
         setToast(String(data.message));
         if (statusTarget?.id === row.id) closeStatusModal();
-        await load();
+        await load({ force: true });
         window.dispatchEvent(new Event(ADMIN_PENDING_ENTERPRISES_CHANGED_EVENT));
       } catch (e) {
         setToast(e instanceof Error ? e.message : ADMIN_ENTERPRISE_MSG.genericError);
@@ -257,7 +260,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
       if (!res.ok) throw new Error(data.message || ADMIN_ENTERPRISE_MSG.rejectFail);
       setToast(String(data.message));
       closeStatusModal();
-      await load();
+      await load({ force: true });
       window.dispatchEvent(new Event(ADMIN_PENDING_ENTERPRISES_CHANGED_EVENT));
     } catch (e) {
       const msg = e instanceof Error ? e.message : ADMIN_ENTERPRISE_MSG.genericError;
@@ -315,7 +318,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
         onSearch={applySearch}
       />
 
-      {loading ? <p className={styles.modulePlaceholder}>Đang tải…</p> : null}
+      {loading && items.length === 0 ? <p className={styles.modulePlaceholder}>Đang tải…</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
 
       {!loading && !error ? (

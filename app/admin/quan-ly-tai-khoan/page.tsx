@@ -68,7 +68,7 @@ export default function AdminQuanLyTaiKhoanPage() {
       params.set("pageSize", String(ADMIN_QUAN_LY_TAI_KHOAN_PAGE_SIZE));
       const url = `/api/admin/accounts?${params.toString()}`;
       const cacheKey = `admin:accounts:list:${url}`;
-      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,

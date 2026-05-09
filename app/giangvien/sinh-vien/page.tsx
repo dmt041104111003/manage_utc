@@ -51,7 +51,7 @@ export default function GiangvienSinhVienPage() {
       const sp = buildGiangVienSinhVienQueryParams({ q, batchId, guidanceStatus });
       const url = `${GIANGVIEN_SINH_VIEN_ENDPOINT}?${sp.toString()}`;
       const cacheKey = `gv:sinh-vien:list:${url}`;
-      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,

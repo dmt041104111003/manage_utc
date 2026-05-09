@@ -72,7 +72,7 @@ export default function GiangvienQuanLyBCPage() {
       if (statusFilter !== "all") sp.set("status", statusFilter);
       const url = `/api/giangvien/bao-cao-thuc-tap?${sp.toString()}`;
       const cacheKey = `gv:bao-cao:list:${url}`;
-      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,

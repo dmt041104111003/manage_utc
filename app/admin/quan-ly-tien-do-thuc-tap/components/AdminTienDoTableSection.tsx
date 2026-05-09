@@ -23,7 +23,7 @@ type Props = {
 export default function AdminTienDoTableSection(props: Props) {
   const { loading, items, page, busyId, onPageChange, onView, onEdit } = props;
 
-  if (loading) return <p className={styles.modulePlaceholder}>Đang tải…</p>;
+  if (loading && items.length === 0) return <p className={styles.modulePlaceholder}>Đang tải…</p>;
 
   const pagedItems = items.slice(
     (page - 1) * ADMIN_QUAN_LY_TIEN_DO_THUC_TAP_PAGE_SIZE,

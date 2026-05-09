@@ -16,13 +16,15 @@ import {
   buildGiangVienTaiKhoanPatchPayload,
   validateGiangVienTaiKhoanForm
 } from "@/lib/utils/giangvien-tai-khoan";
-import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
+import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import GiangVienProfileInfo from "./components/GiangVienProfileInfo";
 import GiangVienAccountEditSection from "./components/GiangVienAccountEditSection";
 
+const GV_TAI_KHOAN_CACHE_KEY = "gv:tai-khoan:me";
+
 export default function GiangVienTaiKhoanPage() {
-  const [loading, setLoading] = useState(true);
-  const [me, setMe] = useState<GiangVienMe | null>(null);
+  const [loading, setLoading] = useState(() => !hasCachedValue(GV_TAI_KHOAN_CACHE_KEY));
+  const [me, setMe] = useState<GiangVienMe | null>(() => getCachedValue<{ item?: GiangVienMe | null }>(GV_TAI_KHOAN_CACHE_KEY)?.item ?? null);
   const [error, setError] = useState("");
 
   const [isEditing, setIsEditing] = useState(false);
@@ -56,10 +58,10 @@ export default function GiangVienTaiKhoanPage() {
     const force = Boolean(opts?.force);
     const silent = Boolean(opts?.silent);
     try {
-      if (!silent && (force || !hasCachedValue("gv:tai-khoan:me"))) setLoading(true);
+      if (!silent && !hasCachedValue(GV_TAI_KHOAN_CACHE_KEY)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
-        "gv:tai-khoan:me",
+        GV_TAI_KHOAN_CACHE_KEY,
         async () => {
           const res = await fetch("/api/giangvien/me");
           const payload = await res.json();
@@ -163,7 +165,7 @@ export default function GiangVienTaiKhoanPage() {
     setIsEditing(false);
   };
 
-  if (loading) return <main className={styles.page}><p className={styles.modulePlaceholder}>Đang tải…</p></main>;
+  if (loading && !me) return <main className={styles.page}><p className={styles.modulePlaceholder}>Đang tải…</p></main>;
   if (!me) return <main className={styles.page} />;
 
   return (

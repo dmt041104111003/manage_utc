@@ -15,7 +15,7 @@ type Props = {
 };
 
 export default function BaoCaoTableSection({ loading, rows, busy, onView, onUpdate, onReview }: Props) {
-  if (loading) {
+  if (loading && rows.length === 0) {
     return <p className={styles.modulePlaceholder}>Đang tải…</p>;
   }
 

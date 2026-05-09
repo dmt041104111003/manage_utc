@@ -11,7 +11,7 @@ import {
   SINHVIEN_TRA_CUU_UNG_TUYEN_TITLE,
   SINHVIEN_TRA_CUU_UNG_TUYEN_SUBMIT_ERROR_DEFAULT
 } from "@/lib/constants/sinhvien-tra-cuu-ung-tuyen-detail";
-import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
+import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import {
   buildSinhVienTraCuuUngTuyenApplyPayload,
   buildSinhVienTraCuuUngTuyenApplyUrl,
@@ -28,10 +28,13 @@ import ApplyFormPopup from "./components/ApplyFormPopup";
 
 export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params);
-  const [loading, setLoading] = useState(true);
+  const detailCacheKey = `sv:tra-cuu-ung-tuyen:detail:${jobId}`;
+  const [loading, setLoading] = useState(() => !hasCachedValue(detailCacheKey));
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
-  const [job, setJob] = useState<SinhVienTraCuuUngTuyenJobDetail | null>(null);
+  const [job, setJob] = useState<SinhVienTraCuuUngTuyenJobDetail | null>(
+    () => getCachedValue<{ item?: SinhVienTraCuuUngTuyenJobDetail | null }>(detailCacheKey)?.item ?? null
+  );
 
   const [applyOpen, setApplyOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -46,10 +49,11 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
   const [removeCv, setRemoveCv] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  async function loadDetail(opts?: { force?: boolean }) {
+  async function loadDetail(opts?: { force?: boolean; silent?: boolean }) {
     const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     const cacheKey = `sv:tra-cuu-ung-tuyen:detail:${jobId}`;
-    if (!force && !hasCachedValue(cacheKey)) setLoading(true);
+    if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
     setError("");
     try {
       const data = await getOrFetchCached(cacheKey, () => fetchSinhVienTraCuuUngTuyenDetail(jobId), { force });
@@ -57,7 +61,7 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
     } catch (e: any) {
       setError(e?.message || SINHVIEN_TRA_CUU_UNG_TUYEN_LOAD_DETAIL_ERROR_DEFAULT);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -159,7 +163,7 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
 
-      {loading ? (
+      {loading && !job ? (
         <p className={styles.modulePlaceholder}>Đang tải…</p>
       ) : job ? (
         <JobDetailInfo job={job} onOpenApply={() => void openApply()} />

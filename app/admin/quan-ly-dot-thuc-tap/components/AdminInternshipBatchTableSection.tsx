@@ -29,7 +29,7 @@ type Props = {
 export default function AdminInternshipBatchTableSection(props: Props) {
   const { loading, items, page, busyId, canClose, onPageChange, onView, onEdit, onDelete, onOpenStatus } = props;
 
-  if (loading) {
+  if (loading && items.length === 0) {
     return <p className={styles.modulePlaceholder}>Đang tải…</p>;
   }
 

@@ -32,7 +32,7 @@ export default function AdminPhanCongGVHDPage() {
   const [items, setItems] = useState<AssignmentItem[]>([]);
   const [faculties, setFaculties] = useState<string[]>([]);
   const [openBatches, setOpenBatches] = useState<OpenBatch[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [searchQ, setSearchQ] = useState("");
@@ -68,7 +68,9 @@ export default function AdminPhanCongGVHDPage() {
     return items.slice(start, start + ADMIN_PHAN_CONG_GVHD_PAGE_SIZE);
   }, [items, page]);
 
-  async function loadList(nextPage = 1) {
+  async function loadList(nextPage = 1, opts?: { force?: boolean; silent?: boolean }) {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
       const url = new URL("/api/admin/assignments", window.location.origin);
       if (searchQ.trim()) url.searchParams.set("q", searchQ.trim());
@@ -76,7 +78,7 @@ export default function AdminPhanCongGVHDPage() {
       if (filterStatus !== "all") url.searchParams.set("status", filterStatus);
       const reqUrl = url.toString();
       const cacheKey = `admin:assignments:list:${reqUrl}`;
-      if (!hasCachedValue(cacheKey)) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,
@@ -85,7 +87,8 @@ export default function AdminPhanCongGVHDPage() {
           const payload = await res.json();
           if (!res.ok || !payload?.success) throw new Error(payload?.message || "Không thể tải danh sách phân công.");
           return payload;
-        }
+        },
+        { force }
       );
       const rawItems: AssignmentItem[] = Array.isArray(data.items) ? data.items : [];
       const groupedMap = new Map<string, AssignmentItem>();
@@ -110,7 +113,7 @@ export default function AdminPhanCongGVHDPage() {
     } catch (e: any) {
       setError(e?.message || "Không thể tải danh sách phân công.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -235,7 +238,7 @@ export default function AdminPhanCongGVHDPage() {
       }
       showPopup(data?.message || "Tạo phân công thành công.");
       closeAdd();
-      await loadList(1);
+      await loadList(1, { force: true });
     } catch (e: any) {
       showPopup(e?.message || "Không thể tạo phân công.");
     } finally {
@@ -252,7 +255,7 @@ export default function AdminPhanCongGVHDPage() {
       if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể xóa phân công.");
       showPopup(data?.message || "Xóa phân công thành công.");
       setDeleteTarget(null);
-      await loadList(1);
+      await loadList(1, { force: true });
     } catch (e: any) {
       showPopup(e?.message || "Không thể xóa phân công.");
     } finally {
@@ -281,7 +284,7 @@ export default function AdminPhanCongGVHDPage() {
         onOpenAdd={openAdd}
       />
 
-      {loading ? (
+      {loading && items.length === 0 ? (
         <p className={styles.modulePlaceholder}>Đang tải…</p>
       ) : (
         <AdminPhanCongGVHDTable

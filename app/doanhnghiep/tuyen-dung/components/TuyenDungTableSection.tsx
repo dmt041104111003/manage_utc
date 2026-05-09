@@ -34,7 +34,7 @@ export default function TuyenDungTableSection({
   onDelete,
   onPageChange
 }: Props) {
-  if (loading) {
+  if (loading && items.length === 0) {
     return <p className={styles.modulePlaceholder}>Đang tải…</p>;
   }
 

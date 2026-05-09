@@ -22,7 +22,7 @@ type Props = {
 
 export default function UngVienTableSection({ loading, items, totalItems, page, onPageChange }: Props) {
 
-  if (loading) {
+  if (loading && items.length === 0) {
     return <p className={styles.modulePlaceholder}>Đang tải…</p>;
   }
 

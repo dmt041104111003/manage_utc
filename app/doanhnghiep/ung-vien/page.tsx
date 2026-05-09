@@ -56,7 +56,7 @@ export default function DoanhNghiepUngVienPage() {
       url.searchParams.set("page", String(nextPage));
       url.searchParams.set("pageSize", String(DOANHNGHIEP_UNG_VIEN_PAGE_SIZE));
       const cacheKey = `enterprise:ung-vien:list:${url.toString()}`;
-      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,

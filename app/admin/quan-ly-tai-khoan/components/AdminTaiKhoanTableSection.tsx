@@ -26,7 +26,7 @@ type Props = {
 export default function AdminTaiKhoanTableSection(props: Props) {
   const { loading, items, totalItems, page, busyId, onPageChange, onView, onStatus, onDelete } = props;
 
-  if (loading) return <p className={styles.modulePlaceholder}>Đang tải…</p>;
+  if (loading && items.length === 0) return <p className={styles.modulePlaceholder}>Đang tải…</p>;
 
   return (
     <>

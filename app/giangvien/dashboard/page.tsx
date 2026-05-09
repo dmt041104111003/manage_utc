@@ -19,7 +19,7 @@ import {
   RECHARTS_TOOLTIP_PROPS
 } from "@/lib/constants/recharts-dashboard-ui";
 import { darkenHex } from "@/lib/utils/chart-colors";
-import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
+import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 type Batch = { id: string; name: string; status: string };
 
@@ -42,6 +42,15 @@ const INTERNSHIP_COLORS = [
 ];
 
 const GV_CHART_ANIM = { isAnimationActive: true, animationDuration: 900, animationEasing: "ease-out" as const };
+
+function gvDashboardOverviewCacheKey(batchId: string) {
+  const qs = new URLSearchParams();
+  if (batchId && batchId !== "all") qs.set("batchId", batchId);
+  const url = `/api/giangvien/dashboard/overview?${qs.toString()}`;
+  return `gv:dashboard:overview:${url}`;
+}
+
+const GV_DASHBOARD_INITIAL_KEY = gvDashboardOverviewCacheKey("all");
 
 function StatusBarChart({
   labels,
@@ -90,10 +99,10 @@ function StatusBarChart({
 }
 
 export default function LecturerDashboardPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !hasCachedValue(GV_DASHBOARD_INITIAL_KEY));
   const [error, setError] = useState<string | null>(null);
   const [batchId, setBatchId] = useState("all");
-  const [payload, setPayload] = useState<OverviewPayload | null>(null);
+  const [payload, setPayload] = useState<OverviewPayload | null>(() => getCachedValue<OverviewPayload>(GV_DASHBOARD_INITIAL_KEY) ?? null);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,7 +114,7 @@ export default function LecturerDashboardPage() {
         if (batchId && batchId !== "all") qs.set("batchId", batchId);
         const url = `/api/giangvien/dashboard/overview?${qs.toString()}`;
         const cacheKey = `gv:dashboard:overview:${url}`;
-        if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+        if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
         setError(null);
         const json = await getOrFetchCached<OverviewPayload>(
           cacheKey,
@@ -153,7 +162,7 @@ export default function LecturerDashboardPage() {
             className={styles.overviewSelect}
             value={batchId}
             onChange={(e) => setBatchId(e.target.value)}
-            disabled={loading || batches.length === 0}
+            disabled={!payload || batches.length === 0}
           >
             {batches.length === 0 && <option value="all">Chưa có đợt thực tập</option>}
             {batches.map((b) => (
@@ -164,9 +173,9 @@ export default function LecturerDashboardPage() {
       </section>
 
       {error ? <div className={styles.modulePlaceholder}>Lỗi: {error}</div> : null}
-      {loading ? <div className={styles.modulePlaceholder}>Đang tải dữ liệu...</div> : null}
+      {loading && !payload ? <div className={styles.modulePlaceholder}>Đang tải dữ liệu...</div> : null}
 
-      {!loading && payload ? (
+      {payload ? (
         <section className={styles.overviewGrid}>
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái hướng dẫn</h2>

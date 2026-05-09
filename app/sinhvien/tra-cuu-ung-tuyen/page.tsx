@@ -36,7 +36,7 @@ export default function SinhVienTraCuuUngTuyenPage() {
     const silent = Boolean(opts?.silent);
     try {
       const key = `sv:tra-cuu-ung-tuyen:list:q=${encodeURIComponent(q)}&workType=${workType}&province=${encodeURIComponent(province)}`;
-      if (!silent && (force || !hasCachedValue(key))) setLoading(true);
+      if (!silent && !hasCachedValue(key)) setLoading(true);
       setError("");
       const result = await getOrFetchCached(
         key,
@@ -102,7 +102,7 @@ export default function SinhVienTraCuuUngTuyenPage() {
 
       <p className={cardStyles.statusNote}>{statusNote}</p>
 
-      {loading ? (
+      {loading && items.length === 0 ? (
         <p className={styles.modulePlaceholder}>{SINHVIEN_TRA_CUU_UNG_TUYEN_LOADING_TEXT}</p>
       ) : items.length === 0 ? (
         <p className={styles.modulePlaceholder}>{SINHVIEN_TRA_CUU_UNG_TUYEN_EMPTY_TEXT}</p>

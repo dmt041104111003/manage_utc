@@ -10,18 +10,19 @@ import { getAvailableNextStatuses } from "@/lib/types/doanhnghiep-ung-vien-detai
 import JobDetailInfo from "./components/JobDetailInfo";
 import ApplicantTableSection from "./components/ApplicantTableSection";
 import { DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE } from "@/lib/constants/doanhnghiep-ung-vien-detail";
-import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
+import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 const ApplicantDetailPopup = dynamic(() => import("./components/ApplicantDetailPopup"), { ssr: false });
 
 export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params);
+  const page1CacheKey = `enterprise:ung-vien:detail:${jobId}:1`;
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !hasCachedValue(page1CacheKey));
   const [error, setError] = useState("");
-  const [job, setJob] = useState<JobDetail | null>(null);
-  const [applicants, setApplicants] = useState<Applicant[]>([]);
+  const [job, setJob] = useState<JobDetail | null>(() => getCachedValue<{ job?: JobDetail | null }>(page1CacheKey)?.job ?? null);
+  const [applicants, setApplicants] = useState<Applicant[]>(() => getCachedValue<{ applicants?: Applicant[] }>(page1CacheKey)?.applicants ?? []);
   const [page, setPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [totalItems, setTotalItems] = useState(() => Number(getCachedValue<{ totalItems?: number }>(page1CacheKey)?.totalItems || 0));
   const [toast, setToast] = useState("");
 
   const [viewTarget, setViewTarget] = useState<Applicant | null>(null);
@@ -37,7 +38,7 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
     try {
       const url = `/api/doanhnghiep/ung-vien/${jobId}?page=${nextPage}&pageSize=${DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE}`;
       const cacheKey = `enterprise:ung-vien:detail:${jobId}:${nextPage}`;
-      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,
@@ -145,7 +146,7 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
 
-      {loading ? (
+      {loading && !job ? (
         <p className={styles.modulePlaceholder}>Đang tải…</p>
       ) : job ? (
         <>

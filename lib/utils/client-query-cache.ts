@@ -11,6 +11,11 @@ export function hasCachedValue(key: string): boolean {
   return QUERY_CACHE.has(key);
 }
 
+export function getCachedValue<T>(key: string): T | undefined {
+  const hit = QUERY_CACHE.get(key);
+  return hit ? (hit.value as T) : undefined;
+}
+
 export async function getOrFetchCached<T>(
   key: string,
   fetcher: () => Promise<T>,

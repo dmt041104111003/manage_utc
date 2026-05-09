@@ -24,7 +24,7 @@ import {
   BCTT_ERROR_REQUIRED_FILE_BEFORE_SUBMIT
 } from "@/lib/constants/sinhvien-bao-cao-thuc-tap";
 import { getSinhVienBaoCaoStatusHintText, isAllowedBcttMime } from "@/lib/utils/sinhvien-bao-cao-thuc-tap";
-import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
+import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import BaoCaoThucTapStatusSection from "./components/BaoCaoThucTapStatusSection";
 import BaoCaoThucTapSupervisorSection from "./components/BaoCaoThucTapSupervisorSection";
 import BaoCaoThucTapStatusHistorySection from "./components/BaoCaoThucTapStatusHistorySection";
@@ -32,17 +32,35 @@ import BaoCaoThucTapResultSection from "./components/BaoCaoThucTapResultSection"
 const BaoCaoThucTapUploadPopup = dynamic(() => import("./components/BaoCaoThucTapUploadPopup"), { ssr: false });
 const BaoCaoThucTapEditPopup = dynamic(() => import("./components/BaoCaoThucTapEditPopup"), { ssr: false });
 
+const SV_BAO_CAO_THUC_TAP_ME_KEY = "sv:bao-cao-thuc-tap:me";
+
+function readSvBaoCaoThucTapSeed() {
+  const data = getCachedValue<{ item?: Record<string, unknown> }>(SV_BAO_CAO_THUC_TAP_ME_KEY);
+  const item = data?.item;
+  if (!item) return null;
+  return {
+    internshipStatus: item.internshipStatus as InternshipStatus,
+    supervisor: (item.supervisor ?? null) as SupervisorInfo | null,
+    report: (item.report ?? null) as Report | null,
+    statusHistory: (Array.isArray(item.statusHistory) ? item.statusHistory : []) as StatusHistoryEvent[],
+    canSubmitReport: Boolean((item.ui as { canSubmitReport?: boolean } | undefined)?.canSubmitReport),
+    canEditReport: Boolean((item.ui as { canEditReport?: boolean } | undefined)?.canEditReport)
+  };
+}
+
 export default function SinhvienBaoCaoThucTapPage() {
-  const [loading, setLoading] = useState(true);
+  const seed = readSvBaoCaoThucTapSeed();
+  const [bootstrapped, setBootstrapped] = useState(() => Boolean(seed));
+  const [loading, setLoading] = useState(() => !hasCachedValue(SV_BAO_CAO_THUC_TAP_ME_KEY));
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
 
-  const [internshipStatus, setInternshipStatus] = useState<InternshipStatus>("NOT_STARTED");
-  const [supervisor, setSupervisor] = useState<SupervisorInfo | null>(null);
-  const [report, setReport] = useState<Report | null>(null);
-  const [statusHistory, setStatusHistory] = useState<StatusHistoryEvent[]>([]);
-  const [canSubmitReport, setCanSubmitReport] = useState(false);
-  const [canEditReport, setCanEditReport] = useState(false);
+  const [internshipStatus, setInternshipStatus] = useState<InternshipStatus>(seed?.internshipStatus ?? "NOT_STARTED");
+  const [supervisor, setSupervisor] = useState<SupervisorInfo | null>(seed?.supervisor ?? null);
+  const [report, setReport] = useState<Report | null>(seed?.report ?? null);
+  const [statusHistory, setStatusHistory] = useState<StatusHistoryEvent[]>(seed?.statusHistory ?? []);
+  const [canSubmitReport, setCanSubmitReport] = useState(seed?.canSubmitReport ?? false);
+  const [canEditReport, setCanEditReport] = useState(seed?.canEditReport ?? false);
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -58,10 +76,10 @@ export default function SinhvienBaoCaoThucTapPage() {
     const force = Boolean(opts?.force);
     const silent = Boolean(opts?.silent);
     try {
-      if (!silent && (force || !hasCachedValue("sv:bao-cao-thuc-tap:me"))) setLoading(true);
+      if (!silent && !hasCachedValue(SV_BAO_CAO_THUC_TAP_ME_KEY)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
-        "sv:bao-cao-thuc-tap:me",
+        SV_BAO_CAO_THUC_TAP_ME_KEY,
         async () => {
           const res = await fetch(SINHVIEN_BAO_CAO_THUC_TAP_ENDPOINT);
           const payload = await res.json();
@@ -77,8 +95,10 @@ export default function SinhvienBaoCaoThucTapPage() {
       setStatusHistory(Array.isArray(item.statusHistory) ? item.statusHistory : []);
       setCanSubmitReport(Boolean(item.ui?.canSubmitReport));
       setCanEditReport(Boolean(item.ui?.canEditReport));
+      setBootstrapped(true);
     } catch (e: any) {
       setError(e?.message || SINHVIEN_BAO_CAO_THUC_TAP_LOAD_ERROR_DEFAULT);
+      setBootstrapped(true);
     } finally {
       if (!silent) setLoading(false);
     }
@@ -203,7 +223,7 @@ export default function SinhvienBaoCaoThucTapPage() {
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
 
-      {loading ? (
+      {loading && !bootstrapped ? (
         <p className={styles.modulePlaceholder}>Đang tải…</p>
       ) : (
         <>

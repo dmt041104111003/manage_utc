@@ -25,13 +25,16 @@ import {
   mapEnterpriseAccountFormFromMe,
   validateEnterpriseAccountForm
 } from "@/lib/utils/doanhnghiep-tai-khoan";
+import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import EnterpriseProfileInfo from "./components/EnterpriseProfileInfo";
 import EnterpriseAccountEditSection from "./components/EnterpriseAccountEditSection";
 
 type FormState = EnterpriseAccountFormState;
 
+const DN_TAI_KHOAN_CACHE_KEY = "doanhnghiep:tai-khoan:me";
+
 export default function EnterpriseAccountPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !hasCachedValue(DN_TAI_KHOAN_CACHE_KEY));
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState("");
@@ -39,7 +42,7 @@ export default function EnterpriseAccountPage() {
   const dismissToast = () => setToast("");
   const dismissErrorToast = () => setError("");
 
-  const [me, setMe] = useState<AdminEnterpriseDetail | null>(null);
+  const [me, setMe] = useState<AdminEnterpriseDetail | null>(() => getCachedValue<ApiResponse<AdminEnterpriseDetail>>(DN_TAI_KHOAN_CACHE_KEY)?.item ?? null);
   const [form, setForm] = useState<FormState>(ENTERPRISE_ACCOUNT_EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -47,11 +50,17 @@ export default function EnterpriseAccountPage() {
     let cancelled = false;
     (async () => {
       try {
-        setLoading(true);
+        if (!hasCachedValue(DN_TAI_KHOAN_CACHE_KEY)) setLoading(true);
         setError("");
-        const res = await fetch(ENTERPRISE_ACCOUNT_ME_ENDPOINT);
-        const data = (await res.json()) as ApiResponse<AdminEnterpriseDetail>;
-        if (!res.ok || !data.success) throw new Error(data.message || ENTERPRISE_ACCOUNT_LOAD_ERROR_DEFAULT);
+        const data = await getOrFetchCached<ApiResponse<AdminEnterpriseDetail>>(
+          DN_TAI_KHOAN_CACHE_KEY,
+          async () => {
+            const res = await fetch(ENTERPRISE_ACCOUNT_ME_ENDPOINT);
+            const json = (await res.json()) as ApiResponse<AdminEnterpriseDetail>;
+            if (!res.ok || !json.success) throw new Error(json.message || ENTERPRISE_ACCOUNT_LOAD_ERROR_DEFAULT);
+            return json;
+          }
+        );
         if (cancelled) return;
         if (!data.item) throw new Error(ENTERPRISE_ACCOUNT_NOT_FOUND_ERROR_DEFAULT);
         setMe(data.item);
@@ -106,15 +115,25 @@ export default function EnterpriseAccountPage() {
   };
 
   const reloadMe = async () => {
-    const res = await fetch(ENTERPRISE_ACCOUNT_ME_ENDPOINT);
-    const data = (await res.json()) as ApiResponse<AdminEnterpriseDetail>;
-    if (res.ok && data.success && data.item) {
-      setMe(data.item);
-      setForm(mapEnterpriseAccountFormFromMe(data.item));
+    try {
+      const data = await getOrFetchCached<ApiResponse<AdminEnterpriseDetail>>(
+        DN_TAI_KHOAN_CACHE_KEY,
+        async () => {
+          const res = await fetch(ENTERPRISE_ACCOUNT_ME_ENDPOINT);
+          return (await res.json()) as ApiResponse<AdminEnterpriseDetail>;
+        },
+        { force: true }
+      );
+      if (data.success && data.item) {
+        setMe(data.item);
+        setForm(mapEnterpriseAccountFormFromMe(data.item));
+      }
+    } catch {
+      // ignore
     }
   };
 
-  if (loading) {
+  if (loading && !me) {
     return (
       <main className={styles.page}>
         <p className={styles.modulePlaceholder}>Đang tải…</p>

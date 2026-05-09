@@ -67,7 +67,9 @@ export default function AdminTienDoThucTapPage() {
       { force }
     );
 
-  async function load() {
+  async function load(opts?: { force?: boolean; silent?: boolean }) {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
       const sp = new URLSearchParams();
       if (q.trim()) sp.set("q", q.trim());
@@ -76,7 +78,7 @@ export default function AdminTienDoThucTapPage() {
       if (filterStatus !== "all") sp.set("status", filterStatus);
       const url = `/api/admin/tien-do-thuc-tap?${sp.toString()}`;
       const cacheKey = `admin:tien-do:list:${url}`;
-      if (!hasCachedValue(cacheKey)) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,
@@ -85,7 +87,8 @@ export default function AdminTienDoThucTapPage() {
           const payload = await res.json();
           if (!res.ok || !payload?.success) throw new Error(payload?.message || "Không thể tải dữ liệu.");
           return payload;
-        }
+        },
+        { force }
       );
 
       setItems(Array.isArray(data.items) ? data.items : []);
@@ -96,7 +99,7 @@ export default function AdminTienDoThucTapPage() {
       setError(e?.message || "Không thể tải dữ liệu.");
       setProgressStats(null);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
@@ -138,7 +141,7 @@ export default function AdminTienDoThucTapPage() {
 
       setEditOpen(false);
       setToast(data?.message || "Cập nhật thành công.");
-      await load();
+      await load({ force: true });
     } catch (e: any) {
       setToast(e?.message || "Cập nhật thất bại.");
     } finally {
@@ -165,7 +168,7 @@ export default function AdminTienDoThucTapPage() {
 
       {error ? <p className={styles.error}>{error}</p> : null}
 
-      {!loading && progressStats ? (
+      {progressStats ? (
         <section aria-label="Thống kê trạng thái thực tập">
           <div className={styles.statsGrid3}>
             <DashboardStatSummaryCard
@@ -230,7 +233,7 @@ export default function AdminTienDoThucTapPage() {
         onChangeFilterFaculty={setFilterFaculty}
         onChangeFilterStatus={setFilterStatus}
         onChangeFilterDegree={setFilterDegree}
-        onSearch={() => void load()}
+        onSearch={() => void load({ force: true })}
       />
 
       <AdminTienDoTableSection

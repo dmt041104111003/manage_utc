@@ -21,7 +21,7 @@ import {
   buildSinhVienQuanLyDangKyUngTuyenRespondEndpoint,
   buildSinhVienQuanLyDangKyUngTuyenListUrl
 } from "@/lib/utils/sinhvien-quan-ly-dang-ky-ung-tuyen";
-import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
+import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import QuanLyUngTuyenToolbar from "./components/QuanLyUngTuyenToolbar";
 import QuanLyUngTuyenTableSection from "./components/QuanLyUngTuyenTableSection";
 
@@ -56,11 +56,19 @@ function computeStats(rows: SinhVienQuanLyDangKyUngTuyenRow[]): StatCard[] {
   ];
 }
 
+const SV_QL_UT_INIT_URL = buildSinhVienQuanLyDangKyUngTuyenListUrl("all");
+const SV_QL_UT_INIT_KEY = `sv:ql-ung-tuyen:list:${SV_QL_UT_INIT_URL}`;
+
+function readSvQlUngTuyenInitialRows(): SinhVienQuanLyDangKyUngTuyenRow[] {
+  const d = getCachedValue<{ items?: SinhVienQuanLyDangKyUngTuyenRow[] }>(SV_QL_UT_INIT_KEY);
+  return Array.isArray(d?.items) ? d.items : [];
+}
+
 export default function SinhVienQuanLyUngTuyenPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !hasCachedValue(SV_QL_UT_INIT_KEY));
   const [error, setError] = useState("");
   // Always keep full dataset; filter client-side for table display
-  const [allRows, setAllRows] = useState<SinhVienQuanLyDangKyUngTuyenRow[]>([]);
+  const [allRows, setAllRows] = useState<SinhVienQuanLyDangKyUngTuyenRow[]>(readSvQlUngTuyenInitialRows);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [toast, setToast] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -72,7 +80,7 @@ export default function SinhVienQuanLyUngTuyenPage() {
       // Always fetch all so we can compute stats regardless of current filter
       const url = buildSinhVienQuanLyDangKyUngTuyenListUrl("all");
       const cacheKey = `sv:ql-ung-tuyen:list:${url}`;
-      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,
@@ -151,21 +159,19 @@ export default function SinhVienQuanLyUngTuyenPage() {
       </header>
 
       {/* Stat cards */}
-      {!loading && (
-        <div className={styles.statsGrid}>
-          {stats.map((stat) => (
-            <DashboardStatSummaryCard
-              key={stat.label}
-              cardClassName={styles.statCard}
-              labelClassName={styles.statLabel}
-              valueClassName={styles.statValue}
-              label={stat.label}
-              value={stat.count}
-              Icon={stat.Icon}
-            />
-          ))}
-        </div>
-      )}
+      <div className={styles.statsGrid}>
+        {stats.map((stat) => (
+          <DashboardStatSummaryCard
+            key={stat.label}
+            cardClassName={styles.statCard}
+            labelClassName={styles.statLabel}
+            valueClassName={styles.statValue}
+            label={stat.label}
+            value={stat.count}
+            Icon={stat.Icon}
+          />
+        ))}
+      </div>
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
 
@@ -175,7 +181,7 @@ export default function SinhVienQuanLyUngTuyenPage() {
         onSearch={() => void load({ force: true })}
       />
 
-      {loading ? (
+      {loading && allRows.length === 0 ? (
         <p className={styles.modulePlaceholder}>Đang tải…</p>
       ) : (
         <QuanLyUngTuyenTableSection

@@ -74,7 +74,9 @@ export default function AdminQuanLyTinTuyenDungPage() {
     }
   };
 
-  const load = async () => {
+  const load = async (opts?: { force?: boolean; silent?: boolean }) => {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
@@ -83,7 +85,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
       if (searchStatus !== "all") params.set("status", searchStatus);
       const url = `/api/admin/job-posts?${params.toString()}`;
       const cacheKey = `admin:job-posts:list:${url}`;
-      if (!hasCachedValue(cacheKey)) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       setPage(1);
       const data = await getOrFetchCached<any>(
@@ -93,7 +95,8 @@ export default function AdminQuanLyTinTuyenDungPage() {
           const payload = (await res.json()) as ApiResponse<JobListItem> & { expertises?: string[] };
           if (!res.ok || !payload.success) throw new Error(payload.message || "Không tải được danh sách tin.");
           return payload;
-        }
+        },
+        { force }
       );
       setItems((data.items || []) as any);
       if (Array.isArray(data.expertises)) setExpertises(data.expertises);
@@ -103,7 +106,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
       setItems([]);
       setStatusStats(null);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -171,7 +174,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
       setToast(data.message || "Cập nhật trạng thái thành công.");
       closeStatus();
       deleteCacheByPrefix("admin:job-posts:");
-      await load();
+      await load({ force: true });
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Cập nhật thất bại.");
     } finally {
@@ -190,7 +193,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
       setToast(data.message || "Xóa tin tuyển dụng thành công");
       setDeleteTarget(null);
       deleteCacheByPrefix("admin:job-posts:");
-      await load();
+      await load({ force: true });
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Xóa thất bại.");
     } finally {
@@ -200,7 +203,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
 
   const search = async () => {
     setPage(1);
-    await load();
+    await load({ force: true });
   };
 
   return (

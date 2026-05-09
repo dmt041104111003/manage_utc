@@ -63,7 +63,9 @@ export default function AdminQuanLyDotThucTapPage() {
     });
   };
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { force?: boolean; silent?: boolean }) => {
+    const force = Boolean(opts?.force);
+    const silent = Boolean(opts?.silent);
     try {
       const params = new URLSearchParams();
       if (searchName.trim()) params.set("q", searchName.trim());
@@ -72,7 +74,7 @@ export default function AdminQuanLyDotThucTapPage() {
       if (searchStatus !== "all") params.set("status", searchStatus);
       const url = `/api/admin/internship-batches?${params.toString()}`;
       const cacheKey = `admin:internship-batches:list:${url}`;
-      if (!hasCachedValue(cacheKey)) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       setPage(1);
       const data = await getOrFetchCached<any>(
@@ -82,7 +84,8 @@ export default function AdminQuanLyDotThucTapPage() {
           const payload = (await res.json()) as ApiResponse<InternshipBatchRow>;
           if (!res.ok || !payload.success) throw new Error(payload.message || "Không tải được danh sách đợt thực tập.");
           return payload;
-        }
+        },
+        { force }
       );
       setItems((data.items || []) as any);
       setBatchStatusStats((data as any).batchStatusStats ?? null);
@@ -91,7 +94,7 @@ export default function AdminQuanLyDotThucTapPage() {
       setItems([]);
       setBatchStatusStats(null);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [searchName, searchStart, searchEnd, searchStatus]);
 
@@ -198,7 +201,7 @@ export default function AdminQuanLyDotThucTapPage() {
       }
       setToast(data.message || "Tạo đợt thực tập thành công.");
       closeEditModal();
-      await load();
+      await load({ force: true });
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Tạo đợt thực tập thất bại.");
     } finally {
@@ -233,7 +236,7 @@ export default function AdminQuanLyDotThucTapPage() {
       }
       setToast(data.message || "Cập nhật đợt thực tập thành công.");
       closeEditModal();
-      await load();
+      await load({ force: true });
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Cập nhật đợt thực tập thất bại.");
     } finally {
@@ -251,7 +254,7 @@ export default function AdminQuanLyDotThucTapPage() {
       if (!res.ok || !data.success) throw new Error(data.message || "Xóa đợt thực tập thất bại.");
       setToast(data.message || "Xóa đợt thực tập thành công.");
       setDeleteTarget(null);
-      await load();
+      await load({ force: true });
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Xóa đợt thực tập thất bại.");
     } finally {
@@ -273,7 +276,7 @@ export default function AdminQuanLyDotThucTapPage() {
       if (!res.ok || !data.success) throw new Error(data.message || "Cập nhật trạng thái thất bại.");
       setToast(data.message || "Đã đóng đợt thực tập.");
       setStatusTarget(null);
-      await load();
+      await load({ force: true });
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Cập nhật trạng thái thất bại.");
     } finally {

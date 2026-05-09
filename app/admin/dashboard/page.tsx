@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 
 import type { OverviewPayload } from "@/lib/types/admin-dashboard";
+import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import {
   BarChart,
   DonutChart,
@@ -12,26 +13,43 @@ import {
   TopFacultiesCard
 } from "../components/AdminDashboardCharts";
 
+function adminDashboardCacheKey(faculty: string, batchId: string) {
+  const qs = new URLSearchParams();
+  if (faculty) qs.set("faculty", faculty);
+  if (batchId) qs.set("batchId", batchId);
+  return `admin:dashboard:overview:${qs.toString()}`;
+}
+
 export default function AdminDashboardPage() {
-  const [loading, setLoading] = useState(true);
+  const initialKey = adminDashboardCacheKey("all", "all");
+  const [loading, setLoading] = useState(() => !hasCachedValue(initialKey));
   const [error, setError] = useState<string | null>(null);
 
   const [faculty, setFaculty] = useState("all");
   const [batchId, setBatchId] = useState("all");
-  const [payload, setPayload] = useState<OverviewPayload | null>(null);
+  const [payload, setPayload] = useState<OverviewPayload | null>(() => getCachedValue<OverviewPayload>(initialKey) ?? null);
 
   useEffect(() => {
     let cancelled = false;
-    async function load() {
-      setLoading(true);
-      setError(null);
+    async function load(opts?: { force?: boolean; silent?: boolean }) {
+      const force = Boolean(opts?.force);
+      const silent = Boolean(opts?.silent);
+      const qs = new URLSearchParams();
+      if (faculty) qs.set("faculty", faculty);
+      if (batchId) qs.set("batchId", batchId);
+      const cacheKey = adminDashboardCacheKey(faculty, batchId);
       try {
-        const qs = new URLSearchParams();
-        if (faculty) qs.set("faculty", faculty);
-        if (batchId) qs.set("batchId", batchId);
-        const res = await fetch(`/api/admin/dashboard/overview?${qs.toString()}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = (await res.json()) as OverviewPayload;
+        if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
+        setError(null);
+        const json = await getOrFetchCached<OverviewPayload>(
+          cacheKey,
+          async () => {
+            const res = await fetch(`/api/admin/dashboard/overview?${qs.toString()}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return (await res.json()) as OverviewPayload;
+          },
+          { force }
+        );
         if (cancelled) return;
         setPayload(json);
         setFaculty(json.selectedFaculty ?? "all");
@@ -40,11 +58,17 @@ export default function AdminDashboardPage() {
         if (cancelled) return;
         setError(e instanceof Error ? e.message : "Không thể tải dữ liệu.");
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && !silent) setLoading(false);
       }
     }
     void load();
-    return () => { cancelled = true; };
+    const timer = setInterval(() => {
+      void load({ force: true, silent: true });
+    }, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
   }, [faculty, batchId]);
 
   const faculties = payload?.faculties ?? [];
@@ -70,7 +94,7 @@ export default function AdminDashboardPage() {
             className={styles.overviewSelect}
             value={faculty}
             onChange={(e) => setFaculty(e.target.value)}
-            disabled={loading || faculties.length === 0}
+            disabled={!payload || faculties.length === 0}
           >
             <option value="all">Tất cả</option>
             {faculties.map((f) => (
@@ -85,7 +109,7 @@ export default function AdminDashboardPage() {
             className={styles.overviewSelect}
             value={batchId}
             onChange={(e) => setBatchId(e.target.value)}
-            disabled={loading || batches.length === 0}
+            disabled={!payload || batches.length === 0}
           >
             {batches.map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
@@ -95,9 +119,9 @@ export default function AdminDashboardPage() {
       </section>
 
       {error ? <div className={styles.statusNote}>Lỗi: {error}</div> : null}
-      {loading ? <div className={styles.modulePlaceholder}>Đang tải dữ liệu...</div> : null}
+      {loading && !payload ? <div className={styles.modulePlaceholder}>Đang tải dữ liệu...</div> : null}
 
-      {!loading && payload ? (
+      {payload ? (
         <section className={styles.overviewGrid}>
           {/* Row 1: Two donuts */}
           <article className={styles.card}>

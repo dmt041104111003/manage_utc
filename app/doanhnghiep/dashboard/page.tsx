@@ -24,7 +24,7 @@ import {
   RECHARTS_TOOLTIP_PROPS
 } from "@/lib/constants/recharts-dashboard-ui";
 import { darkenHex } from "@/lib/utils/chart-colors";
-import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
+import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 type SimpleChartSeries = { name: string; data: number[]; color: string };
 
@@ -41,13 +41,23 @@ const JOB_STATUS_COLORS = ["#f59e0b", "#ef4444", "#16a34a", "#6b7280"];
 
 const CHART_ANIM = { isAnimationActive: true, animationDuration: 900, animationEasing: "ease-out" as const };
 
+function enterpriseDashboardOverviewCacheKey(dateFrom: string, dateTo: string) {
+  const qs = new URLSearchParams();
+  if (dateFrom) qs.set("dateFrom", dateFrom);
+  if (dateTo) qs.set("dateTo", dateTo);
+  const url = `/api/doanhnghiep/dashboard/overview?${qs.toString()}`;
+  return `enterprise:dashboard:overview:${url}`;
+}
+
+const ENTERPRISE_DASHBOARD_INITIAL_KEY = enterpriseDashboardOverviewCacheKey("", "");
+
 export default function EnterpriseDashboardPage() {
   const chartUid = useId().replace(/:/g, "");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !hasCachedValue(ENTERPRISE_DASHBOARD_INITIAL_KEY));
   const [error, setError] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [payload, setPayload] = useState<OverviewPayload | null>(null);
+  const [payload, setPayload] = useState<OverviewPayload | null>(() => getCachedValue<OverviewPayload>(ENTERPRISE_DASHBOARD_INITIAL_KEY) ?? null);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,7 +70,7 @@ export default function EnterpriseDashboardPage() {
         if (dateTo) qs.set("dateTo", dateTo);
         const url = `/api/doanhnghiep/dashboard/overview?${qs.toString()}`;
         const cacheKey = `enterprise:dashboard:overview:${url}`;
-        if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+        if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
         setError(null);
         const json = await getOrFetchCached<OverviewPayload>(
           cacheKey,
@@ -145,9 +155,9 @@ export default function EnterpriseDashboardPage() {
       </section>
 
       {error ? <div className={styles.modulePlaceholder}>Lỗi: {error}</div> : null}
-      {loading ? <div className={styles.modulePlaceholder}>Đang tải dữ liệu...</div> : null}
+      {loading && !payload ? <div className={styles.modulePlaceholder}>Đang tải dữ liệu...</div> : null}
 
-      {!loading && payload ? (
+      {payload ? (
         <section className={styles.overviewGrid}>
           {/* Double bar: SV accepted vs declined by expertise */}
           <article className={styles.card} style={{ gridColumn: "1 / -1" }}>

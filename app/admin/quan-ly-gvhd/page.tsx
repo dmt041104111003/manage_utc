@@ -140,7 +140,7 @@ export default function AdminQuanLyGVHDPage() {
       params.set("pageSize", String(ADMIN_QUAN_LY_GVHD_PAGE_SIZE));
       const url = `/api/admin/supervisors?${params.toString()}`;
       const cacheKey = `admin:supervisors:list:${url}`;
-      if (!silent && (force || !hasCachedValue(cacheKey))) setLoading(true);
+      if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
         cacheKey,
