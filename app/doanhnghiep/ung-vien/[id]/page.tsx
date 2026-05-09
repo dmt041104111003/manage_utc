@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import styles from "../../styles/dashboard.module.css";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../../components/MessagePopup";
@@ -9,8 +9,8 @@ import JobDetailInfo from "./components/JobDetailInfo";
 import ApplicantTableSection from "./components/ApplicantTableSection";
 import ApplicantDetailPopup from "./components/ApplicantDetailPopup";
 
-export default function DoanhNghiepUngVienDetailPage({ params }: { params: { id: string } }) {
-  const jobId = params.id;
+export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: jobId } = use(params);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
