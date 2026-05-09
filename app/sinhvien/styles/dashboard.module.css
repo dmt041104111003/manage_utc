@@ -93,7 +93,6 @@
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   padding: 16px 18px;
-  backdrop-filter: blur(6px);
 }
 
 /* Auto tints for sinhvien stat cards */

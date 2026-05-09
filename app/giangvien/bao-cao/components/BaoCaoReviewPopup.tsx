@@ -1,7 +1,6 @@
 import FormPopup from "../../../components/FormPopup";
 import type { Row } from "@/lib/types/giangvien-bao-cao-thuc-tap";
 import { degreeLabel } from "@/lib/constants/giangvien-bao-cao-thuc-tap";
-import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import formStyles from "../../../auth/styles/register.module.css";
 
@@ -80,8 +79,9 @@ export default function BaoCaoReviewPopup({
             <div className={adminStyles.detailSectionTitle} style={{ marginBottom: 8 }}>File BCTT</div>
             <a
               className={adminStyles.detailLink}
-              href={dataUrlFromBase64(reviewTarget.report.reportMime, reviewTarget.report.reportBase64)}
-              download={reviewTarget.report.reportFileName}
+              href={`/api/files/internship-report/${reviewTarget.report.id}`}
+              target="_blank"
+              rel="noreferrer"
             >
               Tải BCTT: {reviewTarget.report.reportFileName}
             </a>

@@ -15,7 +15,6 @@ export type Report = {
   reviewStatus: ReportReviewStatus;
   reportFileName: string;
   reportMime: string;
-  reportBase64: string;
   supervisorRejectReason: string | null;
   supervisorEvaluation: string | null;
   supervisorPoint: number | null;

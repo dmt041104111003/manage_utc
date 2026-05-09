@@ -2,7 +2,6 @@ import MessagePopup from "../../../components/MessagePopup";
 import type { Row } from "@/lib/types/giangvien-bao-cao-thuc-tap";
 import { degreeLabel } from "@/lib/constants/giangvien-bao-cao-thuc-tap";
 import { formatDateVi } from "@/lib/utils/giangvien-bao-cao-thuc-tap";
-import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 
 type Props = {
@@ -24,10 +23,7 @@ export default function BaoCaoViewPopup({ viewTarget, onClose }: Props) {
 
   const statusColors = internshipStatusColor[viewTarget.internshipStatus] ?? { bg: "#f3f4f6", color: "#374151" };
 
-  const reportFileLink =
-    viewTarget.report
-      ? dataUrlFromBase64(viewTarget.report.reportMime, viewTarget.report.reportBase64)
-      : null;
+  const reportFileLink = viewTarget.report ? `/api/files/internship-report/${viewTarget.report.id}` : null;
 
   return (
     <MessagePopup open title="Xem chi tiết sinh viên" size="extraWide" onClose={onClose}>
