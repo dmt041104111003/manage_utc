@@ -5,6 +5,7 @@ import { validateEnterpriseRegisterPayload, type EnterpriseRegisterPayload } fro
 import { SCHOOL_NAME } from "@/lib/constants/school";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
 import { toCloudinaryRef, uploadEnterpriseLicenseBytesToCloudinary, uploadEnterpriseLogoBytesToCloudinary } from "@/lib/storage/cloudinary";
+import type { Prisma } from "@prisma/client";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as EnterpriseRegisterPayload;
@@ -55,7 +56,10 @@ export async function POST(request: Request) {
     delete enterpriseMeta.companyLogoByteLength;
   }
 
-  const nextUserCreate = { ...userCreate, enterpriseMeta };
+  const nextUserCreate: Prisma.UserCreateInput = {
+    ...userCreate,
+    enterpriseMeta: enterpriseMeta as Prisma.InputJsonValue
+  };
 
   try {
     await prisma.user.create({ data: nextUserCreate });
