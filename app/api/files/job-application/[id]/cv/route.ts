@@ -55,7 +55,12 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   if (!upstream.ok) return NextResponse.json({ success: false, message: "Không thể tải file CV." }, { status: 502 });
   const ab = await upstream.arrayBuffer();
   const bytes = Buffer.from(ab);
-  const mime = upstream.headers.get("content-type") || String(row.cvMime || "") || "application/pdf";
+  const upstreamType = String(upstream.headers.get("content-type") || "").trim().toLowerCase();
+  const fallbackType = String(row.cvMime || "").trim().toLowerCase();
+  const mime =
+    !upstreamType || upstreamType === "application/octet-stream"
+      ? fallbackType || "application/pdf"
+      : upstreamType;
 
   const filename = safeFilename(row.cvFileName || "cv.pdf");
   const disposition = `${download ? "attachment" : "inline"}; filename="${filename}"`;

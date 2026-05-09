@@ -53,7 +53,6 @@ export async function uploadCvBytesToCloudinary(input: {
 
   const signParams: Record<string, string> = {
     public_id: publicId,
-    resource_type: "raw",
     timestamp
   };
   const signature = buildSignature(signParams, apiSecret);

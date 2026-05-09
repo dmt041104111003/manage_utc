@@ -13,12 +13,17 @@ import { formatDateTimeVi } from "@/lib/utils/doanhnghiep-ung-vien-detail";
 import adminStyles from "../../../../admin/styles/dashboard.module.css";
 
 async function openCvPreview(applicationId: string) {
+  const w = window.open("about:blank", "_blank", "noopener,noreferrer");
   const res = await fetch(`/api/files/job-application/${applicationId}/cv`);
-  if (!res.ok) return;
+  if (!res.ok) {
+    try { w?.close(); } catch {}
+    return;
+  }
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
-  window.open(url, "_blank", "noopener,noreferrer");
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  if (w) w.location.href = url;
+  else window.open(url, "_blank", "noopener,noreferrer");
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
 export type Props = {
