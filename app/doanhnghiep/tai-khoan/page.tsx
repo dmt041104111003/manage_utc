@@ -165,7 +165,7 @@ export default function EnterpriseAccountPage() {
     typeof m.businessLicensePublicId === "string" ? m.businessLicensePublicId : null
   );
   const licHref =
-    licPublicId || licB64 ? `/api/files/enterprise-business-license/${me.id}` : null;
+    licPublicId || licB64 ? `/api/files/enterprise-business-license/${me.id}?download=1` : null;
 
   const logoMime = typeof m.companyLogoMime === "string" ? m.companyLogoMime : "";
   const logoB64 = typeof m.companyLogoBase64 === "string" ? m.companyLogoBase64 : null;

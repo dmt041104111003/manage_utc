@@ -35,7 +35,7 @@ export function EnterpriseViewDetailTable({ item }: Props) {
   );
   const logoPublicId = fromCloudinaryRef(typeof m.companyLogoPublicId === "string" ? m.companyLogoPublicId : null);
   const licHref =
-    licPublicId || licB64 ? `/api/files/enterprise-business-license/${item.id}` : null;
+    licPublicId || licB64 ? `/api/files/enterprise-business-license/${item.id}?download=1` : null;
   const logoFromCloud = logoPublicId ? buildCloudinaryImageDeliveryUrl(logoPublicId) : null;
   const logoSrc =
     logoFromCloud ??
@@ -73,7 +73,12 @@ export function EnterpriseViewDetailTable({ item }: Props) {
             <th scope="row">File giấy phép kinh doanh</th>
             <td>
               {licHref ? (
-                <a className={styles.detailLink} href={licHref} target="_blank" rel="noreferrer">
+                <a
+                  className={styles.detailLink}
+                  href={licHref}
+                  download={licName !== "—" ? licName : undefined}
+                  rel="noreferrer"
+                >
                   {licName}
                 </a>
               ) : (
