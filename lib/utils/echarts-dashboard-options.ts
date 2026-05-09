@@ -239,7 +239,7 @@ export function buildLineMultiSeriesOption(labels: string[], series: SimpleChart
     showSymbol: true,
     lineStyle: { width: 3, color: s.color },
     itemStyle: { color: s.color, borderColor: "#fff", borderWidth: 2 },
-    emphasis: { focus: "series", lineStyle: { width: 4 } },
+    emphasis: { focus: "series" as const, lineStyle: { width: 4 } },
     data: labels.map((_, i) => s.data[i] ?? 0)
   }));
 
@@ -291,7 +291,7 @@ export function buildGroupedBarChartOption(
       color: linearGradient(g.colorTop, g.colorBottom),
       borderRadius: [10, 10, 0, 0]
     },
-    emphasis: { focus: "series" },
+    emphasis: { focus: "series" as const },
     data: g.data
   }));
 

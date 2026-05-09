@@ -22,7 +22,7 @@ export default function BaoCaoToolbar({
 }: Props) {
   return (
     <div className={adminStyles.searchToolbar}>
-      <div className={adminStyles.searchField} style={{ maxWidth: 320 }}>
+      <div className={`${adminStyles.searchField} ${adminStyles.searchFieldGrow}`}>
         <label>Tìm theo MSV / Họ tên</label>
         <input
           className={adminStyles.textInputSearch}

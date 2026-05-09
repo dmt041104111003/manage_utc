@@ -28,7 +28,7 @@ export default function UngVienToolbar({
 }: Props) {
   return (
     <div className={adminStyles.searchToolbar}>
-      <div className={adminStyles.searchField} style={{ minWidth: 320, flex: 1 }}>
+      <div className={`${adminStyles.searchField} ${adminStyles.searchFieldGrow}`}>
         <label>Tiêu đề</label>
         <input
           className={adminStyles.textInputSearch}

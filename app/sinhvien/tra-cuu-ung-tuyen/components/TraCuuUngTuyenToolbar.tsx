@@ -25,7 +25,7 @@ export default function TraCuuUngTuyenToolbar({
 }: Props) {
   return (
     <div className={adminStyles.searchToolbar}>
-      <div className={adminStyles.searchField}>
+      <div className={`${adminStyles.searchField} ${adminStyles.searchFieldGrow}`}>
         <input
           className={adminStyles.textInputSearch}
           value={q}

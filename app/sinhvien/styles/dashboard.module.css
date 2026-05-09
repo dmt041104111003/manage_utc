@@ -126,6 +126,19 @@
   border-color: rgba(220, 38, 38, 0.26);
 }
 
+@media (max-width: 768px) {
+  .statsGrid {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+
+  .statsGrid > .statCard {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 .statLabel {
   margin: 0;
   font-size: 13px;

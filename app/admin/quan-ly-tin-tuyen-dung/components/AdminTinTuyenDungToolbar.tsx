@@ -36,7 +36,7 @@ export default function AdminTinTuyenDungToolbar(props: Props) {
 
   return (
     <div className={styles.searchToolbar}>
-      <div className={styles.searchField} style={{ flex: 1, minWidth: 220 }}>
+      <div className={`${styles.searchField} ${styles.searchFieldGrow}`}>
         <label>Tiêu đề / Tên doanh nghiệp</label>
         <input
           className={styles.textInputSearch}

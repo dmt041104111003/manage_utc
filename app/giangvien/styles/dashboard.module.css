@@ -197,6 +197,21 @@
   box-sizing: border-box;
 }
 
+@media (max-width: 768px) {
+  .statsGrid,
+  .statsGrid4 {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+
+  .statsGrid > .statCard,
+  .statsGrid4 > .statCard {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 /* ----- Dashboard charts ----- */
 .overviewControls {
   display: flex;

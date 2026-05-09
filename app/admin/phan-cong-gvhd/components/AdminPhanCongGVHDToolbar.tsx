@@ -34,7 +34,7 @@ export default function AdminPhanCongGVHDToolbar(props: Props) {
 
   return (
     <div className={styles.searchToolbar}>
-      <div className={styles.searchField} style={{ minWidth: 320, flex: 1 }}>
+      <div className={`${styles.searchField} ${styles.searchFieldGrow}`}>
         <label>Tìm kiếm</label>
         <input
           className={styles.textInputSearch}
@@ -82,9 +82,11 @@ export default function AdminPhanCongGVHDToolbar(props: Props) {
         Tìm kiếm
       </button>
 
-      <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onOpenAdd}>
-        Thêm phân công
-      </button>
+      <div className={styles.searchToolbarActions}>
+        <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onOpenAdd}>
+          Thêm phân công
+        </button>
+      </div>
     </div>
   );
 }

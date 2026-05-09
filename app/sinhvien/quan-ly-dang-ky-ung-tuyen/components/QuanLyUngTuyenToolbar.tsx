@@ -12,7 +12,7 @@ type Props = {
 export default function QuanLyUngTuyenToolbar({ statusFilter, onStatusFilterChange, onSearch }: Props) {
   return (
     <div className={adminStyles.searchToolbar}>
-      <div className={adminStyles.searchField} style={{ maxWidth: 280 }}>
+      <div className={adminStyles.searchField}>
         <label>Trạng thái</label>
         <select
           className={adminStyles.selectInput}

@@ -469,18 +469,59 @@
 
 .searchToolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-end;
   gap: 12px;
   margin-bottom: 16px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.searchToolbar > .btn,
+.searchToolbar > button[class*="btn"] {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Nhóm nút thao tác (Thêm / Excel) — cùng 1 hàng, đẩy phải khi đủ chỗ */
+.searchToolbarActions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: 12px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.searchToolbarActions > .btn,
+.searchToolbarActions > button[class*="btn"] {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .searchField {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 12rem;
-  flex: 1;
+  min-width: 7.5rem;
+  flex: 1 1 120px;
+  max-width: 22rem;
+}
+
+.searchFieldGrow {
+  flex: 2 1 180px;
+  min-width: 9rem;
+  max-width: 28rem;
+}
+
+.searchField .textInputSearch,
+.searchField .selectInput {
+  width: 100%;
+  min-width: 0;
 }
 
 .searchField label {
@@ -510,7 +551,8 @@
 }
 
 .selectInput {
-  min-width: 11rem;
+  min-width: 0;
+  width: 100%;
 }
 
 .btnPrimary {
@@ -687,6 +729,56 @@
 .statsGrid4 > .statCard:nth-child(4n + 4) {
   background: #fee2e2;
   border-color: #fca5a5;
+}
+
+@media (max-width: 768px) {
+  .searchToolbar {
+    flex-direction: column;
+    align-items: stretch;
+    overflow-x: visible;
+  }
+
+  .searchToolbar > .btn,
+  .searchToolbar > button[class*="btn"] {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .searchToolbarActions {
+    margin-left: 0;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .searchToolbarActions > .btn,
+  .searchToolbarActions > button[class*="btn"] {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .searchField,
+  .searchFieldGrow {
+    max-width: none;
+    min-width: 0;
+    flex: none;
+    width: 100%;
+  }
+
+  .statsGrid2,
+  .statsGrid3,
+  .statsGrid4 {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+
+  .statsGrid2 > .statCard,
+  .statsGrid3 > .statCard,
+  .statsGrid4 > .statCard {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .statCardTintPending {
