@@ -46,7 +46,7 @@ type PatchStudentBody = {
   degree: Degree;
   phone: string;
   email: string;
-  birthDate: string; // YYYY-MM-DD
+  birthDate: string;
   gender: Gender;
   permanentProvinceCode: string;
   permanentWardCode: string;
@@ -65,7 +65,7 @@ function validateCommon(body: PatchStudentBody) {
   if (!PHONE_PATTERN.test(phone)) errors.phone = "Số điện thoại chỉ gồm số (8–12 ký tự).";
 
   const email = (body.email || "").trim();
-  if (!AUTH_EMAIL_REGISTER_PATTERN.test(email)) errors.email = "Email không đúng định dạng example@domain.com.";
+  if (!AUTH_EMAIL_REGISTER_PATTERN.test(email)) errors.email = "Email không đúng định dạng (ví dụ: example@domain.com).";
 
   const birthDateStr = (body.birthDate || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDateStr)) errors.birthDate = "Ngày sinh không hợp lệ (YYYY-MM-DD).";
@@ -167,7 +167,6 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   const errors = validateCommon(body);
   if (Object.keys(errors).length) return NextResponse.json({ success: false, errors }, { status: 400 });
 
-  // uniqueness check (exclude current)
   const existingEmail = await prismaAny.user.findUnique({ where: { email: body.email.trim() }, select: { id: true } });
   if (existingEmail && existingEmail.id !== current.userId) {
     return NextResponse.json({ success: false, errors: { email: "Email đã tồn tại trong hệ thống." } }, { status: 400 });
@@ -183,16 +182,17 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
   const { provinceName, wardName } = await resolveProvinceWardNames(body.permanentProvinceCode, body.permanentWardCode);
   if (!provinceName || !wardName) {
-    return NextResponse.json({ success: false, errors: { permanentProvinceCode: "Tỉnh/thành hoặc Phường/xã không tồn tại.", permanentWardCode: "Tỉnh/thành hoặc Phường/xã không tồn tại." } }, { status: 400 });
+    return NextResponse.json(
+      { success: false, errors: { permanentProvinceCode: "Tỉnh/thành hoặc phường/xã không tồn tại.", permanentWardCode: "Tỉnh/thành hoặc phường/xã không tồn tại." } },
+      { status: 400 }
+    );
   }
 
-  // Update user fields that are NOT login identity. We keep email/password unchanged.
   await prismaAny.user.update({
     where: { id: current.userId },
     data: {
       fullName: body.fullName.trim(),
       phone: body.phone.trim()
-      // email unchanged
     }
   });
 
@@ -213,7 +213,6 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     }
   });
 
-  // If your requirement wants password = birthDate, keep it unchanged. We do NOT re-hash here.
   return NextResponse.json({ success: true, message: "Cập nhật sinh viên thành công." });
 }
 

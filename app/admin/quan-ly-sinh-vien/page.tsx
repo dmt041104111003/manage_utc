@@ -6,6 +6,7 @@ import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import FormPopup from "../../components/FormPopup";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
+import { ADMIN_STUDENT_EXCEL_HEADER, ADMIN_STUDENT_EXCEL_SAMPLE_ROWS } from "@/lib/constants/admin-students-excel";
 
 type Degree = "BACHELOR" | "ENGINEER";
 type Gender = "MALE" | "FEMALE" | "OTHER";
@@ -469,21 +470,51 @@ export default function AdminQuanLySinhVienPage() {
   const downloadExcelTemplate = async () => {
     const XLSXMod = await import("xlsx");
     const XLSX = XLSXMod as any;
-    const header = [
-      "MSV",
-      "Họ tên",
-      "Lớp",
-      "Khoa",
-      "Khóa",
-      "Bậc",
-      "SĐT",
-      "Email",
-      "Ngày sinh",
-      "Giới tính",
-      "Tỉnh",
-      "Phường/Xã"
+    const ws = XLSX.utils.aoa_to_sheet([
+      [...ADMIN_STUDENT_EXCEL_HEADER],
+      ...ADMIN_STUDENT_EXCEL_SAMPLE_ROWS.map((r) => [
+        r.msv,
+        r.fullName,
+        r.className,
+        r.faculty,
+        r.cohort,
+        r.degree,
+        r.phone,
+        r.email,
+        r.birthDate,
+        r.gender,
+        r.provinceName,
+        r.wardName
+      ])
+    ]);
+
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      for (let r = range.s.r + 1; r <= range.e.r; r++) {
+        const addr = XLSX.utils.encode_cell({ r, c });
+        const cell = ws[addr];
+        if (!cell) continue;
+        cell.t = "s";
+        cell.v = String(cell.v ?? "");
+      }
+    }
+
+    // Width để không bị ####### ở ngày sinh / nội dung dài
+    ws["!cols"] = [
+      { wch: 12 }, // MSV
+      { wch: 22 }, // Họ tên
+      { wch: 10 }, // Lớp
+      { wch: 22 }, // Khoa
+      { wch: 10 }, // Khóa
+      { wch: 10 }, // Bậc
+      { wch: 14 }, // SĐT
+      { wch: 26 }, // Email
+      { wch: 12 }, // Ngày sinh
+      { wch: 10 }, // Giới tính
+      { wch: 14 }, // Tỉnh
+      { wch: 26 } // Phường/Xã
     ];
-    const ws = XLSX.utils.aoa_to_sheet([header]);
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sinh viên");
     const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" });
@@ -491,7 +522,7 @@ export default function AdminQuanLySinhVienPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "mau_sinh_vien.xlsx";
+    a.download = "mau_sinh_vien_co_du_lieu.xlsx";
     document.body.appendChild(a);
     a.click();
     a.remove();

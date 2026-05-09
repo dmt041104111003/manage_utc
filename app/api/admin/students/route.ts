@@ -16,7 +16,6 @@ type Gender = "MALE" | "FEMALE" | "OTHER";
 type InternshipStatus = "NOT_STARTED" | "DOING" | "SELF_FINANCED" | "REPORT_SUBMITTED" | "COMPLETED";
 
 function parseDateOnly(input: string) {
-  // input: YYYY-MM-DD
   return new Date(`${input}T00:00:00.000Z`);
 }
 
@@ -51,13 +50,11 @@ export async function GET(request: Request) {
   const where: any = {};
   const andParts: any[] = [];
 
-  // filters
   if (faculty && faculty !== "all") andParts.push({ faculty });
   if (status && status !== "all") andParts.push({ internshipStatus: status });
   if (degree && degree !== "all") andParts.push({ degree });
   if (andParts.length) where.AND = andParts;
 
-  // search q across msv + fullName + phone + email
   if (q) {
     andParts.push({
       OR: [
@@ -110,7 +107,6 @@ export async function GET(request: Request) {
     for (const a of distinctApps) linked.add(String(a.studentUserId));
   }
 
-  // meta: distinct faculties (for dropdown)
   let faculties: string[] = [];
   try {
     const fRows = await prismaAny.studentProfile.findMany({
@@ -156,7 +152,7 @@ type CreateStudentBody = {
   degree: Degree;
   phone: string;
   email: string;
-  birthDate: string; // YYYY-MM-DD
+  birthDate: string;
   gender: Gender;
   permanentProvinceCode: string;
   permanentWardCode: string;
@@ -175,7 +171,7 @@ function validateCreate(body: CreateStudentBody) {
   if (!PHONE_PATTERN.test(phone)) errors.phone = "Số điện thoại chỉ gồm số (8–12 ký tự).";
 
   const email = (body.email || "").trim();
-  if (!AUTH_EMAIL_REGISTER_PATTERN.test(email)) errors.email = "Email không đúng định dạng example@domain.com.";
+  if (!AUTH_EMAIL_REGISTER_PATTERN.test(email)) errors.email = "Email không đúng định dạng (ví dụ: example@domain.com).";
 
   const birthDateStr = (body.birthDate || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDateStr)) errors.birthDate = "Ngày sinh không hợp lệ (YYYY-MM-DD).";
@@ -237,7 +233,7 @@ export async function POST(request: Request) {
   const { provinceName, wardName } = await resolveProvinceWardNames(body.permanentProvinceCode, body.permanentWardCode);
   if (!provinceName || !wardName) {
     return NextResponse.json(
-      { success: false, errors: { permanentProvinceCode: "Tỉnh/thành hoặc Phường/xã không tồn tại.", permanentWardCode: "Tỉnh/thành hoặc Phường/xã không tồn tại." } },
+      { success: false, errors: { permanentProvinceCode: "Tỉnh/thành hoặc phường/xã không tồn tại.", permanentWardCode: "Tỉnh/thành hoặc phường/xã không tồn tại." } },
       { status: 400 }
     );
   }
