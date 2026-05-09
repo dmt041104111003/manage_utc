@@ -170,7 +170,7 @@
   border-bottom: 1px solid #dbe4f0;
   flex-shrink: 0;
   position: relative;
-  z-index: 102; /* đảm bảo nút 3 gạch không bị sidebar phủ khi mở */
+  z-index: 1;
 }
 
 .menuButton {
@@ -186,7 +186,7 @@
   background: #f8fbff;
   cursor: pointer;
   position: relative;
-  z-index: 103;
+  z-index: 2;
 }
 
 .menuButton span {
@@ -226,6 +226,8 @@
   }
 
   .main {
+    position: relative;
+    z-index: 0;
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
@@ -236,15 +238,21 @@
     justify-content: space-between;
     padding-left: max(16px, env(safe-area-inset-left));
     padding-right: max(8px, env(safe-area-inset-right));
+    z-index: 1;
   }
 
   .menuButton {
     display: flex;
     order: 2; /* đưa nút 3 gạch sang phải */
+    z-index: 2;
   }
 
   .topbarTitle {
     order: 1;
+  }
+
+  .backdrop {
+    z-index: 150;
   }
 
   .sidebar {
@@ -263,6 +271,7 @@
     box-shadow: none;
     border: none;
     pointer-events: none;
+    z-index: 160;
   }
 
   .sidebarOpen {
