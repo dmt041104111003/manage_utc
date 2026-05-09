@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import {
   PieChart,
   Pie,
@@ -13,83 +14,190 @@ import {
   YAxis,
   CartesianGrid,
   LineChart as RechartsLineChart,
-  Line
+  Line,
+  Defs,
+  LinearGradient,
+  Stop
 } from "recharts";
 
 import styles from "../styles/dashboard.module.css";
 import type { DonutSegment, SimpleChartSeries } from "@/lib/types/admin-dashboard";
 import { PROGRESS_STATUS_COLORS } from "@/lib/constants/admin-dashboard-charts";
+import {
+  formatChartInt,
+  RECHARTS_GRID_PROPS,
+  RECHARTS_GRID_PROPS_LINE,
+  RECHARTS_LEGEND_WRAPPER_STYLE,
+  RECHARTS_TICK_PROPS,
+  RECHARTS_TOOLTIP_PROPS
+} from "@/lib/constants/recharts-dashboard-ui";
+import { darkenHex } from "@/lib/utils/chart-colors";
+
+const ANIM = { isAnimationActive: true, animationDuration: 900, animationEasing: "ease-out" as const };
 
 export function DonutChart({ segments }: { segments: DonutSegment[] }) {
-  if (segments.length === 0)
-    return <div className={styles.muted}>Chưa có dữ liệu.</div>;
+  const uid = useId().replace(/:/g, "");
+  if (segments.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
 
   const data = segments.map((s) => ({ name: s.label, value: s.value, color: s.color }));
+  const total = data.reduce((acc, d) => acc + d.value, 0);
 
   return (
-    <ResponsiveContainer width="100%" height={240}>
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          innerRadius={60}
-          outerRadius={88}
-          paddingAngle={2}
-          dataKey="value"
-        >
-          {data.map((entry, i) => (
-            <Cell key={`cell-${i}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip />
-        <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12 }} />
-      </PieChart>
-    </ResponsiveContainer>
+    <div style={{ position: "relative", width: "100%", height: 280 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Defs>
+            {data.map((d, i) => (
+              <LinearGradient key={d.name} id={`${uid}-donut-${i}`} x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0%" stopColor={d.color} stopOpacity={1} />
+                <Stop offset="100%" stopColor={darkenHex(d.color, 0.28)} stopOpacity={1} />
+              </LinearGradient>
+            ))}
+          </Defs>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="48%"
+            innerRadius={62}
+            outerRadius={96}
+            paddingAngle={2.5}
+            cornerRadius={4}
+            dataKey="value"
+            stroke="#fff"
+            strokeWidth={2}
+            {...ANIM}
+          >
+            {data.map((entry, i) => (
+              <Cell key={`cell-${i}`} fill={`url(#${uid}-donut-${i})`} />
+            ))}
+          </Pie>
+          <Tooltip
+            {...RECHARTS_TOOLTIP_PROPS}
+            formatter={(value: number | undefined) => [formatChartInt(value), "Giá trị"]}
+          />
+          <Legend
+            verticalAlign="bottom"
+            iconType="circle"
+            iconSize={11}
+            wrapperStyle={{ ...RECHARTS_LEGEND_WRAPPER_STYLE, paddingTop: 8 }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: 0,
+          height: "76%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+          flexDirection: "column",
+          gap: 2
+        }}
+      >
+        <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b", letterSpacing: "0.04em" }}>TỔNG</span>
+        <span style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", lineHeight: 1, letterSpacing: "-0.02em" }}>
+          {formatChartInt(total)}
+        </span>
+      </div>
+    </div>
   );
 }
 
 export function BarChart({ labels, values }: { labels: string[]; values: number[] }) {
-  if (labels.length === 0)
-    return <div className={styles.muted}>Chưa có dữ liệu.</div>;
+  const uid = useId().replace(/:/g, "");
+  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
 
   const data = labels.map((name, i) => ({ name, value: values[i] ?? 0 }));
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <RechartsBarChart data={data} margin={{ top: 5, right: 16, left: 0, bottom: 48 }}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-30} textAnchor="end" />
-        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={36} />
-        <Tooltip />
-        <Bar dataKey="value" name="Số lượng" fill="#2563eb" radius={[4, 4, 0, 0]} />
+    <ResponsiveContainer width="100%" height={248}>
+      <RechartsBarChart data={data} margin={{ top: 12, right: 20, left: 4, bottom: 52 }}>
+        <Defs>
+          <LinearGradient id={`${uid}-bar-blue`} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0%" stopColor="#60a5fa" />
+            <Stop offset="55%" stopColor="#2563eb" />
+            <Stop offset="100%" stopColor="#1e3a8a" />
+          </LinearGradient>
+        </Defs>
+        <CartesianGrid {...RECHARTS_GRID_PROPS} />
+        <XAxis
+          dataKey="name"
+          tick={RECHARTS_TICK_PROPS}
+          interval={0}
+          angle={-28}
+          textAnchor="end"
+          height={70}
+          axisLine={{ stroke: "#cbd5e1" }}
+          tickLine={{ stroke: "#cbd5e1" }}
+        />
+        <YAxis
+          tick={RECHARTS_TICK_PROPS}
+          allowDecimals={false}
+          width={40}
+          axisLine={false}
+          tickLine={false}
+        />
+        <Tooltip
+          {...RECHARTS_TOOLTIP_PROPS}
+          formatter={(value: number | undefined) => [formatChartInt(value), "Số lượng"]}
+        />
+        <Bar
+          dataKey="value"
+          name="Số lượng"
+          fill={`url(#${uid}-bar-blue)`}
+          radius={[12, 12, 0, 0]}
+          maxBarSize={52}
+          {...ANIM}
+        />
       </RechartsBarChart>
     </ResponsiveContainer>
   );
 }
 
-export function ProgressColumnChart({
-  labels,
-  values
-}: {
-  labels: string[];
-  values: number[];
-}) {
-  if (labels.length === 0)
-    return <div className={styles.muted}>Chưa có dữ liệu.</div>;
+export function ProgressColumnChart({ labels, values }: { labels: string[]; values: number[] }) {
+  const uid = useId().replace(/:/g, "");
+  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
 
-  const data = labels.map((name, i) => ({ name, value: values[i] ?? 0 }));
+  const data = labels.map((name, i) => ({
+    name,
+    value: values[i] ?? 0,
+    color: PROGRESS_STATUS_COLORS[i % PROGRESS_STATUS_COLORS.length]
+  }));
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <RechartsBarChart data={data} margin={{ top: 5, right: 16, left: 0, bottom: 48 }}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-30} textAnchor="end" />
-        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={36} />
-        <Tooltip />
-        <Bar dataKey="value" name="Sinh viên" radius={[4, 4, 0, 0]}>
+    <ResponsiveContainer width="100%" height={248}>
+      <RechartsBarChart data={data} margin={{ top: 12, right: 20, left: 4, bottom: 52 }}>
+        <Defs>
+          {data.map((d, i) => (
+            <LinearGradient key={`${d.name}-${i}`} id={`${uid}-prog-${i}`} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor={d.color} stopOpacity={1} />
+              <Stop offset="100%" stopColor={darkenHex(d.color, 0.25)} stopOpacity={1} />
+            </LinearGradient>
+          ))}
+        </Defs>
+        <CartesianGrid {...RECHARTS_GRID_PROPS} />
+        <XAxis
+          dataKey="name"
+          tick={RECHARTS_TICK_PROPS}
+          interval={0}
+          angle={-28}
+          textAnchor="end"
+          height={70}
+          axisLine={{ stroke: "#cbd5e1" }}
+          tickLine={{ stroke: "#cbd5e1" }}
+        />
+        <YAxis tick={RECHARTS_TICK_PROPS} allowDecimals={false} width={40} axisLine={false} tickLine={false} />
+        <Tooltip
+          {...RECHARTS_TOOLTIP_PROPS}
+          formatter={(value: number | undefined) => [formatChartInt(value), "Sinh viên"]}
+        />
+        <Bar dataKey="value" name="Sinh viên" radius={[12, 12, 0, 0]} maxBarSize={52} {...ANIM}>
           {data.map((_, i) => (
-            <Cell key={`cell-${i}`} fill={PROGRESS_STATUS_COLORS[i % PROGRESS_STATUS_COLORS.length]} />
+            <Cell key={`cell-${i}`} fill={`url(#${uid}-prog-${i})`} />
           ))}
         </Bar>
       </RechartsBarChart>
@@ -97,39 +205,38 @@ export function ProgressColumnChart({
   );
 }
 
-export function LineChart({
-  labels,
-  series
-}: {
-  labels: string[];
-  series: SimpleChartSeries[];
-}) {
-  if (series.length === 0 || labels.length === 0)
-    return <div className={styles.muted}>Chưa có dữ liệu.</div>;
+export function LineChart({ labels, series }: { labels: string[]; series: SimpleChartSeries[] }) {
+  if (series.length === 0 || labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
 
   const data = labels.map((name, i) => {
     const point: Record<string, string | number> = { name };
-    series.forEach((s) => { point[s.name] = s.data[i] ?? 0; });
+    series.forEach((s) => {
+      point[s.name] = s.data[i] ?? 0;
+    });
     return point;
   });
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <RechartsLineChart data={data} margin={{ top: 5, right: 24, left: 0, bottom: 20 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-        <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={36} />
-        <Tooltip />
-        <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12 }} />
+    <ResponsiveContainer width="100%" height={292}>
+      <RechartsLineChart data={data} margin={{ top: 16, right: 28, left: 4, bottom: 16 }}>
+        <CartesianGrid {...RECHARTS_GRID_PROPS_LINE} />
+        <XAxis dataKey="name" tick={RECHARTS_TICK_PROPS} axisLine={{ stroke: "#cbd5e1" }} tickLine={{ stroke: "#cbd5e1" }} />
+        <YAxis tick={RECHARTS_TICK_PROPS} allowDecimals={false} width={42} axisLine={false} tickLine={false} />
+        <Tooltip
+          {...RECHARTS_TOOLTIP_PROPS}
+          formatter={(value: number | undefined) => formatChartInt(value)}
+        />
+        <Legend iconType="circle" iconSize={11} wrapperStyle={RECHARTS_LEGEND_WRAPPER_STYLE} />
         {series.map((s) => (
           <Line
             key={s.name}
             type="monotone"
             dataKey={s.name}
             stroke={s.color}
-            strokeWidth={2}
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
+            strokeWidth={2.75}
+            dot={{ r: 4, strokeWidth: 2, stroke: "#fff", fill: s.color }}
+            activeDot={{ r: 7, strokeWidth: 0, fill: s.color }}
+            {...ANIM}
           />
         ))}
       </RechartsLineChart>
