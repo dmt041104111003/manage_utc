@@ -80,23 +80,24 @@ export function buildDonutChartOption(segments: DonutSegment[]): EChartsOption {
         children: [
           {
             type: "text",
+            left: "center",
+            top: 0,
             style: {
               text: "TỔNG",
               fontSize: 11,
               fontWeight: 600,
-              fill: "#64748b",
-              textAlign: "center"
+              fill: "#64748b"
             }
           },
           {
             type: "text",
+            left: "center",
             top: 18,
             style: {
               text: formatChartInt(total),
               fontSize: 26,
               fontWeight: 700,
-              fill: "#0f172a",
-              textAlign: "center"
+              fill: "#0f172a"
             }
           }
         ]
