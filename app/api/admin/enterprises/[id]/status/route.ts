@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { EnterpriseStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth/admin-session";
+import { deleteEnterpriseUserCascade } from "@/lib/admin/delete-enterprise-user";
 import { sendEnterpriseApprovedEmail, sendEnterpriseRejectedEmail } from "@/lib/mail-enterprise";
 
 export const dynamic = "force-dynamic";
@@ -85,35 +86,33 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     return NextResponse.json({ message: "Vui lòng nhập ít nhất một lý do từ chối." }, { status: 400 });
   }
 
-  const rejectMeta = { ...prevMeta };
-  delete rejectMeta.approvedAt;
-  delete rejectMeta.approvedByAdminId;
+  if (user.enterpriseStatus === EnterpriseStatus.APPROVED) {
+    return NextResponse.json({ message: "Không thể từ chối tài khoản đã phê duyệt." }, { status: 400 });
+  }
 
-  await prisma.user.update({
-    where: { id },
-    data: {
-      enterpriseStatus: EnterpriseStatus.REJECTED,
-      enterpriseMeta: {
-        ...rejectMeta,
-        rejectedAt: new Date().toISOString(),
-        rejectedByAdminId: admin.sub,
-        rejectionReasons: reasons
-      }
-    }
-  });
-
-  let mailError: string | null = null;
   try {
     await sendEnterpriseRejectedEmail(user.email, reasons, companyName);
   } catch (e) {
-    mailError = e instanceof Error ? e.message : "Gửi email thất bại.";
+    const mailError = e instanceof Error ? e.message : "Gửi email thất bại.";
+    return NextResponse.json(
+      { success: false, message: `Gửi email thất bại: ${mailError}` },
+      { status: 502 }
+    );
+  }
+
+  const del = await deleteEnterpriseUserCascade(id);
+  if (!del.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: `${del.message} Email từ chối đã được gửi; vui lòng xử lý thủ công hoặc thử xóa tài khoản sau.`
+      },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({
     success: true,
-    message: mailError
-      ? `Đã từ chối. Cảnh báo gửi email: ${mailError}`
-      : "Đã từ chối. Đã gửi email thông báo tới doanh nghiệp.",
-    mailError
+    message: "Đã gửi email từ chối và xóa tài khoản doanh nghiệp."
   });
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { EnterpriseStatus, Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth/admin-session";
-import { enterpriseUserHasLinkedData } from "@/lib/admin/enterprise-linked-data";
+import { deleteEnterpriseUserCascade } from "@/lib/admin/delete-enterprise-user";
 
 export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
   const admin = await getAdminSession();
@@ -61,13 +61,13 @@ export async function DELETE(_request: Request, ctx: { params: Promise<{ id: str
     return NextResponse.json({ message: "Không tìm thấy doanh nghiệp." }, { status: 404 });
   }
 
-  if (await enterpriseUserHasLinkedData(id)) {
+  const del = await deleteEnterpriseUserCascade(id);
+  if (!del.ok) {
+    const conflict = del.message.includes("phê duyệt") || del.message.includes("liên kết");
     return NextResponse.json(
-      { success: false, message: "Không thể xóa tài khoản đã có dữ liệu liên kết trong hệ thống." },
-      { status: 409 }
+      { success: false, message: del.message },
+      { status: conflict ? 409 : del.message.includes("Không tìm thấy") ? 404 : 500 }
     );
   }
-
-  await prisma.user.delete({ where: { id } });
   return NextResponse.json({ success: true, message: "Xóa tài khoản thành công." });
 }
