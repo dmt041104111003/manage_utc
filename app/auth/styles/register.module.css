@@ -33,15 +33,16 @@
 }
 
 .field {
+  display: grid;
+  gap: 6px;
   margin-bottom: 14px;
 }
 
 .label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
+  font-size: 12px;
   color: #374151;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .required {
@@ -52,29 +53,33 @@
 .input,
 .select {
   width: 100%;
-  padding: 10px 0;
-  border: none;
-  border-bottom: 1px solid #cfd6e0;
+  height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   outline: none;
-  font-size: 16px;
-  color: #1f2937;
-  background: transparent;
+  font-size: 13px;
+  color: #111827;
+  background: #ffffff;
+  font-family: inherit;
 }
 
 .multiSelect {
   width: 100%;
   min-height: 110px;
-  border: none;
-  border-bottom: 1px solid #cfd6e0;
-  background: transparent;
-  font-size: 15px;
-  color: #1f2937;
-  padding: 6px 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 13px;
+  color: #111827;
+  padding: 8px 10px;
   outline: none;
+  font-family: inherit;
 }
 
 .multiSelect:focus {
-  border-bottom: 1px solid #b9c3d1;
+  border-color: rgba(0, 91, 172, 0.55);
+  box-shadow: 0 0 0 3px rgba(0, 91, 172, 0.12);
 }
 
 .input::placeholder {
@@ -83,7 +88,8 @@
 
 .input:focus,
 .select:focus {
-  border-bottom: 1px solid #b9c3d1;
+  border-color: rgba(0, 91, 172, 0.55);
+  box-shadow: 0 0 0 3px rgba(0, 91, 172, 0.12);
 }
 
 .input:disabled,
@@ -91,6 +97,7 @@
 .multiSelect:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+  background: #f9fafb;
 }
 
 .hint {

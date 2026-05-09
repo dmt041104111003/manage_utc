@@ -384,12 +384,20 @@
 .modal textarea {
   width: 100%;
   min-height: 120px;
-  padding: 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
   font-family: inherit;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
   resize: vertical;
+}
+
+.modal textarea:focus {
+  border-color: rgba(0, 91, 172, 0.55);
+  box-shadow: 0 0 0 3px rgba(0, 91, 172, 0.12);
 }
 
 .modalActions {
@@ -455,18 +463,28 @@
 
 .searchField label {
   font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
+  font-weight: 700;
+  color: #374151;
 }
 
 .textInputSearch,
 .selectInput {
+  height: 38px;
   padding: 8px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
   font-family: inherit;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
   max-width: 100%;
+}
+
+.textInputSearch:focus,
+.selectInput:focus {
+  border-color: rgba(0, 91, 172, 0.55);
+  box-shadow: 0 0 0 3px rgba(0, 91, 172, 0.12);
 }
 
 .selectInput {
@@ -574,18 +592,26 @@
 
 .overviewControl label {
   font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
+  font-weight: 700;
+  color: #374151;
 }
 
 .overviewSelect {
+  height: 38px;
   padding: 8px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
   font-family: inherit;
-  max-width: 100%;
+  color: #111827;
   background: #ffffff;
+  outline: none;
+  max-width: 100%;
+}
+
+.overviewSelect:focus {
+  border-color: rgba(0, 91, 172, 0.55);
+  box-shadow: 0 0 0 3px rgba(0, 91, 172, 0.12);
 }
 
 .overviewGrid {
