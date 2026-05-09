@@ -80,6 +80,16 @@ export default function ChangePasswordPage() {
       setNewPassword("");
       setConfirmPassword("");
       setIsSubmitting(false);
+      setTimeout(() => {
+        void (async () => {
+          try {
+            await fetch("/api/auth/logout", { method: "POST" });
+          } catch {
+            // ignore
+          }
+          window.location.replace("/auth/dangnhap");
+        })();
+      }, 1200);
     } catch {
       setSubmitError(getChangePasswordNetworkErrorMessage());
       setIsSubmitting(false);

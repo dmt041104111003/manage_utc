@@ -2,6 +2,33 @@ import Link from "next/link";
 import type { FormEvent } from "react";
 import styles from "../../styles/login.module.css";
 
+function EyeIcon({ hidden }: { hidden: boolean }) {
+  if (hidden) {
+    return (
+      <svg className={styles.togglePasswordIcon} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3 3l18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <path d="M10.6 10.6a3 3 0 004.24 4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <path
+          d="M6.4 6.4C4.6 7.7 3.2 9.5 2.3 12c1.6 4.3 5.4 7.5 9.7 7.5 1.7 0 3.4-.5 4.9-1.4M12 4.5c4.3 0 8.1 3.2 9.7 7.5-.6 1.7-1.6 3.2-2.8 4.4"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg className={styles.togglePasswordIcon} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M2.3 12C3.9 7.7 7.7 4.5 12 4.5s8.1 3.2 9.7 7.5c-1.6 4.3-5.4 7.5-9.7 7.5S3.9 16.3 2.3 12z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  );
+}
+
 type Props = {
   identifier: string;
   password: string;
@@ -92,7 +119,7 @@ export default function LoginFormCard(props: Props) {
               disabled={isSubmitting}
               aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             >
-              {showPassword ? "Ẩn" : "Hiện"}
+              <EyeIcon hidden={!showPassword} />
             </button>
             {passwordError ? <p className={styles.error}>{passwordError}</p> : null}
           </div>
