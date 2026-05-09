@@ -1,6 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  Cell,
+  LineChart,
+  Line,
+  ResponsiveContainer
+} from "recharts";
 import styles from "../styles/dashboard.module.css";
 import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
@@ -13,6 +26,9 @@ type OverviewPayload = {
   applicationStatus: { labels: string[]; values: number[] };
   jobStatus: { labels: string[]; values: number[] };
 };
+
+const APP_STATUS_COLORS = ["#2563eb", "#f59e0b", "#16a34a", "#ef4444"];
+const JOB_STATUS_COLORS = ["#f59e0b", "#ef4444", "#16a34a", "#6b7280"];
 
 export default function EnterpriseDashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -67,6 +83,28 @@ export default function EnterpriseDashboardPage() {
   const applicationStatus = payload?.applicationStatus ?? { labels: [], values: [] };
   const jobStatus = payload?.jobStatus ?? { labels: [], values: [] };
 
+  const doubleBarData = doubleBar.labels.map((name, i) => ({
+    name,
+    "SV chấp nhận": doubleBar.accepted[i] ?? 0,
+    "SV từ chối": doubleBar.declined[i] ?? 0
+  }));
+
+  const appStatusData = applicationStatus.labels.map((name, i) => ({
+    name,
+    value: applicationStatus.values[i] ?? 0
+  }));
+
+  const jobStatusData = jobStatus.labels.map((name, i) => ({
+    name,
+    value: jobStatus.values[i] ?? 0
+  }));
+
+  const lineData = lineChart.labels.map((name, i) => {
+    const point: Record<string, string | number> = { name };
+    lineChart.series.forEach((s) => { point[s.name] = s.data[i] ?? 0; });
+    return point;
+  });
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -104,16 +142,26 @@ export default function EnterpriseDashboardPage() {
             <h2 className={styles.panelTitle}>
               Số SV chấp nhận &amp; từ chối thực tập theo ngành/khoa
             </h2>
-            {doubleBar.labels.length === 0 ? (
+            {doubleBarData.length === 0 ? (
               <div className={styles.muted}>Chưa có dữ liệu.</div>
             ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {doubleBar.labels.map((name, i) => (
-                  <div key={name} className={styles.statusNote}>
-                    {name}: Chấp nhận {doubleBar.accepted[i] ?? 0} | Từ chối {doubleBar.declined[i] ?? 0}
-                  </div>
-                ))}
-              </div>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={doubleBarData} margin={{ top: 5, right: 24, left: 0, bottom: 48 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 11 }}
+                    interval={0}
+                    angle={-30}
+                    textAnchor="end"
+                  />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={36} />
+                  <Tooltip />
+                  <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12 }} />
+                  <Bar dataKey="SV chấp nhận" fill="#16a34a" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="SV từ chối" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             )}
           </article>
 
@@ -125,41 +173,94 @@ export default function EnterpriseDashboardPage() {
             {lineChart.series.length === 0 ? (
               <div className={styles.muted}>Chưa có dữ liệu.</div>
             ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {lineChart.series.map((s) => (
-                  <div key={s.name} className={styles.statusNote}>
-                    {s.name}: {s.data.reduce((acc, v) => acc + Number(v || 0), 0)}
-                  </div>
-                ))}
-              </div>
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={lineData} margin={{ top: 5, right: 24, left: 0, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={36} />
+                  <Tooltip />
+                  <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12 }} />
+                  {lineChart.series.map((s) => (
+                    <Line
+                      key={s.name}
+                      type="monotone"
+                      dataKey={s.name}
+                      stroke={s.color}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
             )}
           </article>
 
           {/* Application status bar */}
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Số lượng hồ sơ theo trạng thái</h2>
-            {applicationStatus.labels.length === 0 ? (
+            {appStatusData.every((d) => d.value === 0) ? (
               <div className={styles.muted}>Chưa có dữ liệu.</div>
             ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {applicationStatus.labels.map((name, i) => (
-                  <div key={name} className={styles.statusNote}>{name}: {applicationStatus.values[i] ?? 0}</div>
-                ))}
-              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart
+                  data={appStatusData}
+                  margin={{ top: 5, right: 16, left: 0, bottom: 40 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 11 }}
+                    interval={0}
+                    angle={-20}
+                    textAnchor="end"
+                  />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={36} />
+                  <Tooltip />
+                  <Bar dataKey="value" name="Hồ sơ" radius={[4, 4, 0, 0]}>
+                    {appStatusData.map((_, i) => (
+                      <Cell
+                        key={`cell-${i}`}
+                        fill={APP_STATUS_COLORS[i % APP_STATUS_COLORS.length]}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             )}
           </article>
 
           {/* Job post status bar */}
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Số lượng tin tuyển dụng theo trạng thái</h2>
-            {jobStatus.labels.length === 0 ? (
+            {jobStatusData.every((d) => d.value === 0) ? (
               <div className={styles.muted}>Chưa có dữ liệu.</div>
             ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {jobStatus.labels.map((name, i) => (
-                  <div key={name} className={styles.statusNote}>{name}: {jobStatus.values[i] ?? 0}</div>
-                ))}
-              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart
+                  data={jobStatusData}
+                  margin={{ top: 5, right: 16, left: 0, bottom: 40 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 11 }}
+                    interval={0}
+                    angle={-20}
+                    textAnchor="end"
+                  />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={36} />
+                  <Tooltip />
+                  <Bar dataKey="value" name="Tin đăng" radius={[4, 4, 0, 0]}>
+                    {jobStatusData.map((_, i) => (
+                      <Cell
+                        key={`cell-${i}`}
+                        fill={JOB_STATUS_COLORS[i % JOB_STATUS_COLORS.length]}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             )}
           </article>
         </section>

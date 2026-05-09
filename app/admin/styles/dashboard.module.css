@@ -845,6 +845,32 @@
   margin-top: 0;
 }
 
+/* Performance mode: flatten heavy visuals for faster render */
+.card,
+.statCard,
+.modal,
+.header {
+  box-shadow: none !important;
+  border-radius: 4px !important;
+}
+
+.statsGrid2 > .statCard,
+.statsGrid3 > .statCard,
+.statsGrid4 > .statCard,
+.statCardTintPending,
+.statCardTintApproved,
+.statCardTintRejected {
+  background: #fff !important;
+  border-color: #e5e7eb !important;
+}
+
+.textInputSearch:focus,
+.selectInput:focus,
+.overviewSelect:focus,
+.modal textarea:focus {
+  box-shadow: none !important;
+}
+
 @media (max-width: 900px) {
   .overviewGrid {
     grid-template-columns: 1fr;

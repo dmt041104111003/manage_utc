@@ -200,3 +200,16 @@
   color: inherit;
   text-decoration: underline;
 }
+
+/* Performance mode: flatten heavy visuals for faster render */
+.card,
+.statCard,
+.header {
+  box-shadow: none !important;
+  border-radius: 4px !important;
+}
+
+.statsGrid > .statCard {
+  background: #fff !important;
+  border-color: #e5e7eb !important;
+}

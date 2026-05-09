@@ -20,6 +20,7 @@ import {
 } from "@/lib/constants/admin-phan-cong-gvhd";
 
 import { studentDisplay, supervisorDisplay } from "@/lib/utils/admin-phan-cong-gvhd-display";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 import AdminPhanCongGVHDTable from "./components/AdminPhanCongGVHDTable";
 import AdminPhanCongGVHDToolbar from "./components/AdminPhanCongGVHDToolbar";
@@ -68,17 +69,24 @@ export default function AdminPhanCongGVHDPage() {
   }, [items, page]);
 
   async function loadList(nextPage = 1) {
-    setLoading(true);
-    setError("");
     try {
       const url = new URL("/api/admin/assignments", window.location.origin);
       if (searchQ.trim()) url.searchParams.set("q", searchQ.trim());
       if (filterFaculty !== "all") url.searchParams.set("faculty", filterFaculty);
       if (filterStatus !== "all") url.searchParams.set("status", filterStatus);
-
-      const res = await fetch(url.toString());
-      const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải danh sách phân công.");
+      const reqUrl = url.toString();
+      const cacheKey = `admin:assignments:list:${reqUrl}`;
+      if (!hasCachedValue(cacheKey)) setLoading(true);
+      setError("");
+      const data = await getOrFetchCached<any>(
+        cacheKey,
+        async () => {
+          const res = await fetch(reqUrl);
+          const payload = await res.json();
+          if (!res.ok || !payload?.success) throw new Error(payload?.message || "Không thể tải danh sách phân công.");
+          return payload;
+        }
+      );
       const rawItems: AssignmentItem[] = Array.isArray(data.items) ? data.items : [];
       const groupedMap = new Map<string, AssignmentItem>();
       for (const it of rawItems) {

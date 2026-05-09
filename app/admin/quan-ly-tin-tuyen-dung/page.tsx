@@ -7,6 +7,7 @@ import MessagePopup from "../../components/MessagePopup";
 
 import type { ApiResponse, InternshipBatchRow, JobDetailResponse, JobListItem, StatusAction } from "@/lib/types/admin-quan-ly-tin-tuyen-dung";
 import { inferDefaultAction } from "@/lib/utils/admin-quan-ly-tin-tuyen-dung";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 import AdminTinTuyenDungToolbar from "./components/AdminTinTuyenDungToolbar";
 import AdminTinTuyenDungTableSection from "./components/AdminTinTuyenDungTableSection";
@@ -60,18 +61,26 @@ export default function AdminQuanLyTinTuyenDungPage() {
   };
 
   const load = async () => {
-    setLoading(true);
-    setError("");
-    setPage(1);
     try {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
       if (searchBatchId !== "all") params.set("batchId", searchBatchId);
       if (searchExpertise !== "all") params.set("expertise", searchExpertise);
       if (searchStatus !== "all") params.set("status", searchStatus);
-      const res = await fetch(`/api/admin/job-posts?${params.toString()}`);
-      const data = (await res.json()) as ApiResponse<JobListItem> & { expertises?: string[] };
-      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách tin.");
+      const url = `/api/admin/job-posts?${params.toString()}`;
+      const cacheKey = `admin:job-posts:list:${url}`;
+      if (!hasCachedValue(cacheKey)) setLoading(true);
+      setError("");
+      setPage(1);
+      const data = await getOrFetchCached<any>(
+        cacheKey,
+        async () => {
+          const res = await fetch(url);
+          const payload = (await res.json()) as ApiResponse<JobListItem> & { expertises?: string[] };
+          if (!res.ok || !payload.success) throw new Error(payload.message || "Không tải được danh sách tin.");
+          return payload;
+        }
+      );
       setItems((data.items || []) as any);
       if (Array.isArray(data.expertises)) setExpertises(data.expertises);
       setStatusStats((data as any).statusStats ?? null);

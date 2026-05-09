@@ -18,6 +18,7 @@ import {
   buildAdminEnterprisesListQueryParams,
   parseAdminEnterprisesStatusQueryParam
 } from "@/lib/utils/admin-quan-ly-doanh-nghiep";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import MessagePopup from "../../components/MessagePopup";
 import Pagination from "../../components/Pagination";
 import styles from "../styles/dashboard.module.css";
@@ -77,13 +78,21 @@ export default function AdminQuanLyDoanhNghiepPage() {
   };
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
     try {
       const params = buildAdminEnterprisesListQueryParams(appliedQ, appliedStatus);
-      const res = await fetch(`/api/admin/enterprises?${params.toString()}`);
-      const data = await res.json();
-      if (!res.ok || data?.success === false) throw new Error(data.message || ADMIN_ENTERPRISE_MSG.listLoadFail);
+      const url = `/api/admin/enterprises?${params.toString()}`;
+      const cacheKey = `admin:enterprises:list:${url}`;
+      if (!hasCachedValue(cacheKey)) setLoading(true);
+      setError("");
+      const data = await getOrFetchCached<any>(
+        cacheKey,
+        async () => {
+          const res = await fetch(url);
+          const payload = await res.json();
+          if (!res.ok || payload?.success === false) throw new Error(payload.message || ADMIN_ENTERPRISE_MSG.listLoadFail);
+          return payload;
+        }
+      );
       setItems(data.items as AdminEnterpriseListItem[]);
       setEnterpriseStatusStats(data.enterpriseStatusStats ?? null);
     } catch (e) {

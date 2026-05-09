@@ -15,6 +15,7 @@ import {
 } from "@/lib/constants/admin-quan-ly-dot-thuc-tap";
 import { buildEmptyBatchForm } from "@/lib/utils/admin-quan-ly-dot-thuc-tap-form";
 import { formatDateVi, getTodayStart, parseDateOnly, todayDateInputValue } from "@/lib/utils/admin-quan-ly-dot-thuc-tap-dates";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 import AdminInternshipBatchToolbar from "./components/AdminInternshipBatchToolbar";
 import AdminInternshipBatchTableSection from "./components/AdminInternshipBatchTableSection";
@@ -61,19 +62,26 @@ export default function AdminQuanLyDotThucTapPage() {
   };
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    setPage(1);
     try {
       const params = new URLSearchParams();
       if (searchName.trim()) params.set("q", searchName.trim());
       if (searchStart) params.set("startDate", searchStart);
       if (searchEnd) params.set("endDate", searchEnd);
       if (searchStatus !== "all") params.set("status", searchStatus);
-
-      const res = await fetch(`/api/admin/internship-batches?${params.toString()}`);
-      const data = (await res.json()) as ApiResponse<InternshipBatchRow>;
-      if (!res.ok || !data.success) throw new Error(data.message || "Không tải được danh sách đợt thực tập.");
+      const url = `/api/admin/internship-batches?${params.toString()}`;
+      const cacheKey = `admin:internship-batches:list:${url}`;
+      if (!hasCachedValue(cacheKey)) setLoading(true);
+      setError("");
+      setPage(1);
+      const data = await getOrFetchCached<any>(
+        cacheKey,
+        async () => {
+          const res = await fetch(url);
+          const payload = (await res.json()) as ApiResponse<InternshipBatchRow>;
+          if (!res.ok || !payload.success) throw new Error(payload.message || "Không tải được danh sách đợt thực tập.");
+          return payload;
+        }
+      );
       setItems((data.items || []) as any);
       setBatchStatusStats((data as any).batchStatusStats ?? null);
     } catch (e) {

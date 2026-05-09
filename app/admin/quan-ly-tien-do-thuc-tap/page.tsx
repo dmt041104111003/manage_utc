@@ -5,6 +5,7 @@ import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 
 import type { Detail, ListRow } from "@/lib/types/admin-quan-ly-tien-do-thuc-tap";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 import AdminTienDoToolbar from "./components/AdminTienDoToolbar";
 import AdminTienDoTableSection from "./components/AdminTienDoTableSection";
@@ -44,18 +45,25 @@ export default function AdminTienDoThucTapPage() {
   const [toast, setToast] = useState("");
 
   async function load() {
-    setLoading(true);
-    setError("");
     try {
       const sp = new URLSearchParams();
       if (q.trim()) sp.set("q", q.trim());
       if (filterFaculty !== "all") sp.set("faculty", filterFaculty);
       if (filterDegree !== "all") sp.set("degree", filterDegree);
       if (filterStatus !== "all") sp.set("status", filterStatus);
-
-      const res = await fetch(`/api/admin/tien-do-thuc-tap?${sp.toString()}`);
-      const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải dữ liệu.");
+      const url = `/api/admin/tien-do-thuc-tap?${sp.toString()}`;
+      const cacheKey = `admin:tien-do:list:${url}`;
+      if (!hasCachedValue(cacheKey)) setLoading(true);
+      setError("");
+      const data = await getOrFetchCached<any>(
+        cacheKey,
+        async () => {
+          const res = await fetch(url);
+          const payload = await res.json();
+          if (!res.ok || !payload?.success) throw new Error(payload?.message || "Không thể tải dữ liệu.");
+          return payload;
+        }
+      );
 
       setItems(Array.isArray(data.items) ? data.items : []);
       setFaculties(Array.isArray(data.faculties) ? data.faculties : []);
