@@ -12,8 +12,6 @@ export const SINHVIEN_TRA_CUU_UNG_TUYEN_SEARCH_BUTTON_TEXT = "Tìm kiếm";
 
 export const SINHVIEN_TRA_CUU_UNG_TUYEN_EMPTY_TEXT = "Không có tin tuyển dụng phù hợp.";
 
-export const SINHVIEN_TRA_CUU_UNG_TUYEN_LOADING_TEXT = "Đang tải…";
-
 export const workTypeLabel: Record<WorkType, string> = { PART_TIME: "Part-time", FULL_TIME: "Full-time" };
 
 export const internshipLabel: Record<InternshipStatus, string> = {
