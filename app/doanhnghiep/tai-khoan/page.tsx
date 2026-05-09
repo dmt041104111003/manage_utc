@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
+import adminStyles from "../../admin/styles/dashboard.module.css";
 import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import {
@@ -36,6 +37,7 @@ const EMPTY_FORM: FormState = {
 export default function EnterpriseAccountPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const dismissToast = () => setToast("");
@@ -126,6 +128,7 @@ export default function EnterpriseAccountPage() {
   };
 
   const submit = async () => {
+    if (!isEditing) return;
     setToast("");
     setError("");
     if (!validate()) return;
@@ -145,6 +148,7 @@ export default function EnterpriseAccountPage() {
       if (!res.ok || !data.success) throw new Error(data.message || "Cập nhật thất bại.");
       setToast(data.message || "Cập nhật thành công.");
       await reloadMe();
+      setIsEditing(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Cập nhật thất bại.");
     } finally {
@@ -185,6 +189,17 @@ export default function EnterpriseAccountPage() {
 
   const statusText = formatAdminEnterpriseStatusLine(me.enterpriseStatus);
 
+  const startEdit = () => {
+    setFieldErrors({});
+    setIsEditing(true);
+  };
+
+  const cancelEdit = () => {
+    syncFormFromMe(me);
+    setFieldErrors({});
+    setIsEditing(false);
+  };
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -206,122 +221,147 @@ export default function EnterpriseAccountPage() {
           <h2 className={styles.panelTitle}>Thông tin hồ sơ</h2>
       
 
-          <div className={formStyles.grid2}>
-            <div className={formStyles.field} style={{ marginBottom: 0 }}>
-              <label className={formStyles.label}>Tên doanh nghiệp</label>
-              <input className={formStyles.input} disabled value={me.companyName || "—"} />
-            </div>
-            <div className={formStyles.field} style={{ marginBottom: 0 }}>
-              <label className={formStyles.label}>Mã số thuế</label>
-              <input className={formStyles.input} disabled value={me.taxCode || "—"} />
-            </div>
-          </div>
+          <table className={adminStyles.viewModalDetailTable} style={{ marginTop: 12 }}>
+            <tbody>
+              <tr>
+                <th scope="row">Tên doanh nghiệp</th>
+                <td>{me.companyName || "—"}</td>
+              </tr>
+              <tr>
+                <th scope="row">Mã số thuế</th>
+                <td>{me.taxCode || "—"}</td>
+              </tr>
+              <tr>
+                <th scope="row">Địa chỉ trụ sở chính</th>
+                <td>{address}</td>
+              </tr>
+              <tr>
+                <th scope="row">File giấy phép kinh doanh</th>
+                <td>
+                  {licHref ? (
+                    <a className={adminStyles.detailLink} href={licHref} download={licName}>
+                      {licName}
+                    </a>
+                  ) : (
+                    licName
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Logo công ty</th>
+                <td>{logoSrc ? <img src={logoSrc} alt="Logo công ty" className={adminStyles.previewLogo} /> : "—"}</td>
+              </tr>
+              <tr>
+                <th scope="row">Email</th>
+                <td>{me.email}</td>
+              </tr>
+              <tr>
+                <th scope="row">Số điện thoại</th>
+                <td>{me.phone || "—"}</td>
+              </tr>
+              <tr>
+                <th scope="row">Trạng thái phê duyệt</th>
+                <td>{statusText}</td>
+              </tr>
+            </tbody>
+          </table>
 
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>Địa chỉ trụ sở chính</label>
-            <input className={formStyles.input} disabled value={address} />
-          </div>
+          <div style={{ marginTop: 20 }}>
+            {isEditing ? (
+              <>
+                <div className={formStyles.field}>
+                <label className={formStyles.label}>Tên người đại diện</label>
+                <input
+                  className={formStyles.input}
+                  disabled={saving}
+                  value={form.representativeName}
+                  onChange={(e) => setField("representativeName", e.target.value)}
+                  placeholder="Nhập họ và tên"
+                />
+                {fieldErrors.representativeName ? <p className={formStyles.error}>{fieldErrors.representativeName}</p> : null}
+              </div>
 
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>File giấy phép kinh doanh</label>
-            <div style={{ marginTop: 6 }}>
-              {licHref ? (
-                <a
-                  href={licHref}
-                  download={licName}
-                  style={{ pointerEvents: "none", color: "#1d4ed8", fontWeight: 500, fontSize: 13 }}
+              <div className={formStyles.field}>
+                <label className={formStyles.label}>Chức vụ</label>
+                <input
+                  className={formStyles.input}
+                  disabled={saving}
+                  value={form.representativeTitle}
+                  onChange={(e) => setField("representativeTitle", e.target.value)}
+                  placeholder="Nhập chức vụ"
+                />
+                {fieldErrors.representativeTitle ? <p className={formStyles.error}>{fieldErrors.representativeTitle}</p> : null}
+              </div>
+
+              <div className={formStyles.field}>
+                <label className={formStyles.label}>Giới thiệu (lĩnh vực hoạt động)</label>
+                <select
+                  multiple
+                  disabled={saving}
+                  className={formStyles.multiSelect}
+                  value={form.businessFields}
+                  onChange={(e) => setField("businessFields", Array.from(e.target.selectedOptions).map((o) => o.value))}
                 >
-                  {licName}
-                </a>
-              ) : (
-                <span>{licName}</span>
-              )}
-            </div>
-          </div>
+                  {businessOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+                <p className={formStyles.hint}>Giữ Ctrl (hoặc Cmd trên Mac) để chọn nhiều lĩnh vực.</p>
+                {fieldErrors.businessFields ? <p className={formStyles.error}>{fieldErrors.businessFields}</p> : null}
+              </div>
 
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>Logo công ty</label>
-            <div style={{ marginTop: 10 }}>
-              {logoSrc ? <img src={logoSrc} alt="Logo công ty" style={{ maxWidth: 120, maxHeight: 120 }} /> : <span>—</span>}
-            </div>
-          </div>
+              <div className={formStyles.field}>
+                <label className={formStyles.label}>Website công ty</label>
+                <input
+                  className={formStyles.input}
+                  disabled={saving}
+                  value={form.website}
+                  onChange={(e) => setField("website", e.target.value)}
+                  placeholder="https://company.vn"
+                />
+                {fieldErrors.website ? <p className={formStyles.error}>{fieldErrors.website}</p> : null}
+              </div>
 
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>Email</label>
-            <input className={formStyles.input} disabled value={me.email} />
-          </div>
-
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>Số điện thoại</label>
-            <input className={formStyles.input} disabled value={me.phone || "—"} />
-          </div>
-
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>Trạng thái phê duyệt</label>
-            <input className={formStyles.input} disabled value={statusText} />
-          </div>
-
-          <hr style={{ margin: "16px 0" }} />
-
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>Tên người đại diện</label>
-            <input
-              className={formStyles.input}
-              disabled={saving}
-              value={form.representativeName}
-              onChange={(e) => setField("representativeName", e.target.value)}
-              placeholder="Nhập họ và tên"
-            />
-            {fieldErrors.representativeName ? <p className={formStyles.error}>{fieldErrors.representativeName}</p> : null}
-          </div>
-
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>Chức vụ</label>
-            <input
-              className={formStyles.input}
-              disabled={saving}
-              value={form.representativeTitle}
-              onChange={(e) => setField("representativeTitle", e.target.value)}
-              placeholder="Nhập chức vụ"
-            />
-            {fieldErrors.representativeTitle ? <p className={formStyles.error}>{fieldErrors.representativeTitle}</p> : null}
-          </div>
-
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>Giới thiệu (lĩnh vực hoạt động)</label>
-            <select
-              multiple
-              disabled={saving}
-              className={formStyles.multiSelect}
-              value={form.businessFields}
-              onChange={(e) => setField("businessFields", Array.from(e.target.selectedOptions).map((o) => o.value))}
-            >
-              {businessOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-            <p className={formStyles.hint}>Giữ Ctrl (hoặc Cmd trên Mac) để chọn nhiều lĩnh vực.</p>
-            {fieldErrors.businessFields ? <p className={formStyles.error}>{fieldErrors.businessFields}</p> : null}
-          </div>
-
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>Website công ty</label>
-            <input
-              className={formStyles.input}
-              disabled={saving}
-              value={form.website}
-              onChange={(e) => setField("website", e.target.value)}
-              placeholder="https://company.vn"
-            />
-            {fieldErrors.website ? <p className={formStyles.error}>{fieldErrors.website}</p> : null}
-          </div>
-
-          <div className={formStyles.section} style={{ marginTop: 18 }}>
-            <button type="submit" className={formStyles.button} disabled={saving}>
-              {saving ? "Đang cập nhật…" : "Lưu thay đổi"}
-            </button>
+                <div className={formStyles.section} style={{ marginTop: 18, display: "flex", gap: 10, alignItems: "center" }}>
+                  <button type="button" className={adminStyles.btn} onClick={cancelEdit} disabled={saving}>
+                    Hủy
+                  </button>
+                  <button type="submit" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} disabled={saving}>
+                    {saving ? "Đang cập nhật…" : "Lưu thay đổi"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <table className={adminStyles.viewModalDetailTable}>
+                <tbody>
+                  <tr>
+                    <th scope="row">Tên người đại diện</th>
+                    <td>{form.representativeName || "—"}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Chức vụ</th>
+                    <td>{form.representativeTitle || "—"}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Giới thiệu (lĩnh vực hoạt động)</th>
+                    <td>{form.businessFields.length ? form.businessFields.join(", ") : "—"}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Website công ty</th>
+                    <td>{form.website || "—"}</td>
+                  </tr>
+                </tbody>
+                </table>
+                <div className={formStyles.section} style={{ marginTop: 18 }}>
+                  <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={startEdit}>
+                    Sửa
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </section>
       </form>

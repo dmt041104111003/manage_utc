@@ -450,29 +450,31 @@ export default function DoanhNghiepTuyenDungPage() {
       {toast ? <MessagePopup open message={toast} onClose={dismissToast} /> : null}
       {error ? <p className={styles.modulePlaceholder}>{error}</p> : null}
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "flex-end", marginBottom: 16 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <label style={{ fontSize: 12, fontWeight: 500, color: "#6b7280" }}>Tên tiêu đề / Chuyên môn</label>
+      <div className={adminStyles.searchToolbar}>
+        <div className={adminStyles.searchField} style={{ minWidth: 280, flex: 1 }}>
+          <label>Tên tiêu đề / Chuyên môn</label>
           <input
             className={adminStyles.textInputSearch}
             value={searchQ}
             onChange={(e) => setSearchQ(e.target.value)}
             placeholder="Nhập tiêu đề hoặc chuyên môn"
+            style={{ width: "100%" }}
           />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <label style={{ fontSize: 12, fontWeight: 500, color: "#6b7280" }}>Ngày đăng tin</label>
+        <div className={adminStyles.searchField} style={{ minWidth: 180, flex: 1 }}>
+          <label>Ngày đăng tin</label>
           <input
             className={adminStyles.textInputSearch}
             type="date"
             value={searchDate}
             onChange={(e) => setSearchDate(e.target.value)}
             placeholder="Chọn ngày"
+            style={{ width: "100%" }}
           />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <label style={{ fontSize: 12, fontWeight: 500, color: "#6b7280" }}>Trạng thái</label>
-          <select className={adminStyles.selectInput} value={searchStatus} onChange={(e) => setSearchStatus(e.target.value as any)}>
+        <div className={adminStyles.searchField} style={{ minWidth: 180, flex: 1 }}>
+          <label>Trạng thái</label>
+          <select className={adminStyles.selectInput} value={searchStatus} onChange={(e) => setSearchStatus(e.target.value as any)} style={{ width: "100%" }}>
             <option value="all">Tất cả</option>
             <option value="PENDING">Chờ duyệt</option>
             <option value="REJECTED">Từ chối duyệt</option>
@@ -480,10 +482,10 @@ export default function DoanhNghiepTuyenDungPage() {
             <option value="STOPPED">Dừng hoạt động</option>
           </select>
         </div>
-        <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={() => void refresh()}>
+        <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={() => void refresh()} style={{ minWidth: 120 }}>
           Tìm kiếm
         </button>
-        <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={() => void openAdd()}>
+        <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={() => void openAdd()} style={{ minWidth: 170 }}>
           Thêm tin tuyển dụng
         </button>
       </div>

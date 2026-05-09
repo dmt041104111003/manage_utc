@@ -8,7 +8,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ cod
   }
   try {
     const wards = await fetchWardsForProvince(code);
-    return NextResponse.json({ wards });
+    return NextResponse.json({ items: wards, wards });
   } catch {
     return NextResponse.json({ message: "Không tải được phường xã." }, { status: 502 });
   }

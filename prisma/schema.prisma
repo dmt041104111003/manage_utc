@@ -220,6 +220,16 @@ model StudentProfile {
   permanentWardCode String
   permanentWardName String?
 
+  currentProvinceCode String?
+  currentProvinceName String?
+  currentWardCode String?
+  currentWardName String?
+
+  intro String?
+  cvFileName String?
+  cvMime String?
+  cvBase64 String?
+
   internshipStatus StudentInternshipStatus @default(NOT_STARTED)
 
   createdAt DateTime @default(now())
