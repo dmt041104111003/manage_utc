@@ -1,15 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
-import { ReactEchart } from "@/app/components/charts/ReactEchart";
 import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
-import {
-  buildGroupedBarChartOption,
-  buildLineMultiSeriesOption,
-  buildPerBarColorChartOption
-} from "@/lib/utils/echarts-dashboard-options";
 
 type SimpleChartSeries = { name: string; data: number[]; color: string };
 
@@ -33,6 +27,157 @@ function enterpriseDashboardOverviewCacheKey(dateFrom: string, dateTo: string) {
 }
 
 const ENTERPRISE_DASHBOARD_INITIAL_KEY = enterpriseDashboardOverviewCacheKey("", "");
+
+function SimpleBarBlock({
+  labels,
+  values,
+  colors,
+  unit
+}: {
+  labels: string[];
+  values: number[];
+  colors: string[];
+  unit: string;
+}) {
+  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
+  const max = Math.max(1, ...values);
+  return (
+    <div className={styles.barChart}>
+      <div className={styles.barArea}>
+        {labels.map((label, i) => (
+          <div key={`${label}-${i}`} className={styles.barCol}>
+            <div
+              className={styles.bar}
+              style={{
+                height: `${Math.max(2, Math.round(((values[i] ?? 0) / max) * 160))}px`,
+                background: colors[i % colors.length]
+              }}
+            />
+            <div className={styles.barLabel}>{label}</div>
+            <div className={styles.muted} style={{ fontSize: 11, fontWeight: 600 }}>
+              {values[i] ?? 0} {unit}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DoubleBarBlock({
+  labels,
+  accepted,
+  declined
+}: {
+  labels: string[];
+  accepted: number[];
+  declined: number[];
+}) {
+  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
+  const max = Math.max(1, ...accepted, ...declined);
+  return (
+    <div className={styles.barChart}>
+      <div className={styles.barArea}>
+        {labels.map((label, i) => (
+          <div key={`${label}-${i}`} className={styles.barCol}>
+            <div className={styles.barPair}>
+              <div
+                className={styles.bar}
+                style={{
+                  height: `${Math.max(2, Math.round(((accepted[i] ?? 0) / max) * 120))}px`,
+                  background: "linear-gradient(180deg, #4ade80, #15803d)",
+                  maxWidth: 26
+                }}
+              />
+              <div
+                className={styles.bar}
+                style={{
+                  height: `${Math.max(2, Math.round(((declined[i] ?? 0) / max) * 120))}px`,
+                  background: "linear-gradient(180deg, #fb7185, #b91c1c)",
+                  maxWidth: 26
+                }}
+              />
+            </div>
+            <div className={styles.barLabel}>{label}</div>
+            <div className={styles.muted} style={{ fontSize: 10, lineHeight: 1.35 }}>
+              Chấp nhận: <strong>{accepted[i] ?? 0}</strong>
+              <br />
+              Từ chối: <strong>{declined[i] ?? 0}</strong>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LineDataTable({
+  labels,
+  series
+}: {
+  labels: string[];
+  series: SimpleChartSeries[];
+}) {
+  if (labels.length === 0 || series.length === 0) {
+    return <div className={styles.muted}>Chưa có dữ liệu.</div>;
+  }
+  return (
+    <div className={styles.lineWrap} style={{ overflowX: "auto", marginTop: 8 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <thead>
+          <tr>
+            <th
+              style={{
+                textAlign: "left",
+                padding: "8px 10px",
+                border: "1px solid #cbd5e1",
+                background: "#e2e8f0",
+                fontWeight: 700
+              }}
+            >
+              Tháng
+            </th>
+            {series.map((s) => (
+              <th
+                key={s.name}
+                style={{
+                  textAlign: "right",
+                  padding: "8px 10px",
+                  border: "1px solid #cbd5e1",
+                  background: "#e2e8f0",
+                  fontWeight: 700,
+                  whiteSpace: "nowrap"
+                }}
+              >
+                {s.name}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {labels.map((label, rowIdx) => (
+            <tr key={label}>
+              <td style={{ padding: "8px 10px", border: "1px solid #cbd5e1", fontWeight: 600 }}>{label}</td>
+              {series.map((s) => (
+                <td
+                  key={s.name}
+                  style={{
+                    textAlign: "right",
+                    padding: "8px 10px",
+                    border: "1px solid #cbd5e1",
+                    color: "#374151"
+                  }}
+                >
+                  {s.data[rowIdx] ?? 0}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function EnterpriseDashboardPage() {
   const [loading, setLoading] = useState(() => !hasCachedValue(ENTERPRISE_DASHBOARD_INITIAL_KEY));
@@ -87,47 +232,6 @@ export default function EnterpriseDashboardPage() {
   const applicationStatus = payload?.applicationStatus ?? { labels: [], values: [] };
   const jobStatus = payload?.jobStatus ?? { labels: [], values: [] };
 
-  const doubleBarOption = useMemo(
-    () =>
-      buildGroupedBarChartOption(doubleBar.labels, [
-        {
-          name: "SV chấp nhận",
-          data: doubleBar.labels.map((_, i) => doubleBar.accepted[i] ?? 0),
-          colorTop: "#4ade80",
-          colorBottom: "#15803d"
-        },
-        {
-          name: "SV từ chối",
-          data: doubleBar.labels.map((_, i) => doubleBar.declined[i] ?? 0),
-          colorTop: "#fb7185",
-          colorBottom: "#b91c1c"
-        }
-      ]),
-    [doubleBar.labels, doubleBar.accepted, doubleBar.declined]
-  );
-
-  const lineOption = useMemo(
-    () => buildLineMultiSeriesOption(lineChart.labels, lineChart.series),
-    [lineChart.labels, lineChart.series]
-  );
-
-  const appStatusOption = useMemo(
-    () =>
-      buildPerBarColorChartOption(
-        applicationStatus.labels,
-        applicationStatus.values,
-        APP_STATUS_COLORS,
-        "Hồ sơ"
-      ),
-    [applicationStatus.labels, applicationStatus.values]
-  );
-
-  const jobStatusOption = useMemo(
-    () =>
-      buildPerBarColorChartOption(jobStatus.labels, jobStatus.values, JOB_STATUS_COLORS, "Tin đăng"),
-    [jobStatus.labels, jobStatus.values]
-  );
-
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -162,63 +266,51 @@ export default function EnterpriseDashboardPage() {
 
       {payload ? (
         <section className={styles.overviewGrid}>
-          {/* Double bar: SV accepted vs declined by expertise */}
-          <div
-            className={`${styles.chartCardShell} ${styles.chartCardShellWide}`}
-            style={{ gridColumn: "1 / -1" }}
-          >
-            <article className={styles.card}>
-              <h2 className={styles.panelTitle}>
-                Số SV chấp nhận &amp; từ chối thực tập theo ngành/khoa
-              </h2>
-              {doubleBar.labels.length === 0 ? (
-                <div className={styles.muted}>Chưa có dữ liệu.</div>
-              ) : (
-                <ReactEchart option={doubleBarOption} height={256} clickReloadPulse />
-              )}
-            </article>
-          </div>
+          <article className={styles.card} style={{ gridColumn: "1 / -1" }}>
+            <h2 className={styles.panelTitle}>
+              Số SV chấp nhận &amp; từ chối thực tập theo ngành/khoa
+            </h2>
+            <DoubleBarBlock
+              labels={doubleBar.labels}
+              accepted={doubleBar.accepted}
+              declined={doubleBar.declined}
+            />
+          </article>
 
-          {/* Line chart: applications per expertise per month */}
-          <div
-            className={`${styles.chartCardShell} ${styles.chartCardShellWide}`}
-            style={{ gridColumn: "1 / -1" }}
-          >
-            <article className={styles.card}>
-              <h2 className={styles.panelTitle}>
-                Số lượng SV ứng tuyển theo ngành/khoa (theo tháng)
-              </h2>
-              {lineChart.series.length === 0 ? (
-                <div className={styles.muted}>Chưa có dữ liệu.</div>
-              ) : (
-                <ReactEchart option={lineOption} height={292} clickReloadPulse />
-              )}
-            </article>
-          </div>
+          <article className={styles.card} style={{ gridColumn: "1 / -1" }}>
+            <h2 className={styles.panelTitle}>
+              Số lượng SV ứng tuyển theo ngành/khoa (theo tháng)
+            </h2>
+            <LineDataTable labels={lineChart.labels} series={lineChart.series} />
+          </article>
 
-          {/* Application status bar */}
-          <div className={styles.chartCardShell}>
-            <article className={styles.card}>
-              <h2 className={styles.panelTitle}>Số lượng hồ sơ theo trạng thái</h2>
-              {applicationStatus.values.every((v) => v === 0) ? (
-                <div className={styles.muted}>Chưa có dữ liệu.</div>
-              ) : (
-                <ReactEchart option={appStatusOption} height={248} clickReloadPulse />
-              )}
-            </article>
-          </div>
+          <article className={styles.card}>
+            <h2 className={styles.panelTitle}>Số lượng hồ sơ theo trạng thái</h2>
+            {applicationStatus.values.every((v) => v === 0) ? (
+              <div className={styles.muted}>Chưa có dữ liệu.</div>
+            ) : (
+              <SimpleBarBlock
+                labels={applicationStatus.labels}
+                values={applicationStatus.values}
+                colors={APP_STATUS_COLORS}
+                unit="hồ sơ"
+              />
+            )}
+          </article>
 
-          {/* Job post status bar */}
-          <div className={styles.chartCardShell}>
-            <article className={styles.card}>
-              <h2 className={styles.panelTitle}>Số lượng tin tuyển dụng theo trạng thái</h2>
-              {jobStatus.values.every((v) => v === 0) ? (
-                <div className={styles.muted}>Chưa có dữ liệu.</div>
-              ) : (
-                <ReactEchart option={jobStatusOption} height={248} clickReloadPulse />
-              )}
-            </article>
-          </div>
+          <article className={styles.card}>
+            <h2 className={styles.panelTitle}>Số lượng tin tuyển dụng theo trạng thái</h2>
+            {jobStatus.values.every((v) => v === 0) ? (
+              <div className={styles.muted}>Chưa có dữ liệu.</div>
+            ) : (
+              <SimpleBarBlock
+                labels={jobStatus.labels}
+                values={jobStatus.values}
+                colors={JOB_STATUS_COLORS}
+                unit="tin"
+              />
+            )}
+          </article>
         </section>
       ) : null}
     </main>

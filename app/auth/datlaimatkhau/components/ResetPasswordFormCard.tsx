@@ -96,24 +96,26 @@ export default function ResetPasswordFormCard(props: Props) {
           <label htmlFor="newPassword" className={styles.label}>
             Mật khẩu mới <span className={styles.required}>*</span>
           </label>
-          <input
-            id="newPassword"
-            type={showNewPassword ? "text" : "password"}
-            className={`${styles.input} ${styles.inputWithToggle}`}
-            placeholder="Nhập mật khẩu mới"
-            value={newPassword}
-            onChange={(e) => onNewPasswordChange(e.target.value)}
-            disabled={isSubmitting}
-          />
-          <button
-            type="button"
-            className={styles.togglePasswordBtn}
-            onClick={() => setShowNewPassword((s) => !s)}
-            disabled={isSubmitting}
-            aria-label={showNewPassword ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"}
-          >
-            <EyeIcon hidden={!showNewPassword} />
-          </button>
+          <div className={styles.inputWrap}>
+            <input
+              id="newPassword"
+              type={showNewPassword ? "text" : "password"}
+              className={`${styles.input} ${styles.inputWithToggle}`}
+              placeholder="Nhập mật khẩu mới"
+              value={newPassword}
+              onChange={(e) => onNewPasswordChange(e.target.value)}
+              disabled={isSubmitting}
+            />
+            <button
+              type="button"
+              className={styles.togglePasswordBtn}
+              onClick={() => setShowNewPassword((s) => !s)}
+              disabled={isSubmitting}
+              aria-label={showNewPassword ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"}
+            >
+              <EyeIcon hidden={!showNewPassword} />
+            </button>
+          </div>
           {newPasswordError ? <p className={styles.error}>{newPasswordError}</p> : null}
         </div>
 
@@ -121,24 +123,26 @@ export default function ResetPasswordFormCard(props: Props) {
           <label htmlFor="confirmPassword" className={styles.label}>
             Xác nhận mật khẩu mới <span className={styles.required}>*</span>
           </label>
-          <input
-            id="confirmPassword"
-            type={showConfirmPassword ? "text" : "password"}
-            className={`${styles.input} ${styles.inputWithToggle}`}
-            placeholder="Nhập lại mật khẩu mới"
-            value={confirmPassword}
-            onChange={(e) => onConfirmPasswordChange(e.target.value)}
-            disabled={isSubmitting}
-          />
-          <button
-            type="button"
-            className={styles.togglePasswordBtn}
-            onClick={() => setShowConfirmPassword((s) => !s)}
-            disabled={isSubmitting}
-            aria-label={showConfirmPassword ? "Ẩn xác nhận mật khẩu" : "Hiện xác nhận mật khẩu"}
-          >
-            <EyeIcon hidden={!showConfirmPassword} />
-          </button>
+          <div className={styles.inputWrap}>
+            <input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              className={`${styles.input} ${styles.inputWithToggle}`}
+              placeholder="Nhập lại mật khẩu mới"
+              value={confirmPassword}
+              onChange={(e) => onConfirmPasswordChange(e.target.value)}
+              disabled={isSubmitting}
+            />
+            <button
+              type="button"
+              className={styles.togglePasswordBtn}
+              onClick={() => setShowConfirmPassword((s) => !s)}
+              disabled={isSubmitting}
+              aria-label={showConfirmPassword ? "Ẩn xác nhận mật khẩu" : "Hiện xác nhận mật khẩu"}
+            >
+              <EyeIcon hidden={!showConfirmPassword} />
+            </button>
+          </div>
           {confirmPasswordError ? <p className={styles.error}>{confirmPasswordError}</p> : null}
         </div>
 

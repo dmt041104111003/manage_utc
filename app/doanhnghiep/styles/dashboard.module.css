@@ -3,28 +3,28 @@
 .page {
   background: transparent;
   padding: 28px 32px;
+  max-width: 100%;
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 
 .header {
   margin-bottom: 22px;
-  padding: 16px 18px;
-  border: 1px solid #dbe4f0;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .title {
   margin: 0;
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
-  color: #0f172a;
+  color: #111827;
 }
 
 .subtitle {
   margin: 8px 0 0;
-  color: #475467;
+  color: #6b7280;
   font-size: 14px;
   line-height: 1.5;
   max-width: 52rem;
@@ -206,101 +206,14 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
-  overflow: visible;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 .overviewGrid .card {
   border-radius: 14px;
   border-color: #dbe4f0;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 12px 40px -10px rgba(11, 99, 206, 0.08);
-}
-
-.chartCardShell {
-  position: relative;
-  min-height: 400px;
-  align-self: stretch;
-}
-
-.chartCardShellWide {
-  min-height: 460px;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .chartCardShell {
-    z-index: 0;
-    isolation: isolate;
-  }
-
-  .chartCardShell::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 4500;
-    background: rgba(15, 23, 42, 0.5);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-  }
-
-  .chartCardShell:hover {
-    z-index: 4600;
-  }
-
-  .chartCardShell:hover::before {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .chartCardShell:hover > .card {
-    position: fixed;
-    z-index: 4601;
-    left: max(12px, env(safe-area-inset-left, 0px));
-    top: max(12px, env(safe-area-inset-top, 0px));
-    right: max(12px, env(safe-area-inset-right, 0px));
-    bottom: max(12px, env(safe-area-inset-bottom, 0px));
-    width: auto;
-    max-width: none;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-sizing: border-box;
-    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
-  }
-
-  .chartCardShell:hover > .card > .panelTitle {
-    flex-shrink: 0;
-  }
-
-  .chartCardShell:hover > .card > .chartPadding {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .chartCardShell:hover > .card > .chartPadding > [data-echart-host] {
-    flex: 1 !important;
-    min-height: 200px !important;
-    height: 100% !important;
-  }
-
-  .chartCardShell:hover > .card > [data-echart-host] {
-    flex: 1 !important;
-    min-height: 200px !important;
-    height: 100% !important;
-  }
-
-  .chartCardShell:hover > .card > .muted {
-    flex-shrink: 0;
-  }
-}
-
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: reduce) {
-  .chartCardShell::before {
-    transition: none;
-  }
 }
 
 .chartPadding {

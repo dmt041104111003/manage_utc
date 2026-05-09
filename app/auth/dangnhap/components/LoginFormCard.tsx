@@ -102,25 +102,27 @@ export default function LoginFormCard(props: Props) {
             <label htmlFor="password" className={styles.label}>
               Mật khẩu <span className={styles.required}>*</span>
             </label>
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              className={styles.input}
-              placeholder="Nhập mật khẩu"
-              value={password}
-              onChange={(e) => onPasswordChange(e.target.value)}
-              disabled={isSubmitting}
-            />
-            <button
-              type="button"
-              className={styles.togglePassword}
-              onClick={onTogglePassword}
-              disabled={isSubmitting}
-              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-            >
-              <EyeIcon hidden={!showPassword} />
-            </button>
+            <div className={styles.inputWrap}>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                className={styles.input}
+                placeholder="Nhập mật khẩu"
+                value={password}
+                onChange={(e) => onPasswordChange(e.target.value)}
+                disabled={isSubmitting}
+              />
+              <button
+                type="button"
+                className={styles.togglePassword}
+                onClick={onTogglePassword}
+                disabled={isSubmitting}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              >
+                <EyeIcon hidden={!showPassword} />
+              </button>
+            </div>
             {passwordError ? <p className={styles.error}>{passwordError}</p> : null}
           </div>
 

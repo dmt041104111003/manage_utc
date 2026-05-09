@@ -107,7 +107,11 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
                 key={`${item.href}-${item.label}`}
                 href={item.href}
                 className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
-                onClick={closeMenu}
+                onClick={(e) => {
+                  /* Bấm lại menu đang mở → không soft-navigate (tránh remount + fetch lại trang) */
+                  if (active) e.preventDefault();
+                  closeMenu();
+                }}
               >
                 <span className={styles.navLinkRow}>
                   <span className={styles.navLinkInner}>

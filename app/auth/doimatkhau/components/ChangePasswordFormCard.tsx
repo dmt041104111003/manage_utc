@@ -80,24 +80,26 @@ export default function ChangePasswordFormCard(props: Props) {
           <label htmlFor="currentPassword" className={styles.label}>
             Mật khẩu hiện tại <span className={styles.required}>*</span>
           </label>
-          <input
-            id="currentPassword"
-            type={showCurrent ? "text" : "password"}
-            className={`${styles.input} ${styles.inputWithToggle}`}
-            placeholder="Nhập mật khẩu hiện tại"
-            value={currentPassword}
-            onChange={(e) => onCurrentPasswordChange(e.target.value)}
-            disabled={isSubmitting}
-          />
-          <button
-            type="button"
-            className={styles.togglePasswordBtn}
-            onClick={() => setShowCurrent((s) => !s)}
-            disabled={isSubmitting}
-            aria-label={showCurrent ? "Ẩn mật khẩu hiện tại" : "Hiện mật khẩu hiện tại"}
-          >
-            <EyeIcon hidden={!showCurrent} />
-          </button>
+          <div className={styles.inputWrap}>
+            <input
+              id="currentPassword"
+              type={showCurrent ? "text" : "password"}
+              className={`${styles.input} ${styles.inputWithToggle}`}
+              placeholder="Nhập mật khẩu hiện tại"
+              value={currentPassword}
+              onChange={(e) => onCurrentPasswordChange(e.target.value)}
+              disabled={isSubmitting}
+            />
+            <button
+              type="button"
+              className={styles.togglePasswordBtn}
+              onClick={() => setShowCurrent((s) => !s)}
+              disabled={isSubmitting}
+              aria-label={showCurrent ? "Ẩn mật khẩu hiện tại" : "Hiện mật khẩu hiện tại"}
+            >
+              <EyeIcon hidden={!showCurrent} />
+            </button>
+          </div>
           {currentPasswordError ? <p className={styles.error}>{currentPasswordError}</p> : null}
         </div>
 
@@ -105,24 +107,26 @@ export default function ChangePasswordFormCard(props: Props) {
           <label htmlFor="newPassword" className={styles.label}>
             Mật khẩu mới <span className={styles.required}>*</span>
           </label>
-          <input
-            id="newPassword"
-            type={showNew ? "text" : "password"}
-            className={`${styles.input} ${styles.inputWithToggle}`}
-            placeholder="Nhập mật khẩu mới"
-            value={newPassword}
-            onChange={(e) => onNewPasswordChange(e.target.value)}
-            disabled={isSubmitting}
-          />
-          <button
-            type="button"
-            className={styles.togglePasswordBtn}
-            onClick={() => setShowNew((s) => !s)}
-            disabled={isSubmitting}
-            aria-label={showNew ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"}
-          >
-            <EyeIcon hidden={!showNew} />
-          </button>
+          <div className={styles.inputWrap}>
+            <input
+              id="newPassword"
+              type={showNew ? "text" : "password"}
+              className={`${styles.input} ${styles.inputWithToggle}`}
+              placeholder="Nhập mật khẩu mới"
+              value={newPassword}
+              onChange={(e) => onNewPasswordChange(e.target.value)}
+              disabled={isSubmitting}
+            />
+            <button
+              type="button"
+              className={styles.togglePasswordBtn}
+              onClick={() => setShowNew((s) => !s)}
+              disabled={isSubmitting}
+              aria-label={showNew ? "Ẩn mật khẩu mới" : "Hiện mật khẩu mới"}
+            >
+              <EyeIcon hidden={!showNew} />
+            </button>
+          </div>
           <p className={styles.hint}>Mật khẩu gồm tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.</p>
           {newPasswordError ? <p className={styles.error}>{newPasswordError}</p> : null}
         </div>
@@ -131,24 +135,26 @@ export default function ChangePasswordFormCard(props: Props) {
           <label htmlFor="confirmPassword" className={styles.label}>
             Xác nhận mật khẩu mới <span className={styles.required}>*</span>
           </label>
-          <input
-            id="confirmPassword"
-            type={showConfirm ? "text" : "password"}
-            className={`${styles.input} ${styles.inputWithToggle}`}
-            placeholder="Nhập lại mật khẩu mới"
-            value={confirmPassword}
-            onChange={(e) => onConfirmPasswordChange(e.target.value)}
-            disabled={isSubmitting}
-          />
-          <button
-            type="button"
-            className={styles.togglePasswordBtn}
-            onClick={() => setShowConfirm((s) => !s)}
-            disabled={isSubmitting}
-            aria-label={showConfirm ? "Ẩn xác nhận mật khẩu" : "Hiện xác nhận mật khẩu"}
-          >
-            <EyeIcon hidden={!showConfirm} />
-          </button>
+          <div className={styles.inputWrap}>
+            <input
+              id="confirmPassword"
+              type={showConfirm ? "text" : "password"}
+              className={`${styles.input} ${styles.inputWithToggle}`}
+              placeholder="Nhập lại mật khẩu mới"
+              value={confirmPassword}
+              onChange={(e) => onConfirmPasswordChange(e.target.value)}
+              disabled={isSubmitting}
+            />
+            <button
+              type="button"
+              className={styles.togglePasswordBtn}
+              onClick={() => setShowConfirm((s) => !s)}
+              disabled={isSubmitting}
+              aria-label={showConfirm ? "Ẩn xác nhận mật khẩu" : "Hiện xác nhận mật khẩu"}
+            >
+              <EyeIcon hidden={!showConfirm} />
+            </button>
+          </div>
           {confirmPasswordError ? <p className={styles.error}>{confirmPasswordError}</p> : null}
         </div>
 

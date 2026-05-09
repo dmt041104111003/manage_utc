@@ -64,6 +64,21 @@
   font-family: inherit;
 }
 
+.textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  outline: none;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #111827;
+  background: #ffffff;
+  font-family: inherit;
+  resize: vertical;
+}
+
 .multiSelect {
   width: 100%;
   min-height: 110px;
@@ -281,19 +296,22 @@
   font-size: 13px;
 }
 
-.input::placeholder {
+.input::placeholder,
+.textarea::placeholder {
   color: #98a2b3;
 }
 
 .input:focus,
-.select:focus {
+.select:focus,
+.textarea:focus {
   border-color: rgba(0, 91, 172, 0.55);
   box-shadow: 0 0 0 3px rgba(0, 91, 172, 0.12);
 }
 
 .input:disabled,
 .select:disabled,
-.multiSelect:disabled {
+.multiSelect:disabled,
+.textarea:disabled {
   opacity: 0.65;
   cursor: not-allowed;
   background: #f9fafb;

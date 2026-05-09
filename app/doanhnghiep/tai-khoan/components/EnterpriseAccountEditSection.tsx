@@ -58,7 +58,6 @@ export default function EnterpriseAccountEditSection({
             value={form.companyIntro}
             onChange={(e) => onSetField("companyIntro", e.target.value)}
             placeholder="Nhập giới thiệu ngắn về doanh nghiệp"
-            style={{ width: "100%", minHeight: 110, resize: "vertical" }}
           />
           {fieldErrors.companyIntro ? <p className={formStyles.error}>{fieldErrors.companyIntro}</p> : null}
         </div>

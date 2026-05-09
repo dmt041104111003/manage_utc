@@ -171,10 +171,16 @@
   background: #f9fafb;
 }
 
+.inputWrap {
+  position: relative;
+  width: 100%;
+}
+
 .togglePassword {
   position: absolute;
   right: 10px;
-  top: 28px;
+  top: 50%;
+  transform: translateY(-50%);
   border: 0;
   background: transparent;
   color: #6b7280;

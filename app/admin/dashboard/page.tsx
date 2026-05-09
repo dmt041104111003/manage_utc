@@ -13,6 +13,7 @@ import {
   TopFacultiesCard
 } from "../components/AdminDashboardCharts";
 import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
+import { ChartCardShell } from "@/app/components/ChartCardShell";
 
 function adminDashboardCacheKey(faculty: string, batchId: string) {
   const qs = new URLSearchParams();
@@ -127,7 +128,7 @@ export default function AdminDashboardPage() {
       {payload ? (
         <section className={styles.overviewGrid}>
           {/* Row 1: Two donuts */}
-          <div className={styles.chartCardShell}>
+          <ChartCardShell>
             <article className={styles.card}>
               <h2 className={styles.panelTitle}>Trạng thái hồ sơ ứng tuyển</h2>
               <div className={styles.chartPadding}>
@@ -137,9 +138,9 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             </article>
-          </div>
+          </ChartCardShell>
 
-          <div className={styles.chartCardShell}>
+          <ChartCardShell>
             <article className={styles.card}>
               <h2 className={styles.panelTitle}>Trạng thái tin tuyển dụng</h2>
               <div className={styles.chartPadding}>
@@ -149,36 +150,36 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             </article>
-          </div>
+          </ChartCardShell>
 
           {/* Row 2: Two bars */}
-          <div className={styles.chartCardShell}>
+          <ChartCardShell>
             <article className={styles.card}>
               <h2 className={styles.panelTitle}>Số lượng doanh nghiệp liên kết theo ngành/khoa</h2>
               <div className={styles.chartPadding}>
                 <BarChart labels={enterprisesByField.labels} values={enterprisesByField.values} />
               </div>
             </article>
-          </div>
+          </ChartCardShell>
 
-          <div className={styles.chartCardShell}>
+          <ChartCardShell>
             <article className={styles.card}>
               <h2 className={styles.panelTitle}>Tiến độ thực tập: số lượng sinh viên theo trạng thái</h2>
               <div className={styles.chartPadding}>
                 <ProgressColumnChart labels={progress.labels} values={progress.values} />
               </div>
             </article>
-          </div>
+          </ChartCardShell>
 
           {/* Row 3: Line chart full width */}
-          <div className={`${styles.chartCardShell} ${styles.chartCardShellWide}`} style={{ gridColumn: "1 / -1" }}>
+          <ChartCardShell wide style={{ gridColumn: "1 / -1" }}>
             <article className={styles.card}>
               <h2 className={styles.panelTitle}>Thống kê tổng số bài đăng tuyển dụng theo doanh nghiệp</h2>
               <div className={styles.chartPadding}>
                 <LineChart labels={lineJobPosts.labels} series={lineJobPosts.series} />
               </div>
             </article>
-          </div>
+          </ChartCardShell>
 
           {/* Row 4: Top/Bottom tables */}
           <div className={styles.topFieldsGrid}>

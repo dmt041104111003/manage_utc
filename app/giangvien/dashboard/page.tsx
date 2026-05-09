@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
-import { ReactEchart } from "@/app/components/charts/ReactEchart";
-import { buildPerBarColorChartOption } from "@/lib/utils/echarts-dashboard-options";
 
 type Batch = { id: string; name: string; status: string };
 
@@ -36,7 +34,7 @@ function gvDashboardOverviewCacheKey(batchId: string) {
 
 const GV_DASHBOARD_INITIAL_KEY = gvDashboardOverviewCacheKey("all");
 
-function StatusBarChart({
+function SimpleBarBlock({
   labels,
   values,
   colors
@@ -45,12 +43,29 @@ function StatusBarChart({
   values: number[];
   colors: string[];
 }) {
-  const option = useMemo(
-    () => buildPerBarColorChartOption(labels, values, colors, "Sinh viên"),
-    [labels, values, colors]
-  );
   if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-  return <ReactEchart option={option} height={252} clickReloadPulse />;
+  const max = Math.max(1, ...values);
+  return (
+    <div className={styles.barChart}>
+      <div className={styles.barArea}>
+        {labels.map((label, i) => (
+          <div key={`${label}-${i}`} className={styles.barCol}>
+            <div
+              className={styles.bar}
+              style={{
+                height: `${Math.max(2, Math.round(((values[i] ?? 0) / max) * 160))}px`,
+                background: colors[i % colors.length]
+              }}
+            />
+            <div className={styles.barLabel}>{label}</div>
+            <div className={styles.muted} style={{ fontSize: 11, fontWeight: 600 }}>
+              {values[i] ?? 0}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function LecturerDashboardPage() {
@@ -134,23 +149,19 @@ export default function LecturerDashboardPage() {
 
       {payload ? (
         <section className={styles.overviewGrid}>
-          <div className={styles.chartCardShell}>
-            <article className={styles.card}>
-              <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái hướng dẫn</h2>
-              <StatusBarChart labels={guidanceStatus.labels} values={guidanceStatus.values} colors={GUIDANCE_COLORS} />
-            </article>
-          </div>
+          <article className={styles.card}>
+            <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái hướng dẫn</h2>
+            <SimpleBarBlock labels={guidanceStatus.labels} values={guidanceStatus.values} colors={GUIDANCE_COLORS} />
+          </article>
 
-          <div className={styles.chartCardShell}>
-            <article className={styles.card}>
-              <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái thực tập</h2>
-              <StatusBarChart
-                labels={internshipStatus.labels}
-                values={internshipStatus.values}
-                colors={INTERNSHIP_COLORS}
-              />
-            </article>
-          </div>
+          <article className={styles.card}>
+            <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái thực tập</h2>
+            <SimpleBarBlock
+              labels={internshipStatus.labels}
+              values={internshipStatus.values}
+              colors={INTERNSHIP_COLORS}
+            />
+          </article>
         </section>
       ) : null}
     </main>
