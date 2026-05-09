@@ -229,24 +229,13 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     const baseUrl = getBaseUrl();
 
     if (nextStatus === "INTERVIEW_INVITED" && svEmail && responseDeadline && interviewAt) {
-      const confirmToken = await signRespondToken(
-        { purpose: "respond_interview", appId: id, action: "CONFIRM" },
-        responseDeadline
-      );
-      const declineToken = await signRespondToken(
-        { purpose: "respond_interview", appId: id, action: "DECLINE" },
-        responseDeadline
-      );
-      const confirmUrl = `${baseUrl}/api/respond?token=${encodeURIComponent(confirmToken)}`;
-      const declineUrl = `${baseUrl}/api/respond?token=${encodeURIComponent(declineToken)}`;
-
       const interviewDateStr = interviewAt.toLocaleString("vi-VN");
       const deadlineStr = responseDeadline.toLocaleString("vi-VN");
 
       await sendMail(
         svEmail,
         `[UTC] ${companyName} mời bạn tham gia phỏng vấn – ${jobTitle}`,
-        `Kính gửi ${svFullName},\n\nDoanh nghiệp ${companyName} mời bạn tham gia phỏng vấn cho vị trí "${jobTitle}".${expertiseLine}\n\nThời gian phỏng vấn: ${interviewDateStr}\nĐịa điểm: ${interviewLocationRaw}\nThời hạn phản hồi: ${deadlineStr}\n\nVui lòng nhấn một trong hai liên kết bên dưới để xác nhận:\n\n[CHẤP NHẬN PHỎNG VẤN]: ${confirmUrl}\n[TỪ CHỐI PHỎNG VẤN]: ${declineUrl}\n\nLưu ý: Sau ${deadlineStr}, hai nút trên sẽ không còn hiệu lực và phản hồi mặc định là Từ chối.\nĐường dẫn hệ thống: ${baseUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`,
+        `Kính gửi ${svFullName},\n\nDoanh nghiệp ${companyName} mời bạn tham gia phỏng vấn cho vị trí "${jobTitle}".${expertiseLine}\n\nThời gian phỏng vấn: ${interviewDateStr}\nĐịa điểm: ${interviewLocationRaw}\nThời hạn phản hồi: ${deadlineStr}\n\nTruy cập hệ thống để xem thông tin chi tiết.\n${baseUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`,
         `
         <p>Kính gửi <strong>${svFullName}</strong>,</p>
         <p>Doanh nghiệp <strong>${companyName}</strong> mời bạn tham gia phỏng vấn cho vị trí <strong>"${jobTitle}"</strong>.</p>
@@ -255,43 +244,31 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
           <tr><th style="text-align:left;padding:4px 12px 4px 0;color:#6b7280;">Địa điểm:</th><td>${interviewLocationRaw}</td></tr>
           <tr><th style="text-align:left;padding:4px 12px 4px 0;color:#6b7280;">Thời hạn phản hồi:</th><td>${deadlineStr}</td></tr>
         </table>
-        <p>Vui lòng nhấn một trong hai nút bên dưới để xác nhận:</p>
-        <div style="display:flex;gap:12px;margin:16px 0;">
-          <a href="${confirmUrl}" style="background:#16a34a;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;">Chấp nhận phỏng vấn</a>
-          <a href="${declineUrl}" style="background:#dc2626;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;">Từ chối phỏng vấn</a>
-        </div>
-        <p style="font-size:12px;color:#6b7280;">Lưu ý: Sau <strong>${deadlineStr}</strong>, hai nút trên sẽ không còn hiệu lực và phản hồi mặc định là Từ chối.</p>
+        <p style="margin:12px 0 0;">
+          <a href="${baseUrl}/sinhvien" style="background:#005bac;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;">
+            Truy cập hệ thống
+          </a>
+        </p>
         `
       );
     }
 
     if (nextStatus === "OFFERED" && svEmail && responseDeadline) {
-      const confirmToken = await signRespondToken(
-        { purpose: "respond_offer", appId: id, action: "CONFIRM" },
-        responseDeadline
-      );
-      const declineToken = await signRespondToken(
-        { purpose: "respond_offer", appId: id, action: "DECLINE" },
-        responseDeadline
-      );
-      const confirmUrl = `${baseUrl}/api/respond?token=${encodeURIComponent(confirmToken)}`;
-      const declineUrl = `${baseUrl}/api/respond?token=${encodeURIComponent(declineToken)}`;
       const deadlineStr = responseDeadline.toLocaleString("vi-VN");
 
       await sendMail(
         svEmail,
         `[UTC] ${companyName} thông báo Trúng tuyển – ${jobTitle}`,
-        `Kính gửi ${svFullName},\n\nChúc mừng! Doanh nghiệp ${companyName} thông báo bạn đã TRÚNG TUYỂN vị trí "${jobTitle}".${expertiseLine}\n\nThời hạn phản hồi: ${deadlineStr}\n\nVui lòng nhấn một trong hai liên kết bên dưới:\n\n[XÁC NHẬN THỰC TẬP]: ${confirmUrl}\n[TỪ CHỐI THỰC TẬP]: ${declineUrl}\n\nĐường dẫn hệ thống: ${baseUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`,
+        `Kính gửi ${svFullName},\n\nChúc mừng! Doanh nghiệp ${companyName} thông báo bạn đã TRÚNG TUYỂN vị trí "${jobTitle}".${expertiseLine}\n\nThời hạn phản hồi: ${deadlineStr}\n\nTruy cập hệ thống để xem thông tin chi tiết.\n${baseUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`,
         `
         <p>Kính gửi <strong>${svFullName}</strong>,</p>
         <p>Chúc mừng! Doanh nghiệp <strong>${companyName}</strong> thông báo bạn đã <strong>TRÚNG TUYỂN</strong> vị trí <strong>"${jobTitle}"</strong>.</p>
         <p><strong>Thời hạn phản hồi:</strong> ${deadlineStr}</p>
-        <p>Vui lòng nhấn một trong hai nút bên dưới để xác nhận:</p>
-        <div style="display:flex;gap:12px;margin:16px 0;">
-          <a href="${confirmUrl}" style="background:#16a34a;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;">Xác nhận thực tập</a>
-          <a href="${declineUrl}" style="background:#dc2626;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;">Từ chối thực tập</a>
-        </div>
-        <p style="font-size:12px;color:#6b7280;">Lưu ý: Sau <strong>${deadlineStr}</strong>, hai nút trên sẽ không còn hiệu lực và phản hồi mặc định là Từ chối.</p>
+        <p style="margin:12px 0 0;">
+          <a href="${baseUrl}/sinhvien" style="background:#005bac;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block;">
+            Truy cập hệ thống
+          </a>
+        </p>
         `
       );
     }
