@@ -105,14 +105,6 @@ function ActionCell({
     );
   }
 
-  if (canViewStatus) {
-    return (
-      <button type="button" className={adminStyles.textLinkBtn} onClick={() => onViewStatus(row)}>
-        {row.status === "INTERVIEW_INVITED" ? "Xem phỏng vấn" : "Xem trúng tuyển"}
-      </button>
-    );
-  }
-
   return <span>—</span>;
 }
 
