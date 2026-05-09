@@ -50,17 +50,23 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   const publicId = String(row.cvPublicId || "").trim();
   if (!publicId) return NextResponse.json({ success: false, message: "Không có file CV." }, { status: 404 });
 
-  const deliveryUrl = buildCloudinaryRawDeliveryUrl(publicId);
-  const upstream = await fetch(deliveryUrl);
-  if (!upstream.ok) return NextResponse.json({ success: false, message: "Không thể tải file CV." }, { status: 502 });
-  const ab = await upstream.arrayBuffer();
-  const bytes = Buffer.from(ab);
-  const upstreamType = String(upstream.headers.get("content-type") || "").trim().toLowerCase();
-  const fallbackType = String(row.cvMime || "").trim().toLowerCase();
-  const mime =
-    !upstreamType || upstreamType === "application/octet-stream"
-      ? fallbackType || "application/pdf"
-      : upstreamType;
+  let bytes: Buffer;
+  let mime: string;
+  try {
+    const deliveryUrl = buildCloudinaryRawDeliveryUrl(publicId);
+    const upstream = await fetch(deliveryUrl);
+    if (!upstream.ok) return NextResponse.json({ success: false, message: "Không thể tải file CV." }, { status: 502 });
+    const ab = await upstream.arrayBuffer();
+    bytes = Buffer.from(ab);
+    const upstreamType = String(upstream.headers.get("content-type") || "").trim().toLowerCase();
+    const fallbackType = String(row.cvMime || "").trim().toLowerCase();
+    mime =
+      !upstreamType || upstreamType === "application/octet-stream"
+        ? fallbackType || "application/pdf"
+        : upstreamType;
+  } catch {
+    return NextResponse.json({ success: false, message: "Không thể tải file CV." }, { status: 500 });
+  }
 
   const filename = safeFilename(row.cvFileName || "cv.pdf");
   const disposition = `${download ? "attachment" : "inline"}; filename="${filename}"`;

@@ -27,7 +27,8 @@ export function buildCvPublicId(ownerId: string, originalName: string): string {
   const safeOwner = sanitizeSegment(ownerId) || "anonymous";
   const safeOriginal = sanitizeSegment(originalName) || "resume";
   const nameNoExt = sanitizeSegment(removeExtension(safeOriginal)).slice(0, 80) || "resume";
-  return `resumes/${safeOwner}_${Date.now()}_${nameNoExt}`;
+  const safeName = nameNoExt.replace(/\s+/g, "_");
+  return `resumes/${safeOwner}_${Date.now()}_${safeName}`;
 }
 
 function buildSignature(params: Record<string, string>, apiSecret: string): string {
@@ -84,6 +85,11 @@ export async function uploadCvBytesToCloudinary(input: {
 export function buildCloudinaryRawDeliveryUrl(publicId: string): string {
   const cloudName = requiredEnv("CLOUDINARY_CLOUD_NAME");
   const pid = String(publicId || "").replace(/^\/+/, "");
-  return `https://res.cloudinary.com/${encodeURIComponent(cloudName)}/raw/upload/${pid}`;
+  const encodedPid = pid
+    .split("/")
+    .filter(Boolean)
+    .map((seg) => encodeURIComponent(seg))
+    .join("/");
+  return `https://res.cloudinary.com/${encodeURIComponent(cloudName)}/raw/upload/${encodedPid}`;
 }
 
