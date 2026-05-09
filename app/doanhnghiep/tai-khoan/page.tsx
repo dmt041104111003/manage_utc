@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import formStyles from "../../auth/styles/register.module.css";
+import MessagePopup from "../../components/MessagePopup";
 import {
   DOANHNGHIEP_BUSINESS_FIELD_OPTIONS,
   DOANHNGHIEP_REGISTER_LETTER_ONLY_PATTERN,
@@ -37,6 +38,8 @@ export default function EnterpriseAccountPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+  const dismissToast = () => setToast("");
+  const dismissErrorToast = () => setError("");
 
   const [me, setMe] = useState<AdminEnterpriseDetail | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -189,16 +192,8 @@ export default function EnterpriseAccountPage() {
         <p className={styles.subtitle}>Xem toàn bộ thông tin hồ sơ. Chỉ một số trường được phép chỉnh sửa.</p>
       </header>
 
-      {toast ? (
-        <p className={formStyles.success} role="status">
-          {toast}
-        </p>
-      ) : null}
-      {error ? (
-        <p className={formStyles.errorGlobal} role="alert">
-          {error}
-        </p>
-      ) : null}
+      {toast ? <MessagePopup open message={toast} onClose={dismissToast} /> : null}
+      {error ? <MessagePopup open message={error} onClose={dismissErrorToast} /> : null}
 
       <form
         onSubmit={(e) => {

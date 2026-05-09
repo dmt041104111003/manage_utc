@@ -20,6 +20,30 @@ enum EnterpriseStatus {
   REJECTED
 }
 
+enum InternshipBatchStatus {
+  OPEN
+  CLOSED
+}
+
+enum WorkType {
+  PART_TIME
+  FULL_TIME
+}
+
+enum JobStatus {
+  PENDING
+  REJECTED
+  ACTIVE
+  STOPPED
+}
+
+enum InternshipBatchSemester {
+  HK_I
+  HK_II
+  HK_HE
+  HK_PHU
+}
+
 model User {
   id                 String              @id @default(cuid())
   email              String              @unique
@@ -35,4 +59,78 @@ model User {
   enterpriseMeta     Json?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+
+  // Recruitment module relations (only used by doanhnghiep / sinhvien roles).
+  jobPosts         JobPost[]
+  jobApplications  JobApplication[]
+}
+
+model InternshipBatch {
+  id        String                 @id @default(cuid())
+  name      String                 // Tên đợt thực tập (hiển thị)
+  semester  InternshipBatchSemester
+  schoolYear String               // Ví dụ: 2024-2025
+  status    InternshipBatchStatus @default(OPEN)
+  startDate DateTime              // Thời gian bắt đầu
+  endDate   DateTime              // Thời gian kết thúc
+  notes     String
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  jobPosts JobPost[]
+
+  @@unique([semester, schoolYear])
+  @@unique([startDate, endDate])
+}
+
+model JobPost {
+  id String @id @default(cuid())
+
+  enterpriseUserId   String
+  internshipBatchId  String
+
+  title            String
+  workType         WorkType
+  recruitmentCount Int
+  expertise        String
+
+  salary                 String
+  experienceRequirement String
+
+  deadlineAt       DateTime // Hạn tuyển dụng
+
+  jobDescription           String
+  candidateRequirements    String
+  benefits                 String
+  workLocation             String
+  workTime                 String
+  applicationMethod       String?
+  companyIntro     String?
+  companyWebsite   String?
+
+  status JobStatus @default(PENDING)
+  rejectionReason String?
+
+  stoppedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enterpriseUser  User               @relation(fields: [enterpriseUserId], references: [id])
+  internshipBatch InternshipBatch   @relation(fields: [internshipBatchId], references: [id])
+
+  jobApplications JobApplication[]
+}
+
+model JobApplication {
+  id String @id @default(cuid())
+
+  jobPostId String
+  studentUserId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jobPost JobPost @relation(fields: [jobPostId], references: [id])
+  studentUser User @relation(fields: [studentUserId], references: [id])
 }

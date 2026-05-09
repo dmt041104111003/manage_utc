@@ -1,0 +1,53 @@
+import { NextResponse } from "next/server";
+import { getAdminSession } from "@/lib/auth/admin-session";
+import { prisma } from "@/lib/prisma";
+
+type JobStatus = "PENDING" | "REJECTED" | "ACTIVE" | "STOPPED";
+
+export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
+  const admin = await getAdminSession();
+  if (!admin) return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
+
+  const { id } = await ctx.params;
+  const body = (await request.json()) as {
+    action?: "approve" | "reject" | "stop";
+    rejectionReason?: string;
+  };
+
+  const action = body.action;
+  const rejectionReason = (body.rejectionReason || "").trim();
+
+  const job = await (prisma as any).jobPost.findFirst({ where: { id }, select: { id: true } });
+  if (!job) return NextResponse.json({ success: false, message: "Không tìm thấy tin tuyển dụng." }, { status: 404 });
+
+  let nextStatus: JobStatus = "PENDING";
+  let nextRejectionReason: string | null = null;
+  const now = new Date();
+
+  if (action === "approve") {
+    nextStatus = "ACTIVE";
+  } else if (action === "reject") {
+    if (!rejectionReason) {
+      return NextResponse.json({ success: false, field: "rejectionReason", message: "Lý do từ chối là bắt buộc." }, { status: 400 });
+    }
+    nextStatus = "REJECTED";
+    nextRejectionReason = rejectionReason;
+  } else if (action === "stop") {
+    nextStatus = "STOPPED";
+    nextRejectionReason = null;
+  } else {
+    return NextResponse.json({ success: false, message: "Thiếu hành động hợp lệ." }, { status: 400 });
+  }
+
+  await (prisma as any).jobPost.update({
+    where: { id },
+    data: {
+      status: nextStatus,
+      rejectionReason: nextRejectionReason,
+      stoppedAt: nextStatus === "STOPPED" ? now : null
+    }
+  });
+
+  return NextResponse.json({ success: true, message: "Cập nhật trạng thái tin tuyển dụng thành công." });
+}
+

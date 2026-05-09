@@ -14,6 +14,7 @@ import { buildEnterpriseHeadquartersAddress, normalizeEnterpriseStatus } from "@
 import { companyTaxLabel } from "@/lib/utils/admin-enterprise-display";
 import { EnterpriseStatusCell } from "../components/EnterpriseStatusCell";
 import { EnterpriseViewDetailTable } from "../components/EnterpriseViewDetailTable";
+import MessagePopup from "../../components/MessagePopup";
 import styles from "../styles/dashboard.module.css";
 
 export default function AdminQuanLyDoanhNghiepPage() {
@@ -36,6 +37,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
   const [statusTarget, setStatusTarget] = useState<AdminEnterpriseListItem | null>(null);
   const [statusDetail, setStatusDetail] = useState<AdminEnterpriseDetail | null>(null);
   const [rejectText, setRejectText] = useState("");
+  const [rejectTextError, setRejectTextError] = useState("");
   const [rejectOpen, setRejectOpen] = useState(false);
 
   const closeStatusModal = () => {
@@ -43,6 +45,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
     setStatusDetail(null);
     setRejectOpen(false);
     setRejectText("");
+    setRejectTextError("");
   };
 
   const openStatusModal = (row: AdminEnterpriseListItem) => {
@@ -50,6 +53,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
     setStatusDetail(null);
     setRejectOpen(false);
     setRejectText("");
+    setRejectTextError("");
     void (async () => {
       const res = await fetch(`/api/admin/enterprises/${row.id}`);
       const data = await res.json();
@@ -179,16 +183,18 @@ export default function AdminQuanLyDoanhNghiepPage() {
     if (!window.confirm(buildRejectEnterpriseStartConfirmMessage(label))) return;
     setRejectOpen(true);
     setRejectText("");
+    setRejectTextError("");
   };
 
   const submitReject = async () => {
     if (!statusTarget) return;
+    setRejectTextError("");
     const reasons = rejectText
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean);
     if (!reasons.length) {
-      setToast(ADMIN_ENTERPRISE_MSG.rejectReasonRequired);
+      setRejectTextError(ADMIN_ENTERPRISE_MSG.rejectReasonRequired);
       return;
     }
     setBusyId(statusTarget.id);
@@ -206,7 +212,9 @@ export default function AdminQuanLyDoanhNghiepPage() {
       await load();
       window.dispatchEvent(new Event(ADMIN_PENDING_ENTERPRISES_CHANGED_EVENT));
     } catch (e) {
-      setToast(e instanceof Error ? e.message : ADMIN_ENTERPRISE_MSG.genericError);
+      const msg = e instanceof Error ? e.message : ADMIN_ENTERPRISE_MSG.genericError;
+      setToast(msg);
+      if (typeof msg === "string") setRejectTextError(msg);
     } finally {
       setBusyId(null);
     }
@@ -218,14 +226,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
         <h1 className={styles.title}>Quản lý doanh nghiệp</h1>
       </header>
 
-      {toast ? (
-        <div className={styles.toast} role="status">
-          {toast}
-          <button type="button" className={styles.textLinkBtn} style={{ marginLeft: 8 }} onClick={dismissToast}>
-            Đóng
-          </button>
-        </div>
-      ) : null}
+      {toast ? <MessagePopup open message={toast} onClose={dismissToast} /> : null}
 
       <div className={styles.searchToolbar}>
         <div className={styles.searchField}>
@@ -323,123 +324,120 @@ export default function AdminQuanLyDoanhNghiepPage() {
       ) : null}
 
       {viewDetail || viewLoading ? (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true" aria-labelledby="view-dn-title">
-          <div className={`${styles.modal} ${styles.modalExtraWide}`}>
-            <h2 id="view-dn-title">Xem thông tin doanh nghiệp</h2>
-            {viewLoading ? <p>Đang tải…</p> : null}
-            {!viewLoading && viewDetail ? <EnterpriseViewDetailTable item={viewDetail} /> : null}
-            <div className={styles.modalActions}>
-              <button
-                type="button"
-                className={styles.btn}
-                onClick={() => {
-                  setViewDetail(null);
-                  setViewLoading(false);
-                }}
-              >
-                Đóng
-              </button>
-            </div>
+        <MessagePopup open title="Xem thông tin doanh nghiệp" size="extraWide">
+          {viewLoading ? <p>Đang tải…</p> : null}
+          {!viewLoading && viewDetail ? <EnterpriseViewDetailTable item={viewDetail} /> : null}
+          <div className={styles.modalActions}>
+            <button
+              type="button"
+              className={styles.btn}
+              onClick={() => {
+                setViewDetail(null);
+                setViewLoading(false);
+              }}
+            >
+              Đóng
+            </button>
           </div>
-        </div>
+        </MessagePopup>
       ) : null}
 
       {statusTarget ? (
-        <div className={styles.modalBackdrop} role="dialog" aria-modal="true" aria-labelledby="st-dn-title">
-          <div className={`${styles.modal} ${styles.modalWide}`}>
-            <h2 id="st-dn-title">Cập nhật trạng thái phê duyệt</h2>
-            {!rejectOpen ? (
-              <>
-                <div className={styles.statusCurrentRow}>
-                  <strong>Trạng thái hiện tại:</strong>{" "}
-                  <EnterpriseStatusCell status={statusTarget.enterpriseStatus} />
-                </div>
-                <p>
-                  <strong>Tên doanh nghiệp:</strong> {statusTarget.companyName || "—"}
-                  <br />
-                  <strong>Mã số thuế:</strong> {statusTarget.taxCode || "—"}
-                  <br />
-                  <strong>Email:</strong> {statusTarget.email}
-                  <br />
-                  <strong>Địa chỉ:</strong>{" "}
-                  {statusDetail
-                    ? buildEnterpriseHeadquartersAddress(statusDetail.enterpriseMeta)
-                    : "Đang tải…"}
-                </p>
+        <MessagePopup open title="Cập nhật trạng thái phê duyệt" size="wide">
+          {!rejectOpen ? (
+            <>
+              <div className={styles.statusCurrentRow}>
+                <strong>Trạng thái hiện tại:</strong> <EnterpriseStatusCell status={statusTarget.enterpriseStatus} />
+              </div>
+              <p>
+                <strong>Tên doanh nghiệp:</strong> {statusTarget.companyName || "—"}
+                <br />
+                <strong>Mã số thuế:</strong> {statusTarget.taxCode || "—"}
+                <br />
+                <strong>Email:</strong> {statusTarget.email}
+                <br />
+                <strong>Địa chỉ:</strong>{" "}
+                {statusDetail ? buildEnterpriseHeadquartersAddress(statusDetail.enterpriseMeta) : "Đang tải…"}
+              </p>
 
-                <div className={styles.modalActions}>
-                  <button type="button" className={styles.btn} onClick={closeStatusModal}>
-                    Đóng
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnDanger}`}
-                    disabled={
-                      busyId !== null ||
-                      normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.REJECTED
-                    }
-                    title={
-                      normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.REJECTED
-                        ? "Hồ sơ đã bị từ chối — không thể từ chối thêm lần nữa."
-                        : undefined
-                    }
-                    onClick={startReject}
-                  >
-                    Từ chối
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnPrimary}`}
-                    disabled={
-                      busyId !== null ||
-                      normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.APPROVED
-                    }
-                    title={
-                      normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.APPROVED
-                        ? "Hồ sơ đã được phê duyệt — không cần phê duyệt lại."
-                        : undefined
-                    }
-                    onClick={submitApprove}
-                  >
-                    Phê duyệt
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p>
-                  <strong>Từ chối:</strong> {statusTarget.companyName || "—"} — MST {statusTarget.taxCode || "—"}
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.btn} onClick={closeStatusModal}>
+                  Đóng
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnDanger}`}
+                  disabled={
+                    busyId !== null ||
+                    normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.REJECTED
+                  }
+                  title={
+                    normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.REJECTED
+                      ? "Hồ sơ đã bị từ chối — không thể từ chối thêm lần nữa."
+                      : undefined
+                  }
+                  onClick={startReject}
+                >
+                  Từ chối
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  disabled={
+                    busyId !== null ||
+                    normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.APPROVED
+                  }
+                  title={
+                    normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.APPROVED
+                      ? "Hồ sơ đã được phê duyệt — không cần phê duyệt lại."
+                      : undefined
+                  }
+                  onClick={submitApprove}
+                >
+                  Phê duyệt
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p>
+                <strong>Từ chối:</strong> {statusTarget.companyName || "—"} — MST {statusTarget.taxCode || "—"}
+              </p>
+              <p>Lý do từ chối (mỗi dòng một ý, hiển thị trong email).</p>
+              <textarea
+                value={rejectText}
+                disabled={busyId !== null}
+                onChange={(e) => setRejectText(e.target.value)}
+                placeholder="Ví dụ: Hồ sơ chưa đầy đủ."
+              />
+              {rejectTextError ? (
+                <p className={styles.error} style={{ marginTop: 6 }}>
+                  {rejectTextError}
                 </p>
-                <p>Lý do từ chối (mỗi dòng một ý, hiển thị trong email).</p>
-                <textarea
-                  value={rejectText}
-                  onChange={(e) => setRejectText(e.target.value)}
-                  placeholder="Ví dụ: Hồ sơ chưa đầy đủ."
-                />
-                <div className={styles.modalActions}>
-                  <button
-                    type="button"
-                    className={styles.btn}
-                    onClick={() => {
-                      setRejectOpen(false);
-                      setRejectText("");
-                    }}
-                  >
-                    Quay lại
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnDanger}`}
-                    disabled={busyId !== null}
-                    onClick={() => void submitReject()}
-                  >
-                    Gửi từ chối
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+              ) : null}
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  className={styles.btn}
+                  onClick={() => {
+                    setRejectOpen(false);
+                    setRejectText("");
+                  }}
+                >
+                  Quay lại
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnDanger}`}
+                  disabled={busyId !== null}
+                  onClick={() => void submitReject()}
+                >
+                  Gửi từ chối
+                </button>
+              </div>
+            </>
+          )}
+        </MessagePopup>
       ) : null}
     </main>
   );
