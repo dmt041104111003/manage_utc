@@ -41,6 +41,18 @@ export default function AdminQuanLyTaiKhoanPage() {
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  const fetchAccountDetailCached = async (id: string, force = false) =>
+    getOrFetchCached<any>(
+      `admin:accounts:detail:${id}`,
+      async () => {
+        const res = await fetch(`/api/admin/accounts/${id}`);
+        const payload = await res.json();
+        if (!res.ok || !payload.success) throw new Error(payload.message || "Không tải được thông tin tài khoản.");
+        return payload;
+      },
+      { force }
+    );
+
   const load = async (opts?: { force?: boolean; silent?: boolean; targetPage?: number }) => {
     const force = Boolean(opts?.force);
     const silent = Boolean(opts?.silent);
@@ -91,14 +103,15 @@ export default function AdminQuanLyTaiKhoanPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQ, filterRole, filterStatus, page]);
 
+  useEffect(() => {
+    if (!items.length) return;
+    void Promise.allSettled(items.map((row) => fetchAccountDetailCached(row.id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
+
   const openView = async (row: AccountRow) => {
     try {
-      const data = await getOrFetchCached<any>(`admin:accounts:detail:${row.id}`, async () => {
-        const res = await fetch(`/api/admin/accounts/${row.id}`);
-        const payload = await res.json();
-        if (!res.ok || !payload.success) throw new Error(payload.message || "Không tải được thông tin tài khoản.");
-        return payload;
-      });
+      const data = await fetchAccountDetailCached(row.id);
       setViewTarget(data.item);
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Không tải được thông tin tài khoản.");

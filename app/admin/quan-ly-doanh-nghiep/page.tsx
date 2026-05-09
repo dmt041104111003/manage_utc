@@ -56,6 +56,18 @@ export default function AdminQuanLyDoanhNghiepPage() {
   const [rejectTextError, setRejectTextError] = useState("");
   const [rejectOpen, setRejectOpen] = useState(false);
 
+  const fetchEnterpriseDetailCached = async (id: string, force = false) =>
+    getOrFetchCached<any>(
+      `admin:enterprises:detail:${id}`,
+      async () => {
+        const res = await fetch(`/api/admin/enterprises/${id}`);
+        const payload = await res.json();
+        if (!res.ok) throw new Error(payload.message || ADMIN_ENTERPRISE_MSG.detailLoadFail);
+        return payload;
+      },
+      { force }
+    );
+
   const closeStatusModal = () => {
     setStatusTarget(null);
     setStatusDetail(null);
@@ -71,9 +83,12 @@ export default function AdminQuanLyDoanhNghiepPage() {
     setRejectText("");
     setRejectTextError("");
     void (async () => {
-      const res = await fetch(`/api/admin/enterprises/${row.id}`);
-      const data = await res.json();
-      if (res.ok) setStatusDetail(data.item as AdminEnterpriseDetail);
+      try {
+        const data = await fetchEnterpriseDetailCached(row.id);
+        setStatusDetail(data.item as AdminEnterpriseDetail);
+      } catch {
+        setStatusDetail(null);
+      }
     })();
   };
 
@@ -123,9 +138,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
     setViewDetail(null);
     setViewLoading(true);
     try {
-      const res = await fetch(`/api/admin/enterprises/${row.id}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || ADMIN_ENTERPRISE_MSG.detailLoadFail);
+      const data = await fetchEnterpriseDetailCached(row.id);
       setViewDetail(data.item as AdminEnterpriseDetail);
     } catch (e) {
       setToast(e instanceof Error ? e.message : ADMIN_ENTERPRISE_MSG.detailLoadError);
@@ -144,6 +157,12 @@ export default function AdminQuanLyDoanhNghiepPage() {
     (page - 1) * ADMIN_QUAN_LY_DOANH_NGHIEP_PAGE_SIZE,
     (page - 1) * ADMIN_QUAN_LY_DOANH_NGHIEP_PAGE_SIZE + ADMIN_QUAN_LY_DOANH_NGHIEP_PAGE_SIZE
   );
+
+  useEffect(() => {
+    if (!pagedItems.length) return;
+    void Promise.allSettled(pagedItems.map((row) => fetchEnterpriseDetailCached(row.id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagedItems]);
 
   const dismissToast = () => setToast("");
 

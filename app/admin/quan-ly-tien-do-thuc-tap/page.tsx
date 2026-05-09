@@ -44,6 +44,20 @@ export default function AdminTienDoThucTapPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toast, setToast] = useState("");
 
+  const fetchProgressDetailCached = async (id: string, force = false) =>
+    getOrFetchCached<any>(
+      `admin:tien-do:detail:${id}`,
+      async () => {
+        const res = await fetch(`/api/admin/tien-do-thuc-tap/${id}`);
+        const payload = await res.json();
+        if (!res.ok || !payload?.success || !payload?.item) {
+          throw new Error(payload?.message || "Không thể tải thông tin tiến độ.");
+        }
+        return payload;
+      },
+      { force }
+    );
+
   async function load() {
     try {
       const sp = new URLSearchParams();
@@ -78,27 +92,25 @@ export default function AdminTienDoThucTapPage() {
   }
 
   async function openView(row: ListRow) {
-    const res = await fetch(`/api/admin/tien-do-thuc-tap/${row.id}`);
-    const data = await res.json();
-    if (!res.ok || !data?.success || !data?.item) {
-      setToast(data?.message || "Không thể tải thông tin tiến độ.");
-      return;
+    try {
+      const data = await fetchProgressDetailCached(row.id);
+      setViewTarget(data.item as Detail);
+      setViewOpen(true);
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : "Không thể tải thông tin tiến độ.");
     }
-    setViewTarget(data.item as Detail);
-    setViewOpen(true);
   }
 
   async function openEdit(row: ListRow) {
     if (!row.canFinalUpdate) return;
-    const res = await fetch(`/api/admin/tien-do-thuc-tap/${row.id}`);
-    const data = await res.json();
-    if (!res.ok || !data?.success || !data?.item) {
-      setToast(data?.message || "Không thể tải thông tin để cập nhật.");
-      return;
+    try {
+      const data = await fetchProgressDetailCached(row.id);
+      setEditTarget(data.item as Detail);
+      setFinalStatusDraft("COMPLETED");
+      setEditOpen(true);
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : "Không thể tải thông tin để cập nhật.");
     }
-    setEditTarget(data.item as Detail);
-    setFinalStatusDraft("COMPLETED");
-    setEditOpen(true);
   }
 
   async function submitEdit() {
@@ -129,6 +141,12 @@ export default function AdminTienDoThucTapPage() {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!items.length) return;
+    void Promise.allSettled(items.map((row) => fetchProgressDetailCached(row.id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
 
   return (
     <main className={styles.page}>

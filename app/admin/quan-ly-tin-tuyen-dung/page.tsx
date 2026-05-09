@@ -7,7 +7,7 @@ import MessagePopup from "../../components/MessagePopup";
 
 import type { ApiResponse, InternshipBatchRow, JobDetailResponse, JobListItem, StatusAction } from "@/lib/types/admin-quan-ly-tin-tuyen-dung";
 import { inferDefaultAction } from "@/lib/utils/admin-quan-ly-tin-tuyen-dung";
-import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
+import { deleteCacheByPrefix, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 import AdminTinTuyenDungToolbar from "./components/AdminTinTuyenDungToolbar";
 import AdminTinTuyenDungTableSection from "./components/AdminTinTuyenDungTableSection";
@@ -44,6 +44,18 @@ export default function AdminQuanLyTinTuyenDungPage() {
   const [rejectReason, setRejectReason] = useState("");
 
   const [deleteTarget, setDeleteTarget] = useState<JobListItem | null>(null);
+
+  const fetchJobDetailCached = async (id: string, force = false) =>
+    getOrFetchCached<any>(
+      `admin:job-posts:detail:${id}`,
+      async () => {
+        const res = await fetch(`/api/admin/job-posts/${id}`);
+        const payload = (await res.json()) as ApiResponse<JobDetailResponse>;
+        if (!res.ok || !payload.success || !payload.item) throw new Error(payload.message || "Không tải được chi tiết tin.");
+        return payload;
+      },
+      { force }
+    );
 
   const loadBatches = async () => {
     setLoadingBatches(true);
@@ -101,6 +113,12 @@ export default function AdminQuanLyTinTuyenDungPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!items.length) return;
+    void Promise.allSettled(items.map((row) => fetchJobDetailCached(row.id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
+
   const dismissToast = () => setToast("");
 
   const openView = async (row: JobListItem) => {
@@ -108,9 +126,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
     setViewDetail(null);
     setViewLoading(true);
     try {
-      const res = await fetch(`/api/admin/job-posts/${row.id}`);
-      const data = (await res.json()) as ApiResponse<JobDetailResponse>;
-      if (!res.ok || !data.success || !data.item) throw new Error(data.message || "Không tải được chi tiết tin.");
+      const data = await fetchJobDetailCached(row.id);
       setViewDetail(data.item);
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Lỗi tải chi tiết.");
@@ -152,6 +168,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
       if (!res.ok || !data.success) throw new Error(data.message || "Cập nhật trạng thái thất bại.");
       setToast(data.message || "Cập nhật trạng thái thành công.");
       closeStatus();
+      deleteCacheByPrefix("admin:job-posts:");
       await load();
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Cập nhật thất bại.");
@@ -170,6 +187,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
       if (!res.ok || !data.success) throw new Error(data.message || "Xóa thất bại.");
       setToast(data.message || "Xóa tin tuyển dụng thành công");
       setDeleteTarget(null);
+      deleteCacheByPrefix("admin:job-posts:");
       await load();
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Xóa thất bại.");

@@ -76,6 +76,18 @@ export default function AdminQuanLySinhVienPage() {
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  const fetchStudentDetailCached = async (id: string, force = false) =>
+    getOrFetchCached<any>(
+      `admin:students:detail:${id}`,
+      async () => {
+        const res = await fetch(`/api/admin/students/${id}`);
+        const payload = await res.json();
+        if (!res.ok || !payload.success || !payload.item) throw new Error(payload.message || "Không tải được thông tin sinh viên.");
+        return payload;
+      },
+      { force }
+    );
+
   // address dropdowns
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
@@ -176,6 +188,12 @@ export default function AdminQuanLySinhVienPage() {
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQ, filterFaculty, filterInternshipStatus, filterDegree, page]);
+
+  useEffect(() => {
+    if (!items.length) return;
+    void Promise.allSettled(items.map((row) => fetchStudentDetailCached(row.id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
 
   const showPopup = (message: string) => setToastPopup({ open: true, message });
 
@@ -347,12 +365,7 @@ export default function AdminQuanLySinhVienPage() {
   const openView = async (row: StudentListItem) => {
     try {
       setViewStudent(null);
-      const data = await getOrFetchCached<any>(`admin:students:detail:${row.id}`, async () => {
-        const res = await fetch(`/api/admin/students/${row.id}`);
-        const payload = await res.json();
-        if (!res.ok || !payload.success || !payload.item) throw new Error(payload.message || "Không tải được thông tin sinh viên.");
-        return payload;
-      });
+      const data = await fetchStudentDetailCached(row.id);
       setViewStudent(data.item as ViewStudent);
       setViewOpen(true);
     } catch (e) {

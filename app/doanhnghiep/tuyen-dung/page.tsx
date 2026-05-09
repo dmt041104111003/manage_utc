@@ -16,7 +16,7 @@ import {
   buildJobFormForEdit,
   validateJobForm
 } from "@/lib/utils/doanhnghiep-tuyen-dung";
-import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
+import { deleteCacheByPrefix, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import TuyenDungToolbar from "./components/TuyenDungToolbar";
 import TuyenDungTableSection from "./components/TuyenDungTableSection";
 const TuyenDungViewPopup = dynamic(() => import("./components/TuyenDungViewPopup"), { ssr: false });
@@ -56,6 +56,18 @@ export default function DoanhNghiepTuyenDungPage() {
 
   const [form, setForm] = useState<JobFormState>(() => buildEmptyJobFormState());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const fetchJobDetailCached = async (id: string, force = false) =>
+    getOrFetchCached<any>(
+      `enterprise:tuyen-dung:detail:${id}`,
+      async () => {
+        const res = await fetch(`/api/doanhnghiep/tuyen-dung/${id}`);
+        const payload = (await res.json()) as ApiResponse<JobDetailResponse>;
+        if (!res.ok || !payload.success || !payload.item) throw new Error(payload.message || "Không tải được chi tiết tin tuyển dụng.");
+        return payload;
+      },
+      { force }
+    );
 
   const handleFormChange = (updates: Partial<JobFormState>) => {
     setForm((prev) => ({ ...prev, ...updates }));
@@ -133,6 +145,12 @@ export default function DoanhNghiepTuyenDungPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQ, searchDate, searchStatus, page]);
 
+  useEffect(() => {
+    if (!items.length) return;
+    void Promise.allSettled(items.map((row) => fetchJobDetailCached(row.id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
+
   const resetFormForAdd = () => {
     setFieldErrors({});
     setForm(buildJobFormForAdd({ enterpriseDefaults }));
@@ -153,9 +171,7 @@ export default function DoanhNghiepTuyenDungPage() {
     setViewJob(null);
     setViewLoading(true);
     try {
-      const res = await fetch(`/api/doanhnghiep/tuyen-dung/${row.id}`);
-      const data = (await res.json()) as ApiResponse<JobDetailResponse>;
-      if (!res.ok || !data.success || !data.item) throw new Error(data.message || "Không tải được chi tiết tin tuyển dụng.");
+      const data = await fetchJobDetailCached(row.id);
       setViewJob(data.item);
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Lỗi.");
@@ -169,9 +185,7 @@ export default function DoanhNghiepTuyenDungPage() {
     setEditDetail(null);
     setEditLoading(true);
     try {
-      const res = await fetch(`/api/doanhnghiep/tuyen-dung/${row.id}`);
-      const data = (await res.json()) as ApiResponse<JobDetailResponse>;
-      if (!res.ok || !data.success || !data.item) throw new Error(data.message || "Không tải được chi tiết tin tuyển dụng.");
+      const data = await fetchJobDetailCached(row.id);
       setEditDetail(data.item);
       resetFormForEdit(data.item);
     } catch (e) {
@@ -202,6 +216,7 @@ export default function DoanhNghiepTuyenDungPage() {
       }
       setToast(data.message || "Tạo tin tuyển dụng thành công.");
       setAddOpen(false);
+      deleteCacheByPrefix("enterprise:tuyen-dung:");
       await refresh();
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Tạo tin thất bại.");
@@ -232,6 +247,7 @@ export default function DoanhNghiepTuyenDungPage() {
       setToast(data.message || "Sửa tin tuyển dụng thành công.");
       setEditTarget(null);
       setEditDetail(null);
+      deleteCacheByPrefix("enterprise:tuyen-dung:");
       await refresh();
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Sửa tin thất bại.");
@@ -254,6 +270,7 @@ export default function DoanhNghiepTuyenDungPage() {
       if (!res.ok) throw new Error(data.message || "Dừng hoạt động thất bại.");
       setToast(data.message || "Đã dừng hoạt động.");
       setStopTarget(null);
+      deleteCacheByPrefix("enterprise:tuyen-dung:");
       await refresh();
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Dừng hoạt động thất bại.");
@@ -272,6 +289,7 @@ export default function DoanhNghiepTuyenDungPage() {
       if (!res.ok) { setToast(data.message || "Xóa thất bại."); return; }
       setToast(data.message || "Xóa tin tuyển dụng thành công.");
       setDeleteTarget(null);
+      deleteCacheByPrefix("enterprise:tuyen-dung:");
       await refresh();
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Xóa thất bại.");

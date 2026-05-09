@@ -67,6 +67,18 @@ export default function AdminQuanLyGVHDPage() {
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
+  const fetchSupervisorDetailCached = async (id: string, force = false) =>
+    getOrFetchCached<any>(
+      `admin:supervisors:detail:${id}`,
+      async () => {
+        const res = await fetch(`/api/admin/supervisors/${id}`);
+        const payload = await res.json();
+        if (!res.ok || !payload.success || !payload.item) throw new Error(payload.message || "Không tải được thông tin giảng viên hướng dẫn.");
+        return payload;
+      },
+      { force }
+    );
+
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
   const [addrLoading, setAddrLoading] = useState({ provinces: true, wards: false });
@@ -165,6 +177,12 @@ export default function AdminQuanLyGVHDPage() {
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQ, filterFaculty, filterDegree, page]);
+
+  useEffect(() => {
+    if (!items.length) return;
+    void Promise.allSettled(items.map((row) => fetchSupervisorDetailCached(row.id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
 
   const resetForm = () => {
     setFieldErrors({});
@@ -319,12 +337,7 @@ export default function AdminQuanLyGVHDPage() {
 
   const openView = async (row: SupervisorListItem) => {
     try {
-      const data = await getOrFetchCached<any>(`admin:supervisors:detail:${row.id}`, async () => {
-        const res = await fetch(`/api/admin/supervisors/${row.id}`);
-        const payload = await res.json();
-        if (!res.ok || !payload.success || !payload.item) throw new Error(payload.message || "Không tải được thông tin giảng viên hướng dẫn.");
-        return payload;
-      });
+      const data = await fetchSupervisorDetailCached(row.id);
       setViewItem(data.item as SupervisorListItem);
       setViewOpen(true);
     } catch (e) {
