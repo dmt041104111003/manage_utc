@@ -8,12 +8,7 @@ import type { DashboardRole } from "@/lib/types/dashboard";
 import { isDashboardNavActive } from "@/lib/utils/navigation";
 import { useAdminPendingEnterpriseCount } from "@/hooks/useAdminPendingEnterpriseCount";
 import { useDashboardSidebar } from "@/hooks/useDashboardSidebar";
-import {
-  clearAllClientCaches,
-  restoreFetchResponseCache,
-  schedulePersistFetchResponseCache,
-  type FetchResponseCacheEntry
-} from "@/lib/utils/client-query-cache";
+import { clearAllClientCaches, type FetchResponseCacheEntry } from "@/lib/utils/client-query-cache";
 import styles from "./dashboard-shell.module.css";
 
 const ADMIN_QUAN_LY_DOANH_NGHIEP_HREF = "/admin/quan-ly-doanh-nghiep";
@@ -38,13 +33,18 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
   const reloadingRef = useRef(false);
 
   useEffect(() => {
+    try {
+      localStorage.removeItem("manage_utc:query_cache_v1");
+      localStorage.removeItem("manage_utc:fetch_cache_v1");
+    } catch {
+      // ignore
+    }
     const originalFetch = window.fetch.bind(window);
     const globalAny = window as typeof window & {
       __manageUtcFetchCache?: Map<string, FetchResponseCacheEntry>;
     };
     const fetchCache =
       globalAny.__manageUtcFetchCache ?? (globalAny.__manageUtcFetchCache = new Map<string, FetchResponseCacheEntry>());
-    restoreFetchResponseCache(fetchCache);
     const patchedFetch: typeof window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const method = String(init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
       const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
@@ -76,7 +76,6 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
               statusText: res.statusText,
               headers
             });
-            schedulePersistFetchResponseCache(fetchCache);
           } catch {
             // ignore cache failure
           }
