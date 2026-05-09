@@ -4,9 +4,9 @@ export const SINHVIEN_DASHBOARD_NAV: DashboardNavItem[] = [
   { href: "/sinhvien/dashboard", label: "Tổng quan" },
   { href: "/sinhvien/tai-khoan", label: "Tài khoản cá nhân" },
   { href: "/sinhvien/ho-so", label: "Hồ sơ cá nhân" },
-  { href: "/sinhvien/tra-cuu-ung-tuyen", label: "Quản lý tra cứu và ứng tuyển" },
-  { href: "/sinhvien/quan-ly-dang-ky-ung-tuyen", label: "Quản lý đăng ký ứng tuyển" },
-  { href: "/sinhvien/bao-cao-thuc-tap", label: "Quản lý tiến độ thực tập" },
+  { href: "/sinhvien/tra-cuu-ung-tuyen", label: "Tra cứu và ứng tuyển" },
+  { href: "/sinhvien/quan-ly-dang-ky-ung-tuyen", label: "Việc làm đã ứng tuyển" },
+  { href: "/sinhvien/bao-cao-thuc-tap", label: "Tiến độ thực tập" },
   { href: "/auth/doimatkhau", label: "Đổi mật khẩu" }
 ];
 
