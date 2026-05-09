@@ -3,12 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
-import { DashboardInteractiveChart } from "@/app/components/charts/DashboardInteractiveChart";
-import {
-  buildCategoryBarInsightGetter,
-  buildGroupedBarInsightGetter,
-  buildLineAxisInsightGetter
-} from "@/lib/utils/chart-insights";
+import { ReactEchart } from "@/app/components/charts/ReactEchart";
 import {
   buildGroupedBarChartOption,
   buildLineMultiSeriesOption,
@@ -132,30 +127,6 @@ export default function EnterpriseDashboardPage() {
     [jobStatus.labels, jobStatus.values]
   );
 
-  const doubleBarInsights = useMemo(
-    () =>
-      buildGroupedBarInsightGetter(doubleBar.labels, [
-        { name: "SV chấp nhận", data: doubleBar.labels.map((_, i) => doubleBar.accepted[i] ?? 0) },
-        { name: "SV từ chối", data: doubleBar.labels.map((_, i) => doubleBar.declined[i] ?? 0) }
-      ]),
-    [doubleBar.labels, doubleBar.accepted, doubleBar.declined]
-  );
-
-  const lineInsights = useMemo(
-    () => buildLineAxisInsightGetter(lineChart.labels, lineChart.series),
-    [lineChart.labels, lineChart.series]
-  );
-
-  const appStatusInsights = useMemo(
-    () => buildCategoryBarInsightGetter(applicationStatus.labels, applicationStatus.values, "Hồ sơ"),
-    [applicationStatus.labels, applicationStatus.values]
-  );
-
-  const jobStatusInsights = useMemo(
-    () => buildCategoryBarInsightGetter(jobStatus.labels, jobStatus.values, "Tin đăng"),
-    [jobStatus.labels, jobStatus.values]
-  );
-
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -196,12 +167,7 @@ export default function EnterpriseDashboardPage() {
             {doubleBar.labels.length === 0 ? (
               <div className={styles.muted}>Chưa có dữ liệu.</div>
             ) : (
-              <DashboardInteractiveChart
-                option={doubleBarOption}
-                height={256}
-                chartTitle="SV chấp nhận & từ chối theo ngành/khoa"
-                getInsights={doubleBarInsights}
-              />
+              <ReactEchart option={doubleBarOption} height={256} clickReloadPulse />
             )}
           </article>
 
@@ -213,12 +179,7 @@ export default function EnterpriseDashboardPage() {
             {lineChart.series.length === 0 ? (
               <div className={styles.muted}>Chưa có dữ liệu.</div>
             ) : (
-              <DashboardInteractiveChart
-                option={lineOption}
-                height={292}
-                chartTitle="Ứng tuyển theo ngành (tháng)"
-                getInsights={lineInsights}
-              />
+              <ReactEchart option={lineOption} height={292} clickReloadPulse />
             )}
           </article>
 
@@ -228,12 +189,7 @@ export default function EnterpriseDashboardPage() {
             {applicationStatus.values.every((v) => v === 0) ? (
               <div className={styles.muted}>Chưa có dữ liệu.</div>
             ) : (
-              <DashboardInteractiveChart
-                option={appStatusOption}
-                height={248}
-                chartTitle="Hồ sơ theo trạng thái"
-                getInsights={appStatusInsights}
-              />
+              <ReactEchart option={appStatusOption} height={248} clickReloadPulse />
             )}
           </article>
 
@@ -243,12 +199,7 @@ export default function EnterpriseDashboardPage() {
             {jobStatus.values.every((v) => v === 0) ? (
               <div className={styles.muted}>Chưa có dữ liệu.</div>
             ) : (
-              <DashboardInteractiveChart
-                option={jobStatusOption}
-                height={248}
-                chartTitle="Tin tuyển dụng theo trạng thái"
-                getInsights={jobStatusInsights}
-              />
+              <ReactEchart option={jobStatusOption} height={248} clickReloadPulse />
             )}
           </article>
         </section>

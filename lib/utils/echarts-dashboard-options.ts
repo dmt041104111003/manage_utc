@@ -147,7 +147,6 @@ export function buildDonutChartOption(segments: DonutSegment[]): EChartsOption {
           scaleSize: 6,
           itemStyle: { shadowBlur: 28, shadowColor: "rgba(15,23,42,0.22)" }
         },
-        label: { show: false },
         data
       }
     ]

@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
-import { DashboardInteractiveChart } from "@/app/components/charts/DashboardInteractiveChart";
+import { ReactEchart } from "@/app/components/charts/ReactEchart";
 import { buildPerBarColorChartOption } from "@/lib/utils/echarts-dashboard-options";
-import { buildCategoryBarInsightGetter } from "@/lib/utils/chart-insights";
 
 type Batch = { id: string; name: string; status: string };
 
@@ -39,21 +38,18 @@ const GV_DASHBOARD_INITIAL_KEY = gvDashboardOverviewCacheKey("all");
 function StatusBarChart({
   labels,
   values,
-  colors,
-  chartTitle
+  colors
 }: {
   labels: string[];
   values: number[];
   colors: string[];
-  chartTitle: string;
 }) {
   const option = useMemo(
     () => buildPerBarColorChartOption(labels, values, colors, "Sinh viên"),
     [labels, values, colors]
   );
-  const getInsights = useMemo(() => buildCategoryBarInsightGetter(labels, values, "Sinh viên"), [labels, values]);
   if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-  return <DashboardInteractiveChart option={option} height={252} chartTitle={chartTitle} getInsights={getInsights} />;
+  return <ReactEchart option={option} height={252} clickReloadPulse />;
 }
 
 export default function LecturerDashboardPage() {
@@ -137,12 +133,7 @@ export default function LecturerDashboardPage() {
         <section className={styles.overviewGrid}>
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái hướng dẫn</h2>
-            <StatusBarChart
-              labels={guidanceStatus.labels}
-              values={guidanceStatus.values}
-              colors={GUIDANCE_COLORS}
-              chartTitle="Trạng thái hướng dẫn"
-            />
+            <StatusBarChart labels={guidanceStatus.labels} values={guidanceStatus.values} colors={GUIDANCE_COLORS} />
           </article>
 
           <article className={styles.card}>
@@ -151,7 +142,6 @@ export default function LecturerDashboardPage() {
               labels={internshipStatus.labels}
               values={internshipStatus.values}
               colors={INTERNSHIP_COLORS}
-              chartTitle="Trạng thái thực tập"
             />
           </article>
         </section>

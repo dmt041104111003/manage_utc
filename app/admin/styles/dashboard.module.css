@@ -848,12 +848,38 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+  overflow: visible;
 }
 
 .overviewGrid .card {
   border-radius: 12px;
   border-color: #e8ecf0;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 36px -10px rgba(15, 23, 42, 0.1);
+}
+
+/* Card có ECharts (data-echart-host): hover phóng to */
+.overviewGrid .card:has([data-echart-host]) {
+  position: relative;
+  z-index: 0;
+  transform-origin: 50% 50%;
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.32, 1),
+    box-shadow 0.4s ease;
+  will-change: transform;
+}
+
+.overviewGrid .card:has([data-echart-host]):hover {
+  z-index: 6;
+  transform: scale(1.055);
+  box-shadow: 0 22px 56px rgba(15, 23, 42, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overviewGrid .card:has([data-echart-host]),
+  .overviewGrid .card:has([data-echart-host]):hover {
+    transform: none;
+    transition: none;
+  }
 }
 
 .chartPadding {

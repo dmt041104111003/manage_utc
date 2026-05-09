@@ -127,11 +127,7 @@ export default function AdminDashboardPage() {
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Trạng thái hồ sơ ứng tuyển</h2>
             <div className={styles.chartPadding}>
-              <DonutChart
-                segments={applicationStatusDonut.segments}
-                total={applicationStatusDonut.total}
-                chartTitle="Trạng thái hồ sơ ứng tuyển"
-              />
+              <DonutChart segments={applicationStatusDonut.segments} />
               <div className={styles.muted} style={{ marginTop: 8, fontSize: 13 }}>
                 Tổng: {applicationStatusDonut.total} hồ sơ
               </div>
@@ -141,11 +137,7 @@ export default function AdminDashboardPage() {
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Trạng thái tin tuyển dụng</h2>
             <div className={styles.chartPadding}>
-              <DonutChart
-                segments={jobStatusDonut.segments}
-                total={jobStatusDonut.total}
-                chartTitle="Trạng thái tin tuyển dụng"
-              />
+              <DonutChart segments={jobStatusDonut.segments} />
               <div className={styles.muted} style={{ marginTop: 8, fontSize: 13 }}>
                 Tổng: {jobStatusDonut.total} tin
               </div>
@@ -156,22 +148,14 @@ export default function AdminDashboardPage() {
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Số lượng doanh nghiệp liên kết theo ngành/khoa</h2>
             <div className={styles.chartPadding}>
-              <BarChart
-                labels={enterprisesByField.labels}
-                values={enterprisesByField.values}
-                chartTitle="Doanh nghiệp theo ngành/khoa"
-              />
+              <BarChart labels={enterprisesByField.labels} values={enterprisesByField.values} />
             </div>
           </article>
 
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Tiến độ thực tập: số lượng sinh viên theo trạng thái</h2>
             <div className={styles.chartPadding}>
-              <ProgressColumnChart
-                labels={progress.labels}
-                values={progress.values}
-                chartTitle="Tiến độ thực tập theo trạng thái"
-              />
+              <ProgressColumnChart labels={progress.labels} values={progress.values} />
             </div>
           </article>
 
@@ -179,11 +163,7 @@ export default function AdminDashboardPage() {
           <article className={styles.card} style={{ gridColumn: "1 / -1" }}>
             <h2 className={styles.panelTitle}>Thống kê tổng số bài đăng tuyển dụng theo doanh nghiệp</h2>
             <div className={styles.chartPadding}>
-              <LineChart
-                labels={lineJobPosts.labels}
-                series={lineJobPosts.series}
-                chartTitle="Bài đăng tuyển dụng theo thời gian"
-              />
+              <LineChart labels={lineJobPosts.labels} series={lineJobPosts.series} />
             </div>
           </article>
 
