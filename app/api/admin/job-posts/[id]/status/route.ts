@@ -50,14 +50,19 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     return NextResponse.json({ success: false, message: "Thiếu hành động hợp lệ." }, { status: 400 });
   }
 
-  await (prisma as any).jobPost.update({
-    where: { id },
-    data: {
-      status: nextStatus,
-      rejectionReason: nextRejectionReason,
-      stoppedAt: nextStatus === "STOPPED" ? now : null
-    }
-  });
+  try {
+    await (prisma as any).jobPost.update({
+      where: { id },
+      data: {
+        status: nextStatus,
+        rejectionReason: nextRejectionReason,
+        ...(nextStatus === "STOPPED" ? { stoppedAt: now } : {})
+      }
+    });
+  } catch (e) {
+    console.error("[PATCH /api/admin/job-posts/[id]/status] update error", e);
+    return NextResponse.json({ success: false, message: "Lỗi máy chủ khi cập nhật trạng thái." }, { status: 500 });
+  }
 
   // Send email notification to enterprise
   try {
