@@ -2,6 +2,7 @@
 
 import { EnterpriseStatus } from "@prisma/client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import type { AdminEnterpriseDetail, AdminEnterpriseListItem } from "@/lib/types/admin";
 import {
   ADMIN_ENTERPRISE_MSG,
@@ -22,8 +23,8 @@ import Pagination from "../../components/Pagination";
 import styles from "../styles/dashboard.module.css";
 import AdminEnterpriseToolbar from "./components/AdminEnterpriseToolbar";
 import AdminEnterpriseTable from "./components/AdminEnterpriseTable";
-import AdminEnterpriseStatusPopup from "./components/AdminEnterpriseStatusPopup";
-import AdminEnterpriseViewPopup from "./components/AdminEnterpriseViewPopup";
+const AdminEnterpriseStatusPopup = dynamic(() => import("./components/AdminEnterpriseStatusPopup"), { ssr: false });
+const AdminEnterpriseViewPopup = dynamic(() => import("./components/AdminEnterpriseViewPopup"), { ssr: false });
 
 export default function AdminQuanLyDoanhNghiepPage() {
   const [items, setItems] = useState<AdminEnterpriseListItem[]>([]);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
@@ -28,8 +29,8 @@ import BaoCaoThucTapStatusSection from "./components/BaoCaoThucTapStatusSection"
 import BaoCaoThucTapSupervisorSection from "./components/BaoCaoThucTapSupervisorSection";
 import BaoCaoThucTapStatusHistorySection from "./components/BaoCaoThucTapStatusHistorySection";
 import BaoCaoThucTapResultSection from "./components/BaoCaoThucTapResultSection";
-import BaoCaoThucTapUploadPopup from "./components/BaoCaoThucTapUploadPopup";
-import BaoCaoThucTapEditPopup from "./components/BaoCaoThucTapEditPopup";
+const BaoCaoThucTapUploadPopup = dynamic(() => import("./components/BaoCaoThucTapUploadPopup"), { ssr: false });
+const BaoCaoThucTapEditPopup = dynamic(() => import("./components/BaoCaoThucTapEditPopup"), { ssr: false });
 
 export default function SinhvienBaoCaoThucTapPage() {
   const [loading, setLoading] = useState(true);

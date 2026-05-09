@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "../../styles/dashboard.module.css";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../../components/MessagePopup";
@@ -8,7 +9,7 @@ import type { Applicant, JobApplicationStatus, JobDetail } from "@/lib/types/doa
 import { getAvailableNextStatuses } from "@/lib/types/doanhnghiep-ung-vien-detail";
 import JobDetailInfo from "./components/JobDetailInfo";
 import ApplicantTableSection from "./components/ApplicantTableSection";
-import ApplicantDetailPopup from "./components/ApplicantDetailPopup";
+const ApplicantDetailPopup = dynamic(() => import("./components/ApplicantDetailPopup"), { ssr: false });
 
 export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params);
