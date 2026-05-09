@@ -1,0 +1,37 @@
+{
+  "name": "manage-utc",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "prisma generate",
+    "db:push": "dotenv -e .env.local -- prisma db push",
+    "db:seed": "dotenv -e .env.local -- prisma db seed",
+    "db:studio": "dotenv -e .env.local -- prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "bcryptjs": "^3.0.2",
+    "jose": "^5.9.6",
+    "next": "15.3.1",
+    "nodemailer": "^6.9.16",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.3",
+    "@types/nodemailer": "^6.4.17",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "dotenv-cli": "^11.0.0",
+    "prisma": "^6.19.0",
+    "tsx": "^4.19.2",
+    "typescript": "5.8.3"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}

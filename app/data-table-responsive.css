@@ -1,0 +1,76 @@
+/**
+ * Bảng dữ liệu responsive (mobile).
+ * Dùng: bọc `<table>` trong phần tử có class `data-table-responsive-wrap`,
+ * thêm class `data-table-responsive` cho `<table>`, mỗi `<td>` có `data-label` = tiêu đề cột.
+ */
+@media (max-width: 720px) {
+  .data-table-responsive-wrap {
+    overflow-x: visible;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .data-table-responsive {
+    display: block;
+    width: 100%;
+    border: 0;
+  }
+
+  .data-table-responsive thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .data-table-responsive tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table-responsive tbody tr {
+    display: block;
+    width: 100%;
+    margin-bottom: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .data-table-responsive tbody td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 12px 14px;
+    text-align: left;
+  }
+
+  .data-table-responsive tbody td:last-child {
+    border-bottom: none;
+  }
+
+  .data-table-responsive tbody td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .data-table-responsive tbody td:last-child > div:first-child {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+}
