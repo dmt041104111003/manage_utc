@@ -18,16 +18,16 @@ function htmlPage(title: string, bodyHtml: string, isSuccess: boolean) {
        </svg>`;
 
   return buildMailShell({
+    title: safeTitle,
     bodyHtml: `
-      <div style="display:flex;align-items:center;justify-content:center;margin:0 0 12px;">
-        <div style="width:56px;height:56px;border-radius:999px;background:${iconBg};
-                    border:1px solid ${iconBorder};display:flex;align-items:center;justify-content:center;">
-          ${iconSvg}
-        </div>
-      </div>
-      <h2 style="margin:0 0 12px;font-size:18px;line-height:1.35;color:#111827;">
-        ${safeTitle}
-      </h2>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 16px;">
+        <tr>
+          <td align="center" style="width:56px;height:56px;border-radius:999px;background:${iconBg};
+              border:1px solid ${iconBorder};padding:12px;">
+            ${iconSvg}
+          </td>
+        </tr>
+      </table>
       ${mailCalloutHtml(variant, "Thông báo", bodyHtml)}
     `.trim()
   });

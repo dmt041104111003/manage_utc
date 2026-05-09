@@ -2,12 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/lib/mail";
 import { validateEnterpriseRegisterPayload, type EnterpriseRegisterPayload } from "@/lib/enterprise-register-validate";
-import {
-  MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX,
-  MAIL_PRODUCT_NAME,
-  MAIL_TRANSACTIONAL_SIGN_OFF,
-  SCHOOL_FULL_NAME
-} from "@/lib/constants/school";
+import { MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX, MAIL_TRANSACTIONAL_SIGN_OFF } from "@/lib/constants/school";
 import { MAIL_BRAND } from "@/lib/mail-brand";
 import { buildMailShell, escapeHtml, mailLetterClosingHtml } from "@/lib/mail-layout";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
@@ -100,17 +95,25 @@ export async function POST(request: Request) {
 
   const C = MAIL_BRAND;
   const html = buildMailShell({
+    title: "Thông báo tiếp nhận đăng ký tài khoản doanh nghiệp",
     bodyHtml: `
-      <p style="margin:0 0 12px;font-size:16px;font-weight:600;color:${C.headerTitle};">Kính gửi <strong>${escapeHtml(name)}</strong>,</p>
-      <p style="margin:0 0 20px;font-size:13px;color:${C.muted};line-height:1.55;">
-        ${escapeHtml(MAIL_PRODUCT_NAME)} — ${escapeHtml(SCHOOL_FULL_NAME)}
+      <p style="margin:0 0 12px;">Kính gửi <strong>${escapeHtml(name)}</strong>,</p>
+      <p style="margin:0 0 12px;">
+        Phòng Đào tạo trân trọng thông báo hồ sơ đăng ký tài khoản doanh nghiệp của Quý đơn vị
+        đã được hệ thống <strong>tiếp nhận</strong> và đang trong quá trình xét duyệt.
       </p>
-      <p style="margin:0 0 14px;color:${C.contentText};">Phòng Đào tạo trân trọng thông báo: hồ sơ đăng ký tài khoản doanh nghiệp của Quý đơn vị đã được hệ thống <strong style="color:${C.headerKicker};">tiếp nhận</strong> và đang chờ xét duyệt.</p>
-      <p style="margin:0 0 14px;color:${C.contentText};">Sau khi hồ sơ được phê duyệt, Quý đơn vị sẽ nhận email thông báo và có thể đăng nhập theo đường dẫn dưới đây.</p>
-      <p style="margin:0 0 16px;color:${C.contentText};"><strong style="color:${C.headerTitle};">Đường dẫn đăng nhập</strong><br/>
-        <a href="${escapeHtml(loginUrl)}" style="color:${C.link};font-weight:600;text-decoration:underline;word-break:break-all;">${escapeHtml(loginUrl)}</a>
+      <p style="margin:0 0 12px;">
+        Sau khi hồ sơ được phê duyệt, Quý đơn vị sẽ nhận thông báo và có thể truy cập hệ thống theo đường dẫn dưới đây:
       </p>
-      <p style="margin:0;font-size:13px;color:${C.muted};line-height:1.6;">Trường hợp Quý đơn vị không thực hiện đăng ký, vui lòng bỏ qua thư này hoặc liên hệ quản trị hệ thống.</p>
+      <p style="margin:16px 0;">
+        <a href="${escapeHtml(loginUrl)}"
+           style="color:${C.link};font-weight:bold;text-decoration:underline;word-break:break-all;">
+          ${escapeHtml(loginUrl)}
+        </a>
+      </p>
+      <p style="margin:0;">
+        Trường hợp Quý đơn vị không thực hiện đăng ký, vui lòng bỏ qua email này hoặc liên hệ để được hỗ trợ.
+      </p>
       ${mailLetterClosingHtml()}
     `.trim()
   });

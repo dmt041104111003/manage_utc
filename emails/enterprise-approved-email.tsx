@@ -9,7 +9,7 @@ import {
   SCHOOL_HOTLINE
 } from "@/lib/constants/school";
 
-const primary = "#005bac";
+const primary = "#002f6c";
 const success = "#027a48";
 const muted = "#64748b";
 

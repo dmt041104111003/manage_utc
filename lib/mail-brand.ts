@@ -1,30 +1,22 @@
 /**
- * Giao diện email sáng — thư công văn / Phòng Đào tạo (UTC Hà Nội), không khối header/footer tối.
- * Dùng chung cho lib/mail-layout (HTML chuỗi) và emails/branded-email-layout (React Email).
+ * Giao diện email UTC — bảng 640px, header xanh đậm, không logo (dùng chung HTML + React Email).
  */
 export const MAIL_BRAND = {
-  headerStrip: "#f0f5fb",
-  headerTitle: "#0a2540",
-  headerKicker: "#005bac",
-  headerSubtitle: "#4a5d78",
-
-  pageBg: "#e8edf3",
-  cardBorder: "#b8c5d8",
-  rule: "#dce3ed",
-
-  /** Nội dung thư — tách nền nhẹ, dễ đọc */
-  contentBg: "#fafcfe",
-  contentText: "#334155",
-
-  footerStrip: "#f4f7fb",
-  footerNote: "#eef2f7",
-
-  text: "#1e293b",
-  muted: "#64748b",
-  link: "#005bac"
+  headerBar: "#002f6c",
+  headerText: "#ffffff",
+  titleColor: "#002f6c",
+  bodyText: "#111111",
+  bodyBg: "#ffffff",
+  pageBg: "#ffffff",
+  link: "#002f6c",
+  footerHeading: "#002f6c",
+  footerText: "#333333",
+  footerMuted: "#666666",
+  innerWidth: 640,
+  rule: "#e5e7eb"
 } as const;
 
-/** Logo email: URL tĩnh HTTPS (CDN/trường). */
+/** Giữ API cho .env; layout hiện không nhúng logo. */
 export function getSchoolEmailLogoUrl(): string {
   const a = String(process.env.NEXT_PUBLIC_SCHOOL_EMAIL_LOGO_URL || "").trim();
   const b = String(process.env.SCHOOL_EMAIL_LOGO_URL || "").trim();

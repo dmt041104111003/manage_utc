@@ -55,7 +55,7 @@ lib/
 │   ├── identifier.ts               # resolveLoginEmail (map "admin" → email thật)
 │   └── admin-session.ts            # getAdminSession (helper server-side)
 ├── mail.ts                         # sendMail (nodemailer)
-├── mail-brand.ts                   # MAIL_BRAND (màu/layout email sáng), getSchoolEmailLogoUrl()
+├── mail-brand.ts                   # MAIL_BRAND (#002f6c, bảng 640px), getSchoolEmailLogoUrl() (tuỳ chọn, layout không logo)
 ├── mail-layout.ts                  # buildMailShell, escapeHtml, mailCalloutHtml, mailLetterClosingHtml
 ├── mail-password-reset.ts          # buildPasswordResetMail, sendPasswordResetEmail
 ├── mail-enterprise.ts              # sendEnterpriseApprovedEmail, sendEnterpriseRejectedEmail, getPublicAppUrl
@@ -66,7 +66,7 @@ lib/
     └── routing.ts                  # ROLE_HOME (map role → home URL)
 
 emails/
-├── branded-email-layout.tsx        # Khung React Email (cùng MAIL_BRAND + logo ô trắng)
+├── branded-email-layout.tsx        # Khung React Email (cùng MAIL_BRAND, không logo)
 ├── enterprise-approved-email.tsx
 ├── enterprise-rejected-email.tsx
 └── password-reset-email.tsx
@@ -140,20 +140,18 @@ Caller (API route)
 
 ### Cấu trúc HTML email (`lib/mail-layout.ts` + `lib/mail-brand.ts`)
 
-Email **transactional** (chỉ text hoặc `bodyHtml` fragment → `sendMail` bọc shell): **`buildMailShell()`** dùng palette **`MAIL_BRAND`** (nền sáng, tone UTC xanh `#005bac` + vàng `#c9a227`):
+Email **transactional** (chỉ text hoặc `bodyHtml` fragment → `sendMail` bọc shell): **`buildMailShell()`** dùng **`MAIL_BRAND`**: nền trắng, bảng 640px, header `#002f6c`, tuỳ chọn `title`, body Arial 14px justify:
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  HEADER — nền #f0f5fb; chữ tối                      │
-│  · Logo (tuỳ chọn): ô trắng + viền, tránh PNG alpha │
-│  · Bộ GD&ĐT, SCHOOL_FULL_NAME, Phòng ĐT + product   │
+│  HEADER — #002f6c, chữ trắng: tên trường + MAIL_PRODUCT_NAME │
 ├─────────────────────────────────────────────────────┤
-│  BODY — nền #fafcfe, full width, căn đều (justify) │
-│  · bodyHtml từng route / mailLetterClosingHtml()   │
-│  · mailCalloutHtml() vẫn dùng MAIL_ACCENT (callout) │
+│  TITLE (tuỳ chọn) — 18px đậm #002f6c                │
 ├─────────────────────────────────────────────────────┤
-│  FOOTER — nền xám nhạt, 2 đoạn (liên hệ + disclaimer)│
-│  · Không dùng line-height:0 bọc footer (tránh chồng chữ)│
+│  BODY — #fff, 14px, justify; bodyHtml + mailLetter… │
+│  · mailCalloutHtml() — MAIL_ACCENT (callout)       │
+├─────────────────────────────────────────────────────┤
+│  FOOTER — liên hệ + một dòng disclaimer xám       │
 └─────────────────────────────────────────────────────┘
 ```
 
