@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
+import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import type { Province, SinhVienHoSoDraft, SinhVienHoSoProfile, Ward } from "@/lib/types/sinhvien-ho-so";
 import {
   SINHVIEN_HO_SO_LOAD_PROFILE_ERROR_DEFAULT,
@@ -21,20 +22,41 @@ import {
 import SinhVienProfileEditSection from "./components/SinhVienProfileEditSection";
 import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
+const PROFILE_CACHE_KEY = "sinhvien:ho-so:profile";
+const PROVINCES_CACHE_KEY = "vn-address:provinces";
+
+type ProfilePayload = { success: boolean; item?: SinhVienHoSoProfile | null; message?: string };
+
+function readCachedProfileItem(): SinhVienHoSoProfile | null {
+  if (typeof window === "undefined") return null;
+  const d = getCachedValue<ProfilePayload>(PROFILE_CACHE_KEY);
+  return (d?.item ?? null) as SinhVienHoSoProfile | null;
+}
+
+async function fetchProfilePayload(): Promise<ProfilePayload> {
+  const res = await fetch(SINHVIEN_HO_SO_PROFILE_ENDPOINT);
+  const data = (await res.json()) as ProfilePayload;
+  if (!res.ok || !data?.success) throw new Error(data?.message || SINHVIEN_HO_SO_LOAD_PROFILE_ERROR_DEFAULT);
+  return data;
+}
+
 export default function SinhVienHoSoPage() {
   const [toast, setToast] = useState("");
 
-  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(() =>
+    typeof window === "undefined" ? true : !hasCachedValue(PROFILE_CACHE_KEY)
+  );
   const [profileError, setProfileError] = useState("");
-  const [profile, setProfile] = useState<SinhVienHoSoProfile | null>(null);
+  const [profile, setProfile] = useState<SinhVienHoSoProfile | null>(() => readCachedProfileItem());
 
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [currentProvinceCode, setCurrentProvinceCode] = useState("");
-  const [currentWardCode, setCurrentWardCode] = useState("");
-  const [intro, setIntro] = useState("");
-  const [cvFileName, setCvFileName] = useState<string | null>(null);
-  const [cvMime, setCvMime] = useState<string | null>(null);
+  const initialDraft = mapProfileToDraft(readCachedProfileItem());
+  const [phone, setPhone] = useState(() => initialDraft.phone);
+  const [email, setEmail] = useState(() => initialDraft.email);
+  const [currentProvinceCode, setCurrentProvinceCode] = useState(() => initialDraft.currentProvinceCode);
+  const [currentWardCode, setCurrentWardCode] = useState(() => initialDraft.currentWardCode);
+  const [intro, setIntro] = useState(() => initialDraft.intro);
+  const [cvFileName, setCvFileName] = useState<string | null>(() => initialDraft.cvFileName);
+  const [cvMime, setCvMime] = useState<string | null>(() => initialDraft.cvMime);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [removeCv, setRemoveCv] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -62,12 +84,9 @@ export default function SinhVienHoSoPage() {
   useEffect(() => {
     void (async () => {
       try {
-        setProfileLoading(true);
+        if (!hasCachedValue(PROFILE_CACHE_KEY)) setProfileLoading(true);
         setProfileError("");
-        const res = await fetch(SINHVIEN_HO_SO_PROFILE_ENDPOINT);
-        const data = await res.json();
-        if (!res.ok || !data?.success)
-          throw new Error(data?.message || SINHVIEN_HO_SO_LOAD_PROFILE_ERROR_DEFAULT);
+        const data = await getOrFetchCached<ProfilePayload>(PROFILE_CACHE_KEY, fetchProfilePayload);
         setProfile((data.item ?? null) as SinhVienHoSoProfile | null);
         syncDraftFromProfile((data.item ?? null) as SinhVienHoSoProfile | null);
       } catch (e: any) {
@@ -79,10 +98,34 @@ export default function SinhVienHoSoPage() {
   }, []);
 
   useEffect(() => {
+    const timer = setInterval(() => {
+      if (isEditing || saving) return;
+      void (async () => {
+        try {
+          const data = await getOrFetchCached<ProfilePayload>(PROFILE_CACHE_KEY, fetchProfilePayload, { force: true });
+          setProfile((data.item ?? null) as SinhVienHoSoProfile | null);
+          syncDraftFromProfile((data.item ?? null) as SinhVienHoSoProfile | null);
+        } catch {
+          /* bỏ qua lỗi khi poll nền */
+        }
+      })();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [isEditing, saving]);
+
+  useEffect(() => {
     void (async () => {
-      const res = await fetch("/api/vn-address/provinces");
-      const data = await res.json();
-      if (res.ok && Array.isArray(data?.items)) setProvinces(data.items);
+      try {
+        const items = await getOrFetchCached<Province[]>(PROVINCES_CACHE_KEY, async () => {
+          const res = await fetch("/api/vn-address/provinces");
+          const data = await res.json();
+          if (!res.ok || !Array.isArray(data?.items)) throw new Error("Không tải được danh sách tỉnh/thành.");
+          return data.items as Province[];
+        });
+        setProvinces(items);
+      } catch {
+        setProvinces([]);
+      }
     })();
   }, []);
 
@@ -92,12 +135,16 @@ export default function SinhVienHoSoPage() {
       setCurrentWardCode("");
       return;
     }
+    const wardsKey = `vn-address:wards:${currentProvinceCode}`;
     setWardLoading(true);
-    fetch(`/api/vn-address/provinces/${currentProvinceCode}/wards`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data?.items)) setWards(data.items);
-      })
+    void getOrFetchCached<Ward[]>(wardsKey, async () => {
+      const r = await fetch(`/api/vn-address/provinces/${currentProvinceCode}/wards`);
+      const data = await r.json();
+      if (!Array.isArray(data?.items)) throw new Error("Không tải được phường/xã.");
+      return data.items as Ward[];
+    })
+      .then((items) => setWards(items))
+      .catch(() => setWards([]))
       .finally(() => setWardLoading(false));
   }, [currentProvinceCode]);
 
@@ -162,12 +209,9 @@ export default function SinhVienHoSoPage() {
         throw new Error(data?.message || SINHVIEN_HO_SO_SUBMIT_ERROR_DEFAULT);
       }
       setToast(getSinhVienHoSoSubmitSuccessMessage({ message: data?.message }));
-      const ref = await fetch(SINHVIEN_HO_SO_PROFILE_ENDPOINT);
-      const refData = await ref.json();
-      if (ref.ok && refData?.success) {
-        setProfile(refData.item ?? null);
-        syncDraftFromProfile(refData.item ?? null);
-      }
+      const refData = await getOrFetchCached<ProfilePayload>(PROFILE_CACHE_KEY, fetchProfilePayload, { force: true });
+      setProfile((refData.item ?? null) as SinhVienHoSoProfile | null);
+      syncDraftFromProfile((refData.item ?? null) as SinhVienHoSoProfile | null);
       setIsEditing(false);
     } catch (e: any) {
       setToast(e?.message || getSinhVienHoSoSubmitErrorMessage({ message: e?.message }));

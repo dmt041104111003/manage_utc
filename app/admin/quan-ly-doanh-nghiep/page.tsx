@@ -130,6 +130,13 @@ export default function AdminQuanLyDoanhNghiepPage() {
   }, [load]);
 
   useEffect(() => {
+    const timer = setInterval(() => {
+      void load({ force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [load]);
+
+  useEffect(() => {
     if (urlSynced.current || typeof window === "undefined") return;
     urlSynced.current = true;
     const st = new URLSearchParams(window.location.search).get("status");

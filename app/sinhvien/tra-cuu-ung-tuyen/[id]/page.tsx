@@ -85,6 +85,14 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void loadDetail({ force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId]);
+
   async function openApply() {
     try {
       await loadProfileForApply();

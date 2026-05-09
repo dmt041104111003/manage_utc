@@ -118,11 +118,19 @@ export default function AdminPhanCongGVHDPage() {
     }
   }
 
-  async function loadBaseOptions() {
+  async function loadBaseOptions(opts?: { force?: boolean }) {
+    const force = Boolean(opts?.force);
     try {
-      const res = await fetch("/api/admin/assignments/options");
-      const data = await res.json();
-      if (!res.ok || !data?.success) return;
+      const data = await getOrFetchCached<any>(
+        "admin:assignments:options",
+        async () => {
+          const res = await fetch("/api/admin/assignments/options");
+          const json = await res.json();
+          if (!res.ok || !json?.success) throw new Error(json?.message || "options");
+          return json;
+        },
+        { force }
+      );
       setOpenBatches(Array.isArray(data.openBatches) ? data.openBatches : []);
       if (Array.isArray(data.faculties)) setFaculties(data.faculties);
     } catch {
@@ -177,6 +185,15 @@ export default function AdminPhanCongGVHDPage() {
     loadList(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void loadBaseOptions({ force: true });
+      void loadList(page, { force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, searchQ, filterFaculty, filterStatus]);
 
   useEffect(() => {
     setPage(1);

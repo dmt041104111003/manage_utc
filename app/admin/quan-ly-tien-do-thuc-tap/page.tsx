@@ -155,6 +155,14 @@ export default function AdminTienDoThucTapPage() {
   }, []);
 
   useEffect(() => {
+    const timer = setInterval(() => {
+      void load({ force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, filterFaculty, filterDegree, filterStatus]);
+
+  useEffect(() => {
     if (!items.length) return;
     void Promise.allSettled(items.map((row) => fetchProgressDetailCached(row.id)));
     // eslint-disable-next-line react-hooks/exhaustive-deps

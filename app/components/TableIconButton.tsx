@@ -1,7 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 import styles from "./table-icon-button.module.css";
+
+function isAppInternalHref(href: string) {
+  return href.startsWith("/") && !href.startsWith("//");
+}
 
 type Variant = "default" | "danger" | "success" | "muted";
 
@@ -18,6 +23,13 @@ export default function TableIconButton({ label, href, onClick, disabled, childr
   const className = `${styles.iconBtn} ${variant !== "default" ? styles[variant] : ""}`;
 
   if (href) {
+    if (isAppInternalHref(href)) {
+      return (
+        <Link href={href} className={className} title={label} aria-label={label}>
+          {children}
+        </Link>
+      );
+    }
     return (
       <a href={href} className={className} title={label} aria-label={label}>
         {children}

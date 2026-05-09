@@ -43,6 +43,29 @@ export default function SinhVienTaiKhoanCaNhanPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void (async () => {
+        try {
+          const data = await getOrFetchCached<{ success?: boolean; message?: string; student?: StudentAccount | null }>(
+            SV_TAI_KHOAN_CACHE_KEY,
+            async () => {
+              const res = await fetch(SINHVIEN_HO_SO_TAI_KHOAN_ENDPOINT);
+              const json = await res.json();
+              if (!res.ok || !json?.success) throw new Error(json?.message || SINHVIEN_HO_SO_LOAD_ACCOUNT_ERROR_DEFAULT);
+              return json;
+            },
+            { force: true }
+          );
+          setStudent((data.student ?? null) as StudentAccount | null);
+        } catch {
+          /* poll nền */
+        }
+      })();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>

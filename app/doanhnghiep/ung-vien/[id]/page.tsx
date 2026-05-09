@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import styles from "../../styles/dashboard.module.css";
@@ -139,9 +140,9 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
       <header className={styles.header}>
         <h1 className={styles.title}>Xem chi tiết</h1>
         <p className={styles.subtitle}>
-          <a className={adminStyles.detailLink} href="/doanhnghiep/ung-vien">
+          <Link className={adminStyles.detailLink} href="/doanhnghiep/ung-vien">
             ← Quay lại danh sách
-          </a>
+          </Link>
         </p>
       </header>
 

@@ -3,7 +3,6 @@ import { degreeLabel } from "@/lib/constants/giangvien-bao-cao-thuc-tap";
 import TableIconButton from "../../../components/TableIconButton";
 import { FiBriefcase, FiEye, FiFileText } from "react-icons/fi";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
-import styles from "../../styles/dashboard.module.css";
 import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
@@ -37,7 +36,7 @@ export default function BaoCaoTableSection({ loading, rows, busy, onView, onUpda
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={7} className={styles.modulePlaceholder}>
+              <td colSpan={7} className={adminStyles.modulePlaceholder}>
                 Chưa có dữ liệu.
               </td>
             </tr>

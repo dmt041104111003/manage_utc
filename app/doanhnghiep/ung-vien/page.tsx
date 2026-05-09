@@ -12,7 +12,7 @@ import {
 } from "@/lib/constants/doanhnghiep-ung-vien";
 import { DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE } from "@/lib/constants/doanhnghiep-ung-vien-detail";
 import { buildDoanhNghiepUngVienListUrl, getDoanhNghiepUngVienLoadErrorMessage } from "@/lib/utils/doanhnghiep-ung-vien";
-import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
+import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import UngVienToolbar from "./components/UngVienToolbar";
 import UngVienTableSection from "./components/UngVienTableSection";
 
@@ -28,11 +28,38 @@ const EMPTY_APP_STATS: AppStats = {
   PENDING_REVIEW: 0, INTERVIEW_INVITED: 0, OFFERED: 0, REJECTED: 0, STUDENT_DECLINED: 0
 };
 
+function defaultListPage1CacheKey(): string | null {
+  if (typeof window === "undefined") return null;
+  const url = buildDoanhNghiepUngVienListUrl({
+    origin: window.location.origin,
+    q: "",
+    createdDate: "",
+    deadlineDate: "",
+    status: "all"
+  });
+  url.searchParams.set("page", "1");
+  url.searchParams.set("pageSize", String(DOANHNGHIEP_UNG_VIEN_PAGE_SIZE));
+  return `enterprise:ung-vien:list:${url.toString()}`;
+}
+
 export default function DoanhNghiepUngVienPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    const key = defaultListPage1CacheKey();
+    return key ? !hasCachedValue(key) : true;
+  });
   const [error, setError] = useState("");
-  const [items, setItems] = useState<JobRow[]>([]);
-  const [appStats, setAppStats] = useState<AppStats>(EMPTY_APP_STATS);
+  const [items, setItems] = useState<JobRow[]>(() => {
+    const key = defaultListPage1CacheKey();
+    if (!key) return [];
+    const data = getCachedValue<{ items?: JobRow[] }>(key);
+    return Array.isArray(data?.items) ? data.items : [];
+  });
+  const [appStats, setAppStats] = useState<AppStats>(() => {
+    const key = defaultListPage1CacheKey();
+    if (!key) return EMPTY_APP_STATS;
+    const data = getCachedValue<{ appStats?: AppStats }>(key);
+    return data?.appStats ?? EMPTY_APP_STATS;
+  });
 
   const [q, setQ] = useState("");
   const [createdDate, setCreatedDate] = useState("");
@@ -40,7 +67,12 @@ export default function DoanhNghiepUngVienPage() {
   const [status, setStatus] = useState<JobStatus | "all">("all");
 
   const [page, setPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
+  const [totalItems, setTotalItems] = useState(() => {
+    const key = defaultListPage1CacheKey();
+    if (!key) return 0;
+    const data = getCachedValue<{ totalItems?: number }>(key);
+    return Number(data?.totalItems || 0);
+  });
 
   async function load(nextPage = 1, opts?: { force?: boolean; silent?: boolean }) {
     const force = Boolean(opts?.force);

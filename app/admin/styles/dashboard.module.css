@@ -734,6 +734,51 @@
   border-color: #fca5a5;
 }
 
+/* Tối đa 6 thẻ/hàng, hàng tiếp theo khi >6 — cùng palette statsGrid3 */
+.statsGrid6 {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.statsGrid6 > .statCard {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.statsGrid6 > .statCard:nth-child(6n + 1) {
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+.statsGrid6 > .statCard:nth-child(6n + 2) {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+.statsGrid6 > .statCard:nth-child(6n + 3) {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+.statsGrid6 > .statCard:nth-child(6n + 4) {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+.statsGrid6 > .statCard:nth-child(6n + 5) {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+}
+.statsGrid6 > .statCard:nth-child(6n + 6) {
+  background: #cffafe;
+  border-color: #67e8f9;
+}
+
+@media (max-width: 1100px) {
+  .statsGrid6 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
   .searchToolbar {
     flex-direction: column;
@@ -781,6 +826,10 @@
     flex: none;
     width: 100%;
     min-width: 0;
+  }
+
+  .statsGrid6 {
+    grid-template-columns: 1fr;
   }
 }
 

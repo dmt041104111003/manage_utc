@@ -32,6 +32,7 @@ function jobPostsListCacheKey(
 }
 
 const JOB_POSTS_LIST_INITIAL_KEY = jobPostsListCacheKey("", "all", "all", "all");
+const ADMIN_INTERNSHIP_BATCHES_ALL_CACHE_KEY = "admin:internship-batches:list:status=all";
 
 function readJobPostsListFromCache(key: string) {
   const data = getCachedValue<{
@@ -89,12 +90,20 @@ export default function AdminQuanLyTinTuyenDungPage() {
       { force }
     );
 
-  const loadBatches = async () => {
+  const loadBatches = async (opts?: { force?: boolean }) => {
+    const force = Boolean(opts?.force);
     setLoadingBatches(true);
     try {
-      const res = await fetch("/api/admin/internship-batches?status=all");
-      const data = (await res.json()) as ApiResponse<InternshipBatchRow>;
-      if (!res.ok || !data.success) throw new Error(data.message || "Lỗi tải đợt thực tập.");
+      const data = await getOrFetchCached<ApiResponse<InternshipBatchRow> & { items?: InternshipBatchRow[] }>(
+        ADMIN_INTERNSHIP_BATCHES_ALL_CACHE_KEY,
+        async () => {
+          const res = await fetch("/api/admin/internship-batches?status=all");
+          const json = (await res.json()) as ApiResponse<InternshipBatchRow>;
+          if (!res.ok || !json.success) throw new Error(json.message || "Lỗi tải đợt thực tập.");
+          return json;
+        },
+        { force }
+      );
       setBatches((data.items || []) as any);
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Lỗi tải đợt thực tập.");
@@ -144,6 +153,15 @@ export default function AdminQuanLyTinTuyenDungPage() {
     void Promise.all([loadBatches(), load()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void loadBatches({ force: true });
+      void load({ force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQ, searchBatchId, searchExpertise, searchStatus]);
 
   useEffect(() => {
     if (!items.length) return;

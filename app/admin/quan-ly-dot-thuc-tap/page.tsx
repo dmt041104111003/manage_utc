@@ -102,6 +102,13 @@ export default function AdminQuanLyDotThucTapPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void load({ force: true, silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [load]);
+
   const dismissToast = () => setToast("");
 
   const validateCreate = () => {

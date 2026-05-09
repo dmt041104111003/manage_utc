@@ -78,6 +78,14 @@ export default function EnterpriseAccountPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (isEditing || saving) return;
+      void reloadMe();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [isEditing, saving]);
+
   const setField = (key: keyof FormState, value: string | string[]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
     setFieldErrors((prev) => ({ ...prev, [key]: "" }));
