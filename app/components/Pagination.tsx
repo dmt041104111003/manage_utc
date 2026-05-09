@@ -1,6 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 export default function Pagination({
   page,
@@ -47,6 +48,15 @@ export default function Pagination({
   const btnCls = buttonClassName || "";
   const activeCls = activeButtonClassName || btnCls;
 
+  const iconBtnStyle: CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: "2.25rem",
+    minHeight: "2.25rem",
+    padding: "0 8px"
+  };
+
   return (
     <nav
       className={wrapClassName}
@@ -58,8 +68,16 @@ export default function Pagination({
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <button type="button" className={btnCls} onClick={() => setPage(current - 1)} disabled={!canPrev}>
-          Trước
+        <button
+          type="button"
+          className={btnCls}
+          onClick={() => setPage(current - 1)}
+          disabled={!canPrev}
+          aria-label="Trang trước"
+          title="Trang trước"
+          style={iconBtnStyle}
+        >
+          <FiChevronLeft size={20} aria-hidden />
         </button>
 
         {pages.map((p, idx) => {
@@ -87,11 +105,18 @@ export default function Pagination({
           );
         })}
 
-        <button type="button" className={btnCls} onClick={() => setPage(current + 1)} disabled={!canNext}>
-          Sau
+        <button
+          type="button"
+          className={btnCls}
+          onClick={() => setPage(current + 1)}
+          disabled={!canNext}
+          aria-label="Trang sau"
+          title="Trang sau"
+          style={iconBtnStyle}
+        >
+          <FiChevronRight size={20} aria-hidden />
         </button>
       </div>
     </nav>
   );
 }
-
