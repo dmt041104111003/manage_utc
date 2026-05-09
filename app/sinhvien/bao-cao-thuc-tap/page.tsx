@@ -3,14 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
-import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
-import FormPopup from "../../components/FormPopup";
 import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
 import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
 import type {
   InternshipStatus,
-  InternshipReportReviewStatus,
   Report,
   SupervisorInfo,
   StatusHistoryEvent
@@ -22,14 +19,17 @@ import {
   SINHVIEN_BAO_CAO_THUC_TAP_SUBMIT_EDIT_SUCCESS_DEFAULT,
   SINHVIEN_BAO_CAO_THUC_TAP_SUBMIT_NEW_ERROR_DEFAULT,
   SINHVIEN_BAO_CAO_THUC_TAP_SUBMIT_NEW_SUCCESS_DEFAULT,
-  internshipStatusLabel,
-  genderLabel,
-  supervisorDegreeLabel,
   BCTT_ERROR_INVALID_MIME,
   BCTT_ERROR_REQUIRED_FILE_BEFORE_EDIT,
   BCTT_ERROR_REQUIRED_FILE_BEFORE_SUBMIT
 } from "@/lib/constants/sinhvien-bao-cao-thuc-tap";
 import { getSinhVienBaoCaoStatusHintText, isAllowedBcttMime } from "@/lib/utils/sinhvien-bao-cao-thuc-tap";
+import BaoCaoThucTapStatusSection from "./components/BaoCaoThucTapStatusSection";
+import BaoCaoThucTapSupervisorSection from "./components/BaoCaoThucTapSupervisorSection";
+import BaoCaoThucTapStatusHistorySection from "./components/BaoCaoThucTapStatusHistorySection";
+import BaoCaoThucTapResultSection from "./components/BaoCaoThucTapResultSection";
+import BaoCaoThucTapUploadPopup from "./components/BaoCaoThucTapUploadPopup";
+import BaoCaoThucTapEditPopup from "./components/BaoCaoThucTapEditPopup";
 
 export default function SinhvienBaoCaoThucTapPage() {
   const [loading, setLoading] = useState(true);
@@ -188,255 +188,55 @@ export default function SinhvienBaoCaoThucTapPage() {
         <p className={styles.modulePlaceholder}>Đang tải…</p>
       ) : (
         <>
-          <section className={adminStyles.detailCard} style={{ padding: "20px 22px", maxWidth: "none" }}>
-            <div className={adminStyles.detailSectionTitle}>Trạng thái thực tập</div>
-            <table className={adminStyles.viewModalDetailTable}>
-              <tbody>
-                <tr>
-                  <th scope="row">Trạng thái hiện tại</th>
-                  <td>{internshipStatusLabel[internshipStatus]}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Ghi chú</th>
-                  <td>{statusHint}</td>
-                </tr>
-              </tbody>
-            </table>
+          <BaoCaoThucTapStatusSection
+            internshipStatus={internshipStatus}
+            statusHint={statusHint}
+            canSubmitReport={canSubmitReport}
+            canEditReport={canEditReport}
+            hasReport={!!report}
+            busy={busy}
+            onOpenUpload={() => { resetUploadState(); setUploadOpen(true); }}
+            onOpenEdit={() => { resetUploadState(); setEditOpen(true); }}
+          />
 
-            <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {internshipStatus === "DOING" || internshipStatus === "SELF_FINANCED" ? (
-                <button
-                  type="button"
-                  className={`${adminStyles.btn} ${adminStyles.btnPrimary}`}
-                  disabled={!canSubmitReport || busy}
-                  onClick={() => {
-                    resetUploadState();
-                    setUploadOpen(true);
-                  }}
-                >
-                  Nộp BCTT
-                </button>
-              ) : (
-                <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} disabled>
-                  Nộp BCTT
-                </button>
-              )}
+          <BaoCaoThucTapSupervisorSection supervisor={supervisor} />
 
-              {report ? (
-                canEditReport ? (
-                  <button
-                    type="button"
-                    className={adminStyles.btn}
-                    disabled={busy}
-                    onClick={() => {
-                      resetUploadState();
-                      setEditOpen(true);
-                    }}
-                  >
-                    Sửa BCTT
-                  </button>
-                ) : (
-                  <button type="button" className={adminStyles.btn} disabled>
-                    Sửa BCTT
-                  </button>
-                )
-              ) : null}
-            </div>
-          </section>
-
-          <section className={adminStyles.detailCard} style={{ padding: "20px 22px", marginTop: 16, maxWidth: "none" }}>
-            <div className={adminStyles.detailSectionTitle}>Thông tin GVHD</div>
-            {supervisor ? (
-              <table className={adminStyles.viewModalDetailTable}>
-                <tbody>
-                  <tr>
-                    <th scope="row">Họ tên</th>
-                    <td>{supervisor.fullName}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Số điện thoại</th>
-                    <td>{supervisor.phone ?? "—"}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Email</th>
-                    <td>{supervisor.email}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Giới tính</th>
-                    <td>{genderLabel[supervisor.gender] ?? supervisor.gender}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Bậc</th>
-                    <td>{supervisorDegreeLabel[supervisor.degree] ?? supervisor.degree}</td>
-                  </tr>
-                </tbody>
-              </table>
-            ) : (
-              <p className={styles.modulePlaceholder}>Chưa được phân công GVHD.</p>
-            )}
-          </section>
-
-          <section className={adminStyles.detailCard} style={{ padding: "20px 22px", marginTop: 16, maxWidth: "none" }}>
-            <div className={adminStyles.detailSectionTitle}>Lịch sử thay đổi trạng thái</div>
-            {statusHistory.length ? (
-              <div className={adminStyles.tableWrap}>
-                <table className={adminStyles.dataTable}>
-                  <thead>
-                    <tr>
-                      <th>Thời điểm</th>
-                      <th>Từ</th>
-                      <th>→</th>
-                      <th>To</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {statusHistory.map((h, idx) => (
-                      <tr key={`${h.at || ""}-${idx}`}>
-                        <td>{h.at ? new Date(h.at).toLocaleString("vi-VN") : "—"}</td>
-                        <td>{internshipStatusLabel[h.fromStatus]}</td>
-                        <td> </td>
-                        <td>{internshipStatusLabel[h.toStatus]}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className={styles.modulePlaceholder}>Chưa có lịch sử.</p>
-            )}
-          </section>
+          <BaoCaoThucTapStatusHistorySection statusHistory={statusHistory} />
 
           {canShowResults ? (
-            <section className={adminStyles.detailCard} style={{ padding: "20px 22px", marginTop: 16, maxWidth: "none" }}>
-              <div className={adminStyles.detailSectionTitle}>Kết quả thực tập</div>
-              <table className={adminStyles.viewModalDetailTable}>
-                <tbody>
-                  <tr>
-                    <th scope="row">Đánh giá GVHD</th>
-                    <td style={{ whiteSpace: "pre-wrap" }}>{report?.supervisorEvaluation ?? "—"}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Điểm GVHD</th>
-                    <td>{report?.supervisorPoint ?? "—"}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Đánh giá DN</th>
-                    <td style={{ whiteSpace: "pre-wrap" }}>{report?.enterpriseEvaluation ?? "—"}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Điểm DN</th>
-                    <td>{report?.enterprisePoint ?? "—"}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">File BCTT</th>
-                    <td>{report && reportFileLink ? <a className={adminStyles.detailLink} href={reportFileLink} download={report.reportFileName}>Tải file</a> : "—"}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </section>
+            <BaoCaoThucTapResultSection report={report} reportFileLink={reportFileLink} />
           ) : null}
         </>
       )}
 
       {uploadOpen ? (
-        <FormPopup
-          open
-          title="Nộp BCTT"
-          size="wide"
+        <BaoCaoThucTapUploadPopup
           busy={busy}
-          onClose={() => {
-            if (!busy) setUploadOpen(false);
-          }}
-          actions={
-            <>
-              <button type="button" className={adminStyles.btn} disabled={busy} onClick={() => setUploadOpen(false)}>
-                Hủy
-              </button>
-              <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} disabled={busy} onClick={() => void submitNewReport()}>
-                Nộp BCTT
-              </button>
-            </>
-          }
-        >
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>File BCTT (PDF hoặc DOCX)</label>
-            <input
-              className={formStyles.input}
-              type="file"
-              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              disabled={busy}
-              onChange={(e) => {
-                const f = e.target.files?.[0] ?? null;
-                void onChooseFile(f);
-              }}
-            />
-            {fieldErrors.file ? <p className={formStyles.error}>{fieldErrors.file}</p> : null}
-          </div>
-        </FormPopup>
+          fieldError={fieldErrors.file ?? ""}
+          onChooseFile={(f) => void onChooseFile(f)}
+          onClose={() => setUploadOpen(false)}
+          onSubmit={() => void submitNewReport()}
+        />
       ) : null}
 
       {editOpen ? (
-        <FormPopup
-          open
-          title="Sửa BCTT"
-          size="wide"
+        <BaoCaoThucTapEditPopup
           busy={busy}
-          onClose={() => {
-            if (!busy) setEditOpen(false);
+          report={report}
+          reportFileLink={reportFileLink}
+          selectedFileBase64={selectedFileBase64}
+          deleteLocalFile={deleteLocalFile}
+          fieldError={fieldErrors.file ?? ""}
+          onChooseFile={(f) => void onChooseFile(f)}
+          onDeleteFile={() => {
+            setDeleteLocalFile(true);
+            setSelectedFileName(null);
+            setSelectedFileMime(null);
+            setSelectedFileBase64(null);
           }}
-          actions={
-            <>
-              <button type="button" className={adminStyles.btn} disabled={busy} onClick={() => setEditOpen(false)}>
-                Hủy
-              </button>
-              <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} disabled={busy} onClick={() => void submitEditReport()}>
-                Lưu
-              </button>
-            </>
-          }
-        >
-          <div className={formStyles.field}>
-            <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 8 }}>
-              Lý do GVHD từ chối:
-              <div style={{ marginTop: 4, whiteSpace: "pre-wrap", color: "#111827", fontWeight: 600 }}>{report?.supervisorRejectReason ?? "—"}</div>
-            </div>
-
-            <label className={formStyles.label}>File BCTT mới (PDF hoặc DOCX)</label>
-            <input
-              className={formStyles.input}
-              type="file"
-              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              disabled={busy}
-              onChange={(e) => {
-                const f = e.target.files?.[0] ?? null;
-                void onChooseFile(f);
-              }}
-            />
-
-            {report && reportFileLink && !selectedFileBase64 && !deleteLocalFile ? (
-              <div style={{ marginTop: 10 }}>
-                <a className={adminStyles.detailLink} href={reportFileLink} download={report.reportFileName}>
-                  Tải file hiện tại
-                </a>
-                <button
-                  type="button"
-                  className={adminStyles.textLinkBtn}
-                  disabled={busy}
-                  onClick={() => {
-                    setDeleteLocalFile(true);
-                    setSelectedFileName(null);
-                    setSelectedFileMime(null);
-                    setSelectedFileBase64(null);
-                  }}
-                >
-                  Xóa file
-                </button>
-              </div>
-            ) : null}
-
-            {fieldErrors.file ? <p className={formStyles.error}>{fieldErrors.file}</p> : null}
-          </div>
-        </FormPopup>
+          onClose={() => setEditOpen(false)}
+          onSubmit={() => void submitEditReport()}
+        />
       ) : null}
 
       {toast ? <MessagePopup open message={toast} onClose={() => setToast("")} /> : null}

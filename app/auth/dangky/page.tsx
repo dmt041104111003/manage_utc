@@ -5,16 +5,13 @@ import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from "react";
 import { AuthShell } from "../components/AuthShell";
 import styles from "../styles/register.module.css";
-import {
-  DOANHNGHIEP_BUSINESS_FIELD_OPTIONS,
-  DOANHNGHIEP_MAX_UPLOAD_FILE_LABEL,
-  MAX_ENTERPRISE_UPLOAD_BYTES
-} from "@/lib/constants/doanhnghiep";
 import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
 import { DEMO_ENTERPRISE_REGISTER_FORM } from "./demo-register-data";
 import type { FormDataState, VnProvince, VnWard } from "@/lib/types/enterprise-register";
 import { EMPTY_ENTERPRISE_REGISTER_FORM } from "@/lib/constants/auth/enterprise-register";
 import { getInitialRegisterForm, validateEnterpriseRegisterForm } from "@/lib/utils/auth/enterprise-register";
+import EnterpriseInfoSection from "./components/EnterpriseInfoSection";
+import RepresentativeSection from "./components/RepresentativeSection";
 
 export default function EnterpriseRegisterPage() {
   const router = useRouter();
@@ -122,6 +119,16 @@ export default function EnterpriseRegisterPage() {
     setErrors((prev) => ({ ...prev, ward: "" }));
   };
 
+  const onBusinessLicenseChange = (file: File | null, error: string) => {
+    setBusinessLicense(file);
+    setErrors((prev) => ({ ...prev, businessLicense: error }));
+  };
+
+  const onCompanyLogoChange = (file: File | null, error: string) => {
+    setCompanyLogo(file);
+    setErrors((prev) => ({ ...prev, companyLogo: error }));
+  };
+
   const validate = () => {
     const { errors: nextErrors, isValid } = validateEnterpriseRegisterForm({
       form,
@@ -210,261 +217,28 @@ export default function EnterpriseRegisterPage() {
       <p className={styles.desc}>Tạo tài khoản doanh nghiệp để kết nối thực tập với nhà trường.</p>
 
       <form onSubmit={handleSubmit} noValidate aria-busy={isSubmitting}>
-        <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Thông tin doanh nghiệp</h3>
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Tên doanh nghiệp <span className={styles.required}>*</span>
-            </label>
-            <input
-              disabled={isSubmitting}
-              name="companyName"
-              className={styles.input}
-              placeholder="Nhập tên doanh nghiệp"
-              value={form.companyName}
-              onChange={onChangeText}
-            />
-            {errors.companyName ? <p className={styles.error}>{errors.companyName}</p> : null}
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Mã số thuế <span className={styles.required}>*</span>
-            </label>
-            <input
-              disabled={isSubmitting}
-              name="taxCode"
-              className={styles.input}
-              placeholder="Nhập mã số thuế"
-              value={form.taxCode}
-              onChange={onChangeText}
-            />
-            {errors.taxCode ? <p className={styles.error}>{errors.taxCode}</p> : null}
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Lĩnh vực hoạt động <span className={styles.required}>*</span>
-            </label>
-            <select
-              multiple
-              disabled={isSubmitting}
-              className={styles.multiSelect}
-              value={form.businessFields}
-              onChange={onChangeBusinessFields}
-            >
-              {DOANHNGHIEP_BUSINESS_FIELD_OPTIONS.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-            <p className={styles.hint}>Giữ Ctrl (hoặc Cmd trên Mac) để chọn nhiều lĩnh vực.</p>
-            {errors.businessFields ? <p className={styles.error}>{errors.businessFields}</p> : null}
-          </div>
-
-          <h4 className={styles.sectionTitle} style={{ marginTop: "1.25rem", fontSize: "1rem" }}>
-            Địa chỉ trụ sở chính
-          </h4>
-          {addressError ? <p className={styles.error}>{addressError}</p> : null}
-
-          <div className={styles.grid2}>
-            <div className={styles.field}>
-              <label className={styles.label}>
-                Tỉnh thành <span className={styles.required}>*</span>
-              </label>
-              <select
-                disabled={isSubmitting || addressLoading.provinces}
-                className={styles.select}
-                value={form.provinceCode}
-                onChange={onProvinceChange}
-              >
-                <option value="">{addressLoading.provinces ? "Đang tải…" : "Chọn tỉnh thành"}</option>
-                {provinces.map((p) => (
-                  <option key={p.code} value={String(p.code)}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              {errors.province ? <p className={styles.error}>{errors.province}</p> : null}
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label}>
-                Phường xã <span className={styles.required}>*</span>
-              </label>
-              <select
-                disabled={isSubmitting || !form.provinceCode || addressLoading.wards}
-                className={styles.select}
-                value={form.wardCode}
-                onChange={onWardChange}
-              >
-                <option value="">
-                  {!form.provinceCode
-                    ? "Chọn tỉnh trước"
-                    : addressLoading.wards
-                      ? "Đang tải…"
-                      : "Chọn phường xã"}
-                </option>
-                {wards.map((w) => (
-                  <option key={w.code} value={String(w.code)}>
-                    {w.name}
-                  </option>
-                ))}
-              </select>
-              {errors.ward ? <p className={styles.error}>{errors.ward}</p> : null}
-            </div>
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Địa chỉ chi tiết <span className={styles.required}>*</span>
-            </label>
-            <input
-              disabled={isSubmitting}
-              name="addressDetail"
-              className={styles.input}
-              placeholder="Số nhà, ngõ, đường (chỉ chữ, số, khoảng trắng)"
-              value={form.addressDetail}
-              onChange={onChangeText}
-            />
-            <p className={styles.hint}>
-              Có thể là địa chỉ sau khi sáp nhập địa giới hoặc trước sáp nhập. Chỉ nhập chữ, số và khoảng trắng (không
-              ký tự đặc biệt).
-            </p>
-            {errors.addressDetail ? <p className={styles.error}>{errors.addressDetail}</p> : null}
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Giấy phép kinh doanh <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="file"
-              disabled={isSubmitting || addrBusy}
-              className={styles.input}
-              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              onChange={(event) => {
-                const f = event.target.files?.[0] || null;
-                setBusinessLicense(f);
-                setErrors((prev) => ({ ...prev, businessLicense: "" }));
-                if (f && f.size > MAX_ENTERPRISE_UPLOAD_BYTES) {
-                  setErrors((prev) => ({
-                    ...prev,
-                    businessLicense: `Giấy phép tối đa ${DOANHNGHIEP_MAX_UPLOAD_FILE_LABEL} / file.`
-                  }));
-                }
-              }}
-            />
-            <p className={styles.hint}>Định dạng PDF hoặc Word (.doc, .docx); tối đa {DOANHNGHIEP_MAX_UPLOAD_FILE_LABEL}.</p>
-            {errors.businessLicense ? <p className={styles.error}>{errors.businessLicense}</p> : null}
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Logo công ty <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="file"
-              disabled={isSubmitting || addrBusy}
-              className={styles.input}
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              onChange={(event) => {
-                const f = event.target.files?.[0] || null;
-                setCompanyLogo(f);
-                setErrors((prev) => ({ ...prev, companyLogo: "" }));
-                if (f && f.size > MAX_ENTERPRISE_UPLOAD_BYTES) {
-                  setErrors((prev) => ({
-                    ...prev,
-                    companyLogo: `Logo tối đa ${DOANHNGHIEP_MAX_UPLOAD_FILE_LABEL} / file.`
-                  }));
-                }
-              }}
-            />
-            <p className={styles.hint}>File ảnh (JPG, PNG, WebP, GIF); tối đa {DOANHNGHIEP_MAX_UPLOAD_FILE_LABEL}.</p>
-            {errors.companyLogo ? <p className={styles.error}>{errors.companyLogo}</p> : null}
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>Website (nếu có)</label>
-            <input
-              disabled={isSubmitting}
-              name="website"
-              className={styles.input}
-              placeholder="https://company.vn"
-              value={form.website}
-              onChange={onChangeText}
-            />
-            {errors.website ? <p className={styles.error}>{errors.website}</p> : null}
-          </div>
-        </section>
-
-        <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>Thông tin Người đại diện/Liên hệ</h3>
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Họ và tên <span className={styles.required}>*</span>
-            </label>
-            <input
-              disabled={isSubmitting}
-              name="representativeName"
-              className={styles.input}
-              placeholder="Nhập họ và tên"
-              value={form.representativeName}
-              onChange={onChangeText}
-            />
-            {errors.representativeName ? <p className={styles.error}>{errors.representativeName}</p> : null}
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>
-              Chức vụ <span className={styles.required}>*</span>
-            </label>
-            <input
-              disabled={isSubmitting}
-              name="representativeTitle"
-              className={styles.input}
-              placeholder="Nhập chức vụ"
-              value={form.representativeTitle}
-              onChange={onChangeText}
-            />
-            {errors.representativeTitle ? <p className={styles.error}>{errors.representativeTitle}</p> : null}
-          </div>
-
-          <div className={styles.grid2}>
-            <div className={styles.field}>
-              <label className={styles.label}>
-                Số điện thoại <span className={styles.required}>*</span>
-              </label>
-              <input
-                disabled={isSubmitting}
-                name="phone"
-                className={styles.input}
-                placeholder="Nhập số điện thoại"
-                value={form.phone}
-                onChange={onChangeText}
-              />
-              {errors.phone ? <p className={styles.error}>{errors.phone}</p> : null}
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>
-                Email <span className={styles.required}>*</span>
-              </label>
-              <input
-                disabled={isSubmitting}
-                name="email"
-                type="email"
-                autoComplete="email"
-                className={styles.input}
-                placeholder="example@domain.com"
-                value={form.email}
-                onChange={onChangeText}
-              />
-              {errors.email ? <p className={styles.error}>{errors.email}</p> : null}
-            </div>
-          </div>
-        </section>
-
+        <EnterpriseInfoSection
+          form={form}
+          errors={errors}
+          provinces={provinces}
+          wards={wards}
+          addressLoading={addressLoading}
+          addressError={addressError}
+          addrBusy={addrBusy}
+          isSubmitting={isSubmitting}
+          onChangeText={onChangeText}
+          onChangeBusinessFields={onChangeBusinessFields}
+          onProvinceChange={onProvinceChange}
+          onWardChange={onWardChange}
+          onBusinessLicenseChange={onBusinessLicenseChange}
+          onCompanyLogoChange={onCompanyLogoChange}
+        />
+        <RepresentativeSection
+          form={form}
+          errors={errors}
+          isSubmitting={isSubmitting}
+          onChangeText={onChangeText}
+        />
         <button className={styles.button} type="submit" disabled={isSubmitting || addrBusy}>
           {isSubmitting ? "Đang đăng ký..." : "Đăng ký"}
         </button>

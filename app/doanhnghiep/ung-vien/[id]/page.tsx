@@ -1,26 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../../styles/dashboard.module.css";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../../components/MessagePopup";
-import FormPopup from "../../../components/FormPopup";
-import Pagination from "../../../components/Pagination";
-import type {
-  Applicant,
-  JobApplicationResponse,
-  JobApplicationStatus,
-  JobDetail,
-  JobStatus,
-  WorkType
-} from "@/lib/types/doanhnghiep-ung-vien-detail";
-import {
-  applicationStatusLabel,
-  responseLabel,
-  workTypeLabel,
-  DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE
-} from "@/lib/constants/doanhnghiep-ung-vien-detail";
-import { formatDateTimeVi } from "@/lib/utils/doanhnghiep-ung-vien-detail";
+import type { Applicant, JobApplicationStatus, JobDetail } from "@/lib/types/doanhnghiep-ung-vien-detail";
+import JobDetailInfo from "./components/JobDetailInfo";
+import ApplicantTableSection from "./components/ApplicantTableSection";
+import ApplicantDetailPopup from "./components/ApplicantDetailPopup";
 
 export default function DoanhNghiepUngVienDetailPage({ params }: { params: { id: string } }) {
   const jobId = params.id;
@@ -29,17 +16,10 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: { id:
   const [error, setError] = useState("");
   const [job, setJob] = useState<JobDetail | null>(null);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
-
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE;
-  const paged = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return applicants.slice(start, start + PAGE_SIZE);
-  }, [applicants, page]);
-
   const [toast, setToast] = useState("");
-  const [viewTarget, setViewTarget] = useState<Applicant | null>(null);
 
+  const [viewTarget, setViewTarget] = useState<Applicant | null>(null);
   const [editTarget, setEditTarget] = useState<Applicant | null>(null);
   const [busy, setBusy] = useState(false);
   const [nextStatus, setNextStatus] = useState<JobApplicationStatus>("PENDING_REVIEW");
@@ -55,8 +35,8 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: { id:
       setJob(data.job ?? null);
       setApplicants(Array.isArray(data.applicants) ? data.applicants : []);
       setPage(1);
-    } catch (e: any) {
-      setError(e?.message || "Không thể tải chi tiết tin tuyển dụng.");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Không thể tải chi tiết tin tuyển dụng.");
     } finally {
       setLoading(false);
     }
@@ -74,6 +54,11 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: { id:
     setInterviewAt(app.interviewAt ? new Date(app.interviewAt).toISOString().slice(0, 16) : "");
   }
 
+  const closeApplicant = () => {
+    setViewTarget(null);
+    setEditTarget(null);
+  };
+
   async function submitUpdateStatus() {
     if (!editTarget) return;
     if (nextStatus === "INTERVIEW_INVITED" && !interviewAt) {
@@ -82,7 +67,7 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: { id:
     }
     setBusy(true);
     try {
-      const payload: any = { status: nextStatus };
+      const payload: Record<string, unknown> = { status: nextStatus };
       if (nextStatus === "INTERVIEW_INVITED") payload.interviewAt = new Date(interviewAt).toISOString();
       const res = await fetch(`/api/doanhnghiep/ung-vien/applications/${editTarget.id}`, {
         method: "PATCH",
@@ -92,11 +77,10 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: { id:
       const data = await res.json();
       if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể cập nhật trạng thái hồ sơ.");
       setToast(data?.message || "Cập nhật trạng thái hồ sơ thành công.");
-      setViewTarget(null);
-      setEditTarget(null);
+      closeApplicant();
       await load();
-    } catch (e: any) {
-      setToast(e?.message || "Không thể cập nhật trạng thái hồ sơ.");
+    } catch (e: unknown) {
+      setToast(e instanceof Error ? e.message : "Không thể cập nhật trạng thái hồ sơ.");
     } finally {
       setBusy(false);
     }
@@ -119,215 +103,27 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: { id:
         <p className={styles.modulePlaceholder}>Đang tải…</p>
       ) : job ? (
         <>
-          <section className={adminStyles.detailCard} style={{ maxWidth: "none" }}>
-            <div className={adminStyles.detailSectionTitle}>Thông tin tin tuyển dụng</div>
-            <table className={adminStyles.viewModalDetailTable} style={{ marginTop: 10 }}>
-              <tbody>
-                <tr>
-                  <th scope="row">Tiêu đề</th>
-                  <td>{job.title}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Mức lương</th>
-                  <td>{job.salary}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Chuyên môn</th>
-                  <td>{job.expertise}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Yêu cầu kinh nghiệm</th>
-                  <td>{job.experienceRequirement}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Hình thức làm việc</th>
-                  <td>{workTypeLabel[job.workType]}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Mô tả công việc</th>
-                  <td style={{ whiteSpace: "pre-wrap" }}>{job.jobDescription}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Yêu cầu ứng viên</th>
-                  <td style={{ whiteSpace: "pre-wrap" }}>{job.candidateRequirements}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Địa điểm làm việc</th>
-                  <td>{job.workLocation}</td>
-                </tr>
-              </tbody>
-            </table>
-          </section>
-
-          <section style={{ marginTop: 16 }}>
-            <div className={adminStyles.detailSectionTitle} style={{ marginBottom: 8 }}>
-              Danh sách ứng viên ứng tuyển
-            </div>
-
-            <div className={adminStyles.tableWrap}>
-              <table className={adminStyles.dataTable}>
-                <thead>
-                  <tr>
-                    <th>STT</th>
-                    <th>Họ tên</th>
-                    <th>SĐT</th>
-                    <th>Email</th>
-                    <th>Trạng thái phản hồi</th>
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paged.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className={styles.modulePlaceholder}>
-                        Chưa có ứng viên ứng tuyển.
-                      </td>
-                    </tr>
-                  ) : (
-                    paged.map((a, idx) => (
-                      <tr key={a.id}>
-                        <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
-                        <td data-label="Họ tên">{a.student.fullName}</td>
-                        <td data-label="SĐT">{a.student.phone ?? "—"}</td>
-                        <td data-label="Email">{a.student.email}</td>
-                        <td data-label="Trạng thái phản hồi">
-                          {applicationStatusLabel[a.status]} • {responseLabel[a.response]}
-                        </td>
-                        <td data-label="Thao tác">
-                          <button type="button" className={adminStyles.textLinkBtn} onClick={() => openApplicant(a)} disabled={busy}>
-                            Xem chi tiết
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <Pagination
-              page={page}
-              pageSize={PAGE_SIZE}
-              totalItems={applicants.length}
-              onPageChange={setPage}
-              buttonClassName={adminStyles.btn}
-              activeButtonClassName={`${adminStyles.btn} ${adminStyles.btnPrimary}`}
-            />
-          </section>
+          <JobDetailInfo job={job} />
+          <ApplicantTableSection
+            applicants={applicants}
+            page={page}
+            busy={busy}
+            onView={openApplicant}
+            onPageChange={setPage}
+          />
         </>
       ) : null}
 
-      {viewTarget ? (
-        <FormPopup
-          open
-          title="Xem chi tiết ứng viên"
-          size="extraWide"
-          busy={busy}
-          onClose={() => {
-            setViewTarget(null);
-            setEditTarget(null);
-          }}
-          actions={
-            <>
-              <button
-                type="button"
-                className={adminStyles.btn}
-                onClick={() => {
-                  setViewTarget(null);
-                  setEditTarget(null);
-                }}
-                disabled={busy}
-              >
-                Đóng
-              </button>
-              <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={() => void submitUpdateStatus()} disabled={busy}>
-                Lưu
-              </button>
-            </>
-          }
-        >
-          <table className={adminStyles.viewModalDetailTable}>
-            <tbody>
-              <tr>
-                <th scope="row">Họ tên</th>
-                <td>{viewTarget.student.fullName}</td>
-              </tr>
-              <tr>
-                <th scope="row">SĐT</th>
-                <td>{viewTarget.student.phone ?? "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">Email</th>
-                <td>{viewTarget.student.email}</td>
-              </tr>
-              <tr>
-                <th scope="row">Thư giới thiệu bản thân</th>
-                <td style={{ whiteSpace: "pre-wrap" }}>{viewTarget.coverLetter || "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">File CV đính kèm</th>
-                <td>{viewTarget.cvUrl ? <a className={adminStyles.detailLink} href={viewTarget.cvUrl}>Tải CV</a> : "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">Lịch sử phản hồi</th>
-                <td>
-                  {Array.isArray(viewTarget.history) && viewTarget.history.length ? (
-                    <div style={{ display: "grid", gap: 6 }}>
-                      {viewTarget.history.slice().reverse().map((h: any, idx: number) => (
-                        <div key={idx} style={{ border: "1px solid #e5e7eb", borderRadius: 6, padding: "8px 10px" }}>
-                          <div style={{ fontSize: 12, color: "#6b7280" }}>{formatDateTimeVi(h?.at || null)}</div>
-                          <div style={{ fontSize: 13 }}>
-                            {h?.action === "STATUS_UPDATE" ? (
-                              <>
-                                Cập nhật trạng thái: <b>{h?.from}</b> → <b>{h?.to}</b>
-                                {h?.interviewAt ? <span> • Phỏng vấn: <b>{formatDateTimeVi(h?.interviewAt)}</b></span> : null}
-                              </>
-                            ) : (
-                              JSON.stringify(h)
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <th scope="row">Cập nhật trạng thái</th>
-                <td>
-                  <div style={{ display: "grid", gap: 10 }}>
-                    <select className={adminStyles.selectInput} value={nextStatus} onChange={(e) => setNextStatus(e.target.value as any)} disabled={busy}>
-                      <option value="PENDING_REVIEW">Chờ xem xét</option>
-                      <option value="INTERVIEW_INVITED">Mời phỏng vấn</option>
-                      <option value="OFFERED">Trúng tuyển</option>
-                      <option value="REJECTED">Từ chối</option>
-                    </select>
-
-                    {nextStatus === "INTERVIEW_INVITED" ? (
-                      <div>
-                        <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 6 }}>Thời gian mời phỏng vấn</div>
-                        <input
-                          className={adminStyles.textInputSearch}
-                          type="datetime-local"
-                          value={interviewAt}
-                          onChange={(e) => setInterviewAt(e.target.value)}
-                          disabled={busy}
-                        />
-                      </div>
-                    ) : null}
-
-                    <div style={{ fontSize: 13, color: "#6b7280" }}>
-                      Trạng thái hiện tại: <b>{applicationStatusLabel[viewTarget.status]}</b> • Ứng viên: <b>{responseLabel[viewTarget.response]}</b>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </FormPopup>
-      ) : null}
+      <ApplicantDetailPopup
+        viewTarget={viewTarget}
+        busy={busy}
+        nextStatus={nextStatus}
+        interviewAt={interviewAt}
+        onNextStatusChange={setNextStatus}
+        onInterviewAtChange={setInterviewAt}
+        onClose={closeApplicant}
+        onSave={() => void submitUpdateStatus()}
+      />
 
       {toast ? (
         <MessagePopup
@@ -346,4 +142,3 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: { id:
     </main>
   );
 }
-

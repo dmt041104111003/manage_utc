@@ -3,14 +3,9 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
-import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
-
 import type { Degree, GiangVienMe, Province, Ward } from "@/lib/types/giangvien-tai-khoan";
 import {
-  DEGREE_ALLOWED,
-  degreeLabel,
-  genderLabel,
   GIANGVIEN_TAI_KHOAN_DEFAULT_DEGREE,
   GIANGVIEN_TAI_KHOAN_LOAD_ERROR_DEFAULT,
   GIANGVIEN_TAI_KHOAN_NETWORK_ERROR_DEFAULT,
@@ -19,9 +14,10 @@ import {
 import {
   buildGiangVienTaiKhoanDraftFromMe,
   buildGiangVienTaiKhoanPatchPayload,
-  formatDateVi,
   validateGiangVienTaiKhoanForm
 } from "@/lib/utils/giangvien-tai-khoan";
+import GiangVienProfileInfo from "./components/GiangVienProfileInfo";
+import GiangVienAccountEditSection from "./components/GiangVienAccountEditSection";
 
 export default function GiangVienTaiKhoanPage() {
   const [loading, setLoading] = useState(true);
@@ -185,120 +181,28 @@ export default function GiangVienTaiKhoanPage() {
       >
         <section className={styles.card} style={{ padding: "18px 22px" }}>
           <h2 className={styles.panelTitle}>Thông tin tài khoản</h2>
-          <table className={adminStyles.viewModalDetailTable} style={{ marginTop: 8 }}>
-            <tbody>
-              <tr>
-                <th scope="row">Họ tên</th>
-                <td>{me.fullName}</td>
-              </tr>
-              <tr>
-                <th scope="row">Email</th>
-                <td>{me.email}</td>
-              </tr>
-              <tr>
-                <th scope="row">Ngày sinh</th>
-                <td>{formatDateVi(me.birthDate)}</td>
-              </tr>
-              <tr>
-                <th scope="row">Giới tính</th>
-                <td>{genderLabel[me.gender]}</td>
-              </tr>
-              <tr>
-                <th scope="row">Khoa</th>
-                <td>{me.faculty}</td>
-              </tr>
-            </tbody>
-          </table>
+          <GiangVienProfileInfo me={me} />
 
           <h2 className={styles.panelTitle} style={{ marginTop: 20 }}>Thông tin được phép cập nhật</h2>
-          {isEditing ? (
-            <>
-              <div className={formStyles.grid2} style={{ marginTop: 8 }}>
-                <div className={formStyles.field}>
-                  <label className={formStyles.label}>SĐT</label>
-                  <input
-                    className={formStyles.input}
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 12))}
-                    placeholder="Nhập số điện thoại"
-                    disabled={saving}
-                  />
-                  {fieldErrors.phone ? <p className={formStyles.error}>{fieldErrors.phone}</p> : null}
-                </div>
-                <div className={formStyles.field}>
-                  <label className={formStyles.label}>Bậc</label>
-                  <select className={formStyles.select} value={degree} onChange={(e) => setDegree(e.target.value as Degree)} disabled={saving}>
-                    {DEGREE_ALLOWED.map((d) => (
-                      <option key={d} value={d}>{degreeLabel[d]}</option>
-                    ))}
-                  </select>
-                  {fieldErrors.degree ? <p className={formStyles.error}>{fieldErrors.degree}</p> : null}
-                </div>
-              </div>
-
-              <div className={formStyles.grid2} style={{ marginTop: 0 }}>
-                <div className={formStyles.field}>
-                  <label className={formStyles.label}>Địa chỉ thường trú - Tỉnh/Thành</label>
-                  <select className={formStyles.select} value={provinceCode} onChange={(e) => setProvinceCode(e.target.value)} disabled={saving}>
-                    <option value="">Chọn tỉnh/thành</option>
-                    {provinces.map((p) => (
-                      <option key={p.code} value={String(p.code)}>{p.name}</option>
-                    ))}
-                  </select>
-                  {fieldErrors.permanentProvinceCode ? <p className={formStyles.error}>{fieldErrors.permanentProvinceCode}</p> : null}
-                </div>
-                <div className={formStyles.field}>
-                  <label className={formStyles.label}>Địa chỉ thường trú - Phường/Xã</label>
-                  <select
-                    className={formStyles.select}
-                    value={wardCode}
-                    onChange={(e) => setWardCode(e.target.value)}
-                    disabled={!provinceCode || wardLoading || saving}
-                  >
-                    <option value="">{wardLoading ? "Đang tải…" : !provinceCode ? "Chọn tỉnh trước" : "Chọn phường/xã"}</option>
-                    {wards.map((w) => (
-                      <option key={w.code} value={String(w.code)}>{w.name}</option>
-                    ))}
-                  </select>
-                  {fieldErrors.permanentWardCode ? <p className={formStyles.error}>{fieldErrors.permanentWardCode}</p> : null}
-                </div>
-              </div>
-            </>
-          ) : (
-            <table className={adminStyles.viewModalDetailTable} style={{ marginTop: 8 }}>
-              <tbody>
-                <tr>
-                  <th scope="row">SĐT</th>
-                  <td>{phone || "—"}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Bậc</th>
-                  <td>{degreeLabel[degree]}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Địa chỉ thường trú</th>
-                  <td>{[me.permanentProvinceName, me.permanentWardName].filter(Boolean).join(" - ") || "—"}</td>
-                </tr>
-              </tbody>
-            </table>
-          )}
-
-          {isEditing ? (
-            <div className={formStyles.section} style={{ marginTop: 18, display: "flex", gap: 10, alignItems: "center" }}>
-              <button type="button" className={adminStyles.btn} onClick={cancelEdit} disabled={saving}>
-                Hủy
-              </button>
-              <button type="submit" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} disabled={saving}>
-                {saving ? "Đang cập nhật…" : "Cập nhật"}
-              </button>
-            </div>
-          ) : (
-            <div className={formStyles.section} style={{ marginTop: 18 }}>
-              <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={startEdit}>
-                Sửa
-              </button>
-            </div>
-          )}
+          <GiangVienAccountEditSection
+            me={me}
+            isEditing={isEditing}
+            saving={saving}
+            phone={phone}
+            degree={degree}
+            provinceCode={provinceCode}
+            wardCode={wardCode}
+            provinces={provinces}
+            wards={wards}
+            wardLoading={wardLoading}
+            fieldErrors={fieldErrors}
+            onPhoneChange={setPhone}
+            onDegreeChange={setDegree}
+            onProvinceCodeChange={setProvinceCode}
+            onWardCodeChange={setWardCode}
+            onStartEdit={startEdit}
+            onCancelEdit={cancelEdit}
+          />
         </section>
       </form>
     </main>

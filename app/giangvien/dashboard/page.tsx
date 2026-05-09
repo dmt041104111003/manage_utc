@@ -4,16 +4,14 @@ import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import type { LecturerDashboardItem } from "@/lib/types/giangvien-dashboard";
 import {
-  GIANGVIEN_DASHBOARD_DEFAULT_ERROR_MESSAGE,
-  GIANGVIEN_DASHBOARD_OVERVIEW_ENDPOINT,
-  GIANGVIEN_DASHBOARD_TASKS_EMPTY,
-  GIANGVIEN_DASHBOARD_TASKS_LOADING,
-  GIANGVIEN_DASHBOARD_VALUE_LOADING
+  GIANGVIEN_DASHBOARD_DEFAULT_ERROR_MESSAGE
 } from "@/lib/constants/giangvien-dashboard";
 import {
   fetchLecturerDashboardOverview,
   getLecturerDashboardErrorMessage
 } from "@/lib/utils/giangvien-dashboard";
+import LecturerDashboardStats from "./components/LecturerDashboardStats";
+import LecturerDashboardTasks from "./components/LecturerDashboardTasks";
 
 export default function LecturerDashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -51,29 +49,8 @@ export default function LecturerDashboardPage() {
 
       {error ? <p className={styles.modulePlaceholder}>Lỗi tải dữ liệu: {error}</p> : null}
 
-      <section className={styles.grid}>
-        <article className={styles.card}>
-          <p className={styles.label}>Sinh viên phụ trách</p>
-          <p className={styles.value}>{loading ? GIANGVIEN_DASHBOARD_VALUE_LOADING : String(data?.assignedStudents ?? 0)}</p>
-        </article>
-        <article className={styles.card}>
-          <p className={styles.label}>Báo cáo chờ duyệt</p>
-          <p className={styles.value}>{loading ? GIANGVIEN_DASHBOARD_VALUE_LOADING : String(data?.pendingReports ?? 0)}</p>
-        </article>
-        <article className={styles.card}>
-          <p className={styles.label}>Lịch đánh giá tuần này</p>
-          <p className={styles.value}>{loading ? GIANGVIEN_DASHBOARD_VALUE_LOADING : String(data?.weeklyReviews ?? 0)}</p>
-        </article>
-      </section>
-
-      <section className={styles.card}>
-        <h2 className={styles.panelTitle}>Việc cần làm</h2>
-        <ul className={styles.list}>
-          {(loading ? [GIANGVIEN_DASHBOARD_TASKS_LOADING] : data?.tasks?.length ? data.tasks : [GIANGVIEN_DASHBOARD_TASKS_EMPTY]).map((task, idx) => (
-            <li key={`${task}-${idx}`}>{task}</li>
-          ))}
-        </ul>
-      </section>
+      <LecturerDashboardStats loading={loading} data={data} />
+      <LecturerDashboardTasks loading={loading} data={data} />
     </main>
   );
 }

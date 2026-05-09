@@ -1,9 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
-import { AuthShell } from "../components/AuthShell";
-import styles from "../styles/forgot-password.module.css";
 import {
   getChangePasswordNetworkErrorMessage,
   getChangePasswordSuccessMessage,
@@ -11,6 +8,7 @@ import {
   normalizeAuthMeResponse,
   validateChangePasswordForm
 } from "@/lib/utils/auth/change-password";
+import ChangePasswordFormCard from "./components/ChangePasswordFormCard";
 
 export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -89,75 +87,21 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <AuthShell>
-      <h2 className={styles.title}>Đổi mật khẩu</h2>
-      <p className={styles.desc}>
-        Bạn đã đăng nhập — nhập mật khẩu hiện tại và mật khẩu mới để cập nhật.
-      </p>
-
-      <form onSubmit={handleSubmit} noValidate aria-busy={isSubmitting}>
-        <div className={styles.field}>
-          <label htmlFor="currentPassword" className={styles.label}>
-            Mật khẩu hiện tại <span className={styles.required}>*</span>
-          </label>
-          <input
-            id="currentPassword"
-            type="password"
-            className={styles.input}
-            placeholder="Nhập mật khẩu hiện tại"
-            value={currentPassword}
-            onChange={(event) => setCurrentPassword(event.target.value)}
-            disabled={isSubmitting}
-          />
-          {currentPasswordError ? <p className={styles.error}>{currentPasswordError}</p> : null}
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="newPassword" className={styles.label}>
-            Mật khẩu mới <span className={styles.required}>*</span>
-          </label>
-          <input
-            id="newPassword"
-            type="password"
-            className={styles.input}
-            placeholder="Nhập mật khẩu mới"
-            value={newPassword}
-            onChange={(event) => setNewPassword(event.target.value)}
-            disabled={isSubmitting}
-          />
-          <p className={styles.hint}>Mật khẩu gồm tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.</p>
-          {newPasswordError ? <p className={styles.error}>{newPasswordError}</p> : null}
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="confirmPassword" className={styles.label}>
-            Xác nhận mật khẩu mới <span className={styles.required}>*</span>
-          </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            className={styles.input}
-            placeholder="Nhập lại mật khẩu mới"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            disabled={isSubmitting}
-          />
-          {confirmPasswordError ? <p className={styles.error}>{confirmPasswordError}</p> : null}
-        </div>
-
-        <button type="submit" className={styles.button} disabled={isSubmitting}>
-          {isSubmitting ? "Đang xử lý..." : "Đổi mật khẩu"}
-        </button>
-      </form>
-
-      {submitError ? <p className={styles.errorGlobal}>{submitError}</p> : null}
-      {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
-
-      {dashboardHome ? (
-        <div className={styles.linkRow}>
-          <Link href={dashboardHome}>Quay lại bảng điều khiển</Link>
-        </div>
-      ) : null}
-    </AuthShell>
+    <ChangePasswordFormCard
+      currentPassword={currentPassword}
+      newPassword={newPassword}
+      confirmPassword={confirmPassword}
+      currentPasswordError={currentPasswordError}
+      newPasswordError={newPasswordError}
+      confirmPasswordError={confirmPasswordError}
+      submitError={submitError}
+      successMessage={successMessage}
+      isSubmitting={isSubmitting}
+      dashboardHome={dashboardHome}
+      onCurrentPasswordChange={setCurrentPassword}
+      onNewPasswordChange={setNewPassword}
+      onConfirmPasswordChange={setConfirmPassword}
+      onSubmit={handleSubmit}
+    />
   );
 }

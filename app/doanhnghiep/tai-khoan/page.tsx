@@ -2,15 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
-import adminStyles from "../../admin/styles/dashboard.module.css";
-import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
-import {
-  DOANHNGHIEP_BUSINESS_FIELD_OPTIONS
-} from "@/lib/constants/doanhnghiep";
+import { DOANHNGHIEP_BUSINESS_FIELD_OPTIONS } from "@/lib/constants/doanhnghiep";
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
-import type { ApiResponse } from "@/lib/types/doanhnghiep-tai-khoan";
-import type { EnterpriseAccountFormState } from "@/lib/types/doanhnghiep-tai-khoan";
+import type { ApiResponse, EnterpriseAccountFormState } from "@/lib/types/doanhnghiep-tai-khoan";
 import {
   ENTERPRISE_ACCOUNT_EMPTY_FORM,
   ENTERPRISE_ACCOUNT_LOAD_ERROR_DEFAULT,
@@ -30,6 +25,8 @@ import {
   mapEnterpriseAccountFormFromMe,
   validateEnterpriseAccountForm
 } from "@/lib/utils/doanhnghiep-tai-khoan";
+import EnterpriseProfileInfo from "./components/EnterpriseProfileInfo";
+import EnterpriseAccountEditSection from "./components/EnterpriseAccountEditSection";
 
 type FormState = EnterpriseAccountFormState;
 
@@ -164,158 +161,30 @@ export default function EnterpriseAccountPage() {
       {toast ? <MessagePopup open message={toast} onClose={dismissToast} /> : null}
       {error ? <MessagePopup open message={error} onClose={dismissErrorToast} /> : null}
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void submit();
-        }}
-        noValidate
-      >
+      <form onSubmit={(e) => { e.preventDefault(); void submit(); }} noValidate>
         <section className={styles.card} style={{ padding: "18px 22px" }}>
           <h2 className={styles.panelTitle}>Thông tin hồ sơ</h2>
-      
 
-          <table className={adminStyles.viewModalDetailTable} style={{ marginTop: 12 }}>
-            <tbody>
-              <tr>
-                <th scope="row">Tên doanh nghiệp</th>
-                <td>{me.companyName || "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">Mã số thuế</th>
-                <td>{me.taxCode || "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">Địa chỉ trụ sở chính</th>
-                <td>{address}</td>
-              </tr>
-              <tr>
-                <th scope="row">File giấy phép kinh doanh</th>
-                <td>
-                  {licHref ? (
-                    <a className={adminStyles.detailLink} href={licHref} download={licName}>
-                      {licName}
-                    </a>
-                  ) : (
-                    licName
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <th scope="row">Logo công ty</th>
-                <td>{logoSrc ? <img src={logoSrc} alt="Logo công ty" className={adminStyles.previewLogo} /> : "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">Email</th>
-                <td>{me.email}</td>
-              </tr>
-              <tr>
-                <th scope="row">Số điện thoại</th>
-                <td>{me.phone || "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">Trạng thái phê duyệt</th>
-                <td>{statusText}</td>
-              </tr>
-            </tbody>
-          </table>
+          <EnterpriseProfileInfo
+            me={me}
+            address={address}
+            licName={licName}
+            licHref={licHref}
+            logoSrc={logoSrc}
+            statusText={statusText}
+          />
 
           <div style={{ marginTop: 20 }}>
-            {isEditing ? (
-              <>
-                <div className={formStyles.field}>
-                <label className={formStyles.label}>Tên người đại diện</label>
-                <input
-                  className={formStyles.input}
-                  disabled={saving}
-                  value={form.representativeName}
-                  onChange={(e) => setField("representativeName", e.target.value)}
-                  placeholder="Nhập họ và tên"
-                />
-                {fieldErrors.representativeName ? <p className={formStyles.error}>{fieldErrors.representativeName}</p> : null}
-              </div>
-
-              <div className={formStyles.field}>
-                <label className={formStyles.label}>Chức vụ</label>
-                <input
-                  className={formStyles.input}
-                  disabled={saving}
-                  value={form.representativeTitle}
-                  onChange={(e) => setField("representativeTitle", e.target.value)}
-                  placeholder="Nhập chức vụ"
-                />
-                {fieldErrors.representativeTitle ? <p className={formStyles.error}>{fieldErrors.representativeTitle}</p> : null}
-              </div>
-
-              <div className={formStyles.field}>
-                <label className={formStyles.label}>Giới thiệu (lĩnh vực hoạt động)</label>
-                <select
-                  multiple
-                  disabled={saving}
-                  className={formStyles.multiSelect}
-                  value={form.businessFields}
-                  onChange={(e) => setField("businessFields", Array.from(e.target.selectedOptions).map((o) => o.value))}
-                >
-                  {businessOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-                <p className={formStyles.hint}>Giữ Ctrl (hoặc Cmd trên Mac) để chọn nhiều lĩnh vực.</p>
-                {fieldErrors.businessFields ? <p className={formStyles.error}>{fieldErrors.businessFields}</p> : null}
-              </div>
-
-              <div className={formStyles.field}>
-                <label className={formStyles.label}>Website công ty</label>
-                <input
-                  className={formStyles.input}
-                  disabled={saving}
-                  value={form.website}
-                  onChange={(e) => setField("website", e.target.value)}
-                  placeholder="https://company.vn"
-                />
-                {fieldErrors.website ? <p className={formStyles.error}>{fieldErrors.website}</p> : null}
-              </div>
-
-                <div className={formStyles.section} style={{ marginTop: 18, display: "flex", gap: 10, alignItems: "center" }}>
-                  <button type="button" className={adminStyles.btn} onClick={cancelEdit} disabled={saving}>
-                    Hủy
-                  </button>
-                  <button type="submit" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} disabled={saving}>
-                    {saving ? "Đang cập nhật…" : "Lưu thay đổi"}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <table className={adminStyles.viewModalDetailTable}>
-                <tbody>
-                  <tr>
-                    <th scope="row">Tên người đại diện</th>
-                    <td>{form.representativeName || "—"}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Chức vụ</th>
-                    <td>{form.representativeTitle || "—"}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Giới thiệu (lĩnh vực hoạt động)</th>
-                    <td>{form.businessFields.length ? form.businessFields.join(", ") : "—"}</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Website công ty</th>
-                    <td>{form.website || "—"}</td>
-                  </tr>
-                </tbody>
-                </table>
-                <div className={formStyles.section} style={{ marginTop: 18 }}>
-                  <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={startEdit}>
-                    Sửa
-                  </button>
-                </div>
-              </>
-            )}
+            <EnterpriseAccountEditSection
+              isEditing={isEditing}
+              saving={saving}
+              form={form}
+              fieldErrors={fieldErrors}
+              businessOptions={businessOptions}
+              onSetField={setField}
+              onStartEdit={startEdit}
+              onCancelEdit={cancelEdit}
+            />
           </div>
         </section>
       </form>

@@ -3,34 +3,28 @@
 import { useEffect, useState } from "react";
 import styles from "../../styles/dashboard.module.css";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
-import formStyles from "../../../auth/styles/register.module.css";
 import MessagePopup from "../../../components/MessagePopup";
-import FormPopup from "../../../components/FormPopup";
 import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
-import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
 import type { SinhVienApplyDraft, SinhVienTraCuuUngTuyenJobDetail } from "@/lib/types/sinhvien-tra-cuu-ung-tuyen-detail";
 import {
-  APPLY_BUTTON_LABEL_APPLIED,
-  APPLY_BUTTON_LABEL_DEFAULT,
-  SINHVIEN_TRA_CUU_UNG_TUYEN_APPLY_OPEN_TITLE,
   SINHVIEN_TRA_CUU_UNG_TUYEN_BACK_LINK_TEXT,
   SINHVIEN_TRA_CUU_UNG_TUYEN_LOAD_DETAIL_ERROR_DEFAULT,
   SINHVIEN_TRA_CUU_UNG_TUYEN_TITLE,
-  SINHVIEN_TRA_CUU_UNG_TUYEN_SUBMIT_ERROR_DEFAULT,
-  workTypeLabel
+  SINHVIEN_TRA_CUU_UNG_TUYEN_SUBMIT_ERROR_DEFAULT
 } from "@/lib/constants/sinhvien-tra-cuu-ung-tuyen-detail";
 import {
   buildSinhVienTraCuuUngTuyenApplyPayload,
   buildSinhVienTraCuuUngTuyenApplyUrl,
   fetchSinhVienHoSoProfileForApply,
   fetchSinhVienTraCuuUngTuyenDetail,
-  formatDateVi,
   getCvMimeValidationError,
   getSinhVienTraCuuUngTuyenOpenApplyErrorMessage,
   getSinhVienTraCuuUngTuyenSubmitErrorMessage,
   getSinhVienTraCuuUngTuyenSubmitSuccessMessage,
   validateSinhVienApplyDraft
 } from "@/lib/utils/sinhvien-tra-cuu-ung-tuyen-detail";
+import JobDetailInfo from "./components/JobDetailInfo";
+import ApplyFormPopup from "./components/ApplyFormPopup";
 
 export default function SinhVienJobDetailPage({ params }: { params: { id: string } }) {
   const jobId = params.id;
@@ -165,114 +159,34 @@ export default function SinhVienJobDetailPage({ params }: { params: { id: string
       {loading ? (
         <p className={styles.modulePlaceholder}>Đang tải…</p>
       ) : job ? (
-        <section className={styles.card} style={{ padding: "18px 22px" }}>
-          <div className={adminStyles.detailSectionTitle}>Thông tin tuyển dụng</div>
-          <table className={adminStyles.viewModalDetailTable}>
-            <tbody>
-              <tr><th scope="row">Tiêu đề</th><td>{job.title}</td></tr>
-              <tr><th scope="row">Tên doanh nghiệp</th><td>{job.enterprise.companyName}</td></tr>
-              <tr><th scope="row">MST</th><td>{job.enterprise.taxCode}</td></tr>
-              <tr><th scope="row">Lĩnh vực</th><td>{job.enterprise.businessFields}</td></tr>
-              <tr><th scope="row">Địa điểm trụ sở chính</th><td>{job.enterprise.headquartersAddress}</td></tr>
-              <tr><th scope="row">Giới thiệu công ty</th><td>{job.enterprise.intro || "—"}</td></tr>
-              <tr><th scope="row">Website</th><td>{job.enterprise.website || "—"}</td></tr>
-              <tr><th scope="row">Mức lương</th><td>{job.salary}</td></tr>
-              <tr><th scope="row">Chuyên môn</th><td>{job.expertise}</td></tr>
-              <tr><th scope="row">Yêu cầu kinh nghiệm</th><td>{job.experienceRequirement}</td></tr>
-              <tr><th scope="row">Số lượng tuyển dụng</th><td>{job.recruitmentCount}</td></tr>
-              <tr><th scope="row">Hình thức làm việc</th><td>{workTypeLabel[job.workType]}</td></tr>
-              <tr><th scope="row">Hạn tuyển dụng</th><td>{formatDateVi(job.deadlineAt)}</td></tr>
-              <tr><th scope="row">Mô tả công việc</th><td style={{ whiteSpace: "pre-wrap" }}>{job.jobDescription}</td></tr>
-              <tr><th scope="row">Yêu cầu ứng viên</th><td style={{ whiteSpace: "pre-wrap" }}>{job.candidateRequirements}</td></tr>
-              <tr><th scope="row">Quyền lợi</th><td style={{ whiteSpace: "pre-wrap" }}>{job.benefits}</td></tr>
-              <tr><th scope="row">Địa điểm làm việc</th><td>{job.workLocation}</td></tr>
-              <tr><th scope="row">Thời gian làm việc</th><td>{job.workTime}</td></tr>
-              <tr><th scope="row">Cách thức ứng tuyển</th><td>{job.applicationMethod || "Ứng tuyển trực tiếp trên hệ thống"}</td></tr>
-            </tbody>
-          </table>
-          <div style={{ marginTop: 14 }}>
-            <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={() => void openApply()} disabled={!job.canApply || job.hasApplied}>
-              {job.hasApplied ? APPLY_BUTTON_LABEL_APPLIED : APPLY_BUTTON_LABEL_DEFAULT}
-            </button>
-          </div>
-        </section>
+        <JobDetailInfo job={job} onOpenApply={() => void openApply()} />
       ) : null}
 
       {applyOpen ? (
-        <FormPopup
-          open
-          title={SINHVIEN_TRA_CUU_UNG_TUYEN_APPLY_OPEN_TITLE}
-          size="wide"
+        <ApplyFormPopup
           busy={busy}
+          fullName={fullName}
+          phone={phone}
+          email={email}
+          intro={intro}
+          cvFileName={cvFileName}
+          cvMime={cvMime}
+          cvBase64={cvBase64}
+          removeCv={removeCv}
+          fieldErrors={fieldErrors}
+          onPhoneChange={setPhone}
+          onEmailChange={setEmail}
+          onIntroChange={setIntro}
+          onChooseCv={(f) => void onChooseCv(f)}
+          onRemoveCv={() => {
+            setRemoveCv(true);
+            setCvBase64(null);
+            setCvMime(null);
+            setCvFileName(null);
+          }}
           onClose={() => setApplyOpen(false)}
-          actions={
-            <>
-              <button type="button" className={adminStyles.btn} disabled={busy} onClick={() => setApplyOpen(false)}>
-                Hủy
-              </button>
-              <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} disabled={busy} onClick={() => void submitApply()}>
-                Nộp hồ sơ ứng tuyển
-              </button>
-            </>
-          }
-        >
-          <div className={formStyles.section}>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>Họ tên</label>
-              <input className={formStyles.input} value={fullName} disabled />
-            </div>
-            <div className={formStyles.grid2}>
-              <div className={formStyles.field}>
-                <label className={formStyles.label}>SĐT</label>
-                <input className={formStyles.input} value={phone} onChange={(e) => setPhone(e.target.value)} disabled={busy} />
-                {fieldErrors.phone ? <p className={formStyles.error}>{fieldErrors.phone}</p> : null}
-              </div>
-              <div className={formStyles.field}>
-                <label className={formStyles.label}>Email</label>
-                <input className={formStyles.input} value={email} onChange={(e) => setEmail(e.target.value)} disabled={busy} />
-                {fieldErrors.email ? <p className={formStyles.error}>{fieldErrors.email}</p> : null}
-              </div>
-            </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>Thư giới thiệu bản thân</label>
-              <textarea className={formStyles.textarea} value={intro} onChange={(e) => setIntro(e.target.value)} disabled={busy} />
-              {fieldErrors.intro ? <p className={formStyles.error}>{fieldErrors.intro}</p> : null}
-            </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>File CV đính kèm</label>
-              <input
-                className={formStyles.input}
-                type="file"
-                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                disabled={busy}
-                onChange={(e) => {
-                  const f = e.target.files?.[0] ?? null;
-                  void onChooseCv(f);
-                }}
-              />
-              {cvBase64 && cvMime && cvFileName && !removeCv ? (
-                <div style={{ marginTop: 8, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                  <a className={adminStyles.detailLink} href={dataUrlFromBase64(cvMime, cvBase64)} download={cvFileName}>
-                    {cvFileName}
-                  </a>
-                  <button
-                    type="button"
-                    className={adminStyles.textLinkBtn}
-                    onClick={() => {
-                      setRemoveCv(true);
-                      setCvBase64(null);
-                      setCvMime(null);
-                      setCvFileName(null);
-                    }}
-                  >
-                    Xóa file
-                  </button>
-                </div>
-              ) : null}
-              {fieldErrors.cv ? <p className={formStyles.error}>{fieldErrors.cv}</p> : null}
-            </div>
-          </div>
-        </FormPopup>
+          onSubmit={() => void submitApply()}
+        />
       ) : null}
 
       {toast ? <MessagePopup open message={toast} onClose={() => setToast("")} /> : null}
