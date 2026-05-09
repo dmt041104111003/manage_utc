@@ -5,6 +5,7 @@ export const ADMIN_DASHBOARD_NAV: DashboardNavItem[] = [
   { href: "/admin/quan-ly-doanh-nghiep", label: "Quản lý doanh nghiệp" },
   { href: "/admin/quan-ly-dot-thuc-tap", label: "Quản lý đợt thực tập" },
   { href: "/admin/quan-ly-sinh-vien", label: "Quản lý sinh viên" },
+  { href: "/admin/quan-ly-gvhd", label: "Quản lý GVHD" },
   { href: "/admin/quan-ly-tin-tuyen-dung", label: "Quản lý tin tuyển dụng" },
   { href: "/admin/bao-cao", label: "Báo cáo – thống kê" }
 ];
