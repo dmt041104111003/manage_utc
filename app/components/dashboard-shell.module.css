@@ -10,7 +10,6 @@
   width: 260px;
   flex-shrink: 0;
   background: #0f172a;
-  border-right: 1px solid #1e293b;
   display: flex;
   flex-direction: column;
   z-index: 101;
@@ -24,22 +23,11 @@
 
 .brand {
   padding: 20px 18px;
-  border-bottom: 1px solid #334155;
   position: relative;
 }
 
-.brand::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: #38bdf8;
-}
-
 .brandTitle {
-  margin: 0 0 0 2px;
+  margin: 0;
   font-size: 14px;
   font-weight: 700;
   color: #f8fafc;
@@ -47,14 +35,14 @@
 }
 
 .brandSub {
-  margin: 6px 0 0 2px;
+  margin: 6px 0 0 0;
   font-size: 12px;
   color: #94a3b8;
   line-height: 1.4;
 }
 
 .brandRole {
-  margin: 8px 0 0 2px;
+  margin: 8px 0 0 0;
   font-size: 12px;
   font-weight: 600;
   color: #7dd3fc;
@@ -254,8 +242,7 @@
     transition: transform 0.2s ease-out;
     will-change: transform;
     box-shadow: none;
-    border-right: 1px solid #334155;
-    border-left: none;
+    border: none;
     pointer-events: none;
   }
 
