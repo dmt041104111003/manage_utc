@@ -96,7 +96,7 @@ lib/
 
 ### Chức năng
 - Xem thông tin doanh nghiệp: tên công ty, MST, lĩnh vực kinh doanh, địa chỉ trụ sở, website, người đại diện, chức danh
-- Chỉnh sửa: tên người đại diện, chức danh, lĩnh vực kinh doanh, website
+- Chỉnh sửa: tên người đại diện, chức danh, **giới thiệu về doanh nghiệp** (textarea), website
 
 ### Sơ đồ luồng
 
@@ -122,13 +122,13 @@ sequenceDiagram
     DN->>Page: Nhấn "Chỉnh sửa"
     Page->>Page: startEdit() → isEditing = true<br/>mapEnterpriseAccountFormFromMe(me)
     Page->>EditSection: isEditing = true → hiện form
-    DN->>EditSection: Sửa người đại diện / chức danh / lĩnh vực / website
+    DN->>EditSection: Sửa người đại diện / chức danh / giới thiệu DN / website
     EditSection->>Page: setField(key, value)
 
     DN->>EditSection: Nhấn "Lưu"
     Page->>Page: validate() [lib/utils/doanhnghiep-tai-khoan.ts]
     alt Hợp lệ
-        Page->>API: PATCH /api/doanhnghiep/me<br/>{ representativeName, representativeTitle, businessFields, website }
+        Page->>API: PATCH /api/doanhnghiep/me<br/>{ representativeName, representativeTitle, companyIntro, website }
         API->>DB: user.findUnique (verify session)<br/>user.update (enterpriseProfile fields)
         DB-->>API: OK
         API-->>Page: { success, message }

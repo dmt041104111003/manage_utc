@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
@@ -28,10 +29,10 @@ import { buildEmptyStudentFormState } from "@/lib/utils/admin-quan-ly-sinh-vien-
 
 import AdminSinhVienToolbar from "./components/AdminSinhVienToolbar";
 import AdminSinhVienTableSection from "./components/AdminSinhVienTableSection";
-import AdminSinhVienViewPopup from "./components/AdminSinhVienViewPopup";
-import AdminSinhVienDeletePopup from "./components/AdminSinhVienDeletePopup";
-import AdminSinhVienFormPopup from "./components/AdminSinhVienFormPopup";
-import AdminSinhVienImportPopup from "./components/AdminSinhVienImportPopup";
+const AdminSinhVienViewPopup = dynamic(() => import("./components/AdminSinhVienViewPopup"), { ssr: false });
+const AdminSinhVienDeletePopup = dynamic(() => import("./components/AdminSinhVienDeletePopup"), { ssr: false });
+const AdminSinhVienFormPopup = dynamic(() => import("./components/AdminSinhVienFormPopup"), { ssr: false });
+const AdminSinhVienImportPopup = dynamic(() => import("./components/AdminSinhVienImportPopup"), { ssr: false });
 
 export default function AdminQuanLySinhVienPage() {
   const [items, setItems] = useState<StudentListItem[]>([]);

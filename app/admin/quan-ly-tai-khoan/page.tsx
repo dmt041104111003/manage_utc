@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 
@@ -9,9 +10,9 @@ import { roleLabel } from "@/lib/constants/admin-quan-ly-tai-khoan";
 
 import AdminTaiKhoanToolbar from "./components/AdminTaiKhoanToolbar";
 import AdminTaiKhoanTableSection from "./components/AdminTaiKhoanTableSection";
-import AdminTaiKhoanViewPopup from "./components/AdminTaiKhoanViewPopup";
-import AdminTaiKhoanStatusPopup from "./components/AdminTaiKhoanStatusPopup";
-import AdminTaiKhoanDeletePopup from "./components/AdminTaiKhoanDeletePopup";
+const AdminTaiKhoanViewPopup = dynamic(() => import("./components/AdminTaiKhoanViewPopup"), { ssr: false });
+const AdminTaiKhoanStatusPopup = dynamic(() => import("./components/AdminTaiKhoanStatusPopup"), { ssr: false });
+const AdminTaiKhoanDeletePopup = dynamic(() => import("./components/AdminTaiKhoanDeletePopup"), { ssr: false });
 
 export default function AdminQuanLyTaiKhoanPage() {
   const [items, setItems] = useState<AccountRow[]>([]);

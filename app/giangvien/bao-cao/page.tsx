@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
@@ -8,9 +9,9 @@ import type { Degree, InternshipStatus, Row } from "@/lib/types/giangvien-bao-ca
 import { validateGiangVienBaoCaoApprove } from "@/lib/utils/giangvien-bao-cao-thuc-tap";
 import BaoCaoToolbar from "./components/BaoCaoToolbar";
 import BaoCaoTableSection from "./components/BaoCaoTableSection";
-import BaoCaoViewPopup from "./components/BaoCaoViewPopup";
-import BaoCaoUpdatePopup from "./components/BaoCaoUpdatePopup";
-import BaoCaoReviewPopup from "./components/BaoCaoReviewPopup";
+const BaoCaoViewPopup = dynamic(() => import("./components/BaoCaoViewPopup"), { ssr: false });
+const BaoCaoUpdatePopup = dynamic(() => import("./components/BaoCaoUpdatePopup"), { ssr: false });
+const BaoCaoReviewPopup = dynamic(() => import("./components/BaoCaoReviewPopup"), { ssr: false });
 
 export default function GiangvienQuanLyBCPage() {
   const [loading, setLoading] = useState(true);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import Pagination from "../../components/Pagination";
@@ -22,9 +23,9 @@ import { studentDisplay, supervisorDisplay } from "@/lib/utils/admin-phan-cong-g
 
 import AdminPhanCongGVHDTable from "./components/AdminPhanCongGVHDTable";
 import AdminPhanCongGVHDToolbar from "./components/AdminPhanCongGVHDToolbar";
-import AdminPhanCongGVHDDeletePopup from "./components/AdminPhanCongGVHDDeletePopup";
-import AdminPhanCongGVHDViewPopup from "./components/AdminPhanCongGVHDViewPopup";
-import AdminPhanCongGVHDFormPopup from "./components/AdminPhanCongGVHDFormPopup";
+const AdminPhanCongGVHDDeletePopup = dynamic(() => import("./components/AdminPhanCongGVHDDeletePopup"), { ssr: false });
+const AdminPhanCongGVHDViewPopup = dynamic(() => import("./components/AdminPhanCongGVHDViewPopup"), { ssr: false });
+const AdminPhanCongGVHDFormPopup = dynamic(() => import("./components/AdminPhanCongGVHDFormPopup"), { ssr: false });
 
 export default function AdminPhanCongGVHDPage() {
   const [items, setItems] = useState<AssignmentItem[]>([]);

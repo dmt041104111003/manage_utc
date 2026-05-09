@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
@@ -23,10 +24,10 @@ import { buildEmptySupervisorFormState } from "@/lib/utils/admin-quan-ly-gvhd-fo
 
 import AdminGiangVienToolbar from "./components/AdminGiangVienToolbar";
 import AdminGiangVienTableSection from "./components/AdminGiangVienTableSection";
-import AdminGiangVienViewPopup from "./components/AdminGiangVienViewPopup";
-import AdminGiangVienDeletePopup from "./components/AdminGiangVienDeletePopup";
-import AdminGiangVienFormPopup from "./components/AdminGiangVienFormPopup";
-import AdminGiangVienImportPopup from "./components/AdminGiangVienImportPopup";
+const AdminGiangVienViewPopup = dynamic(() => import("./components/AdminGiangVienViewPopup"), { ssr: false });
+const AdminGiangVienDeletePopup = dynamic(() => import("./components/AdminGiangVienDeletePopup"), { ssr: false });
+const AdminGiangVienFormPopup = dynamic(() => import("./components/AdminGiangVienFormPopup"), { ssr: false });
+const AdminGiangVienImportPopup = dynamic(() => import("./components/AdminGiangVienImportPopup"), { ssr: false });
 
 export default function AdminQuanLyGVHDPage() {
   const [items, setItems] = useState<SupervisorListItem[]>([]);

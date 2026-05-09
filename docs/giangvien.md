@@ -237,7 +237,10 @@ sequenceDiagram
   - **"Đánh giá BCTT"** — chỉ hiển thị với SV có `internshipStatus = REPORT_SUBMITTED`
 - **Popup[Xem chi tiết]:** thông tin SV + trạng thái thực tập hiện tại + dữ liệu điều kiện
 - **Popup[Cập nhật TT thực tập]:** chỉ đổi sang `SELF_FINANCED`, gửi email SV
-- **Popup[Duyệt BCTT]:** nhập đánh giá, điểm ĐQT/KTHP, Duyệt hoặc Từ chối + lý do
+- **Popup[Duyệt BCTT]:** tách rõ 2 chế độ:
+  - **Duyệt BCTT:** hiện `Nhận xét/đánh giá`, `Điểm ĐQT`, `Điểm KTHP`
+  - **Từ chối BCTT:** chỉ hiện `Lý do từ chối` (bắt buộc)
+  - Nút hành động popup: `Xác nhận` + `Hủy`
 
 ### Nội dung Popup[Xem chi tiết]
 
@@ -251,13 +254,17 @@ sequenceDiagram
 ### Popup[Duyệt BCTT] — logic
 
 ```
-Textbox[Đánh giá]    : không bắt buộc, không ký tự đặc biệt (noSpecialPattern)
-Textbox[ĐQT]         : số 1–10, bắt buộc nếu Duyệt
-Textbox[KTHP]        : số 1–10, bắt buộc nếu Duyệt
-Textbox[Lý do từ chối]: bắt buộc nếu Từ chối
+Mode = Duyệt:
+- Textarea[Nhận xét/đánh giá]: không bắt buộc
+- Input[ĐQT]: số 1–10, bắt buộc
+- Input[KTHP]: số 1–10, bắt buộc
 
-Duyệt   → internshipStatus = REPORT_APPROVED, gửi email SV (duyệt + điểm)
-Từ chối → internshipStatus = REPORT_REJECTED, gửi email SV (lý do từ chối)
+Mode = Từ chối:
+- Textarea[Lý do từ chối]: bắt buộc
+
+Nút submit chung: "Xác nhận"
+- Nếu mode Duyệt  -> PATCH action=APPROVE
+- Nếu mode Từ chối -> PATCH action=REJECT
 ```
 
 ### Sơ đồ luồng
@@ -295,7 +302,7 @@ sequenceDiagram
     GV->>Table: Nhấn "Xem chi tiết"
     Table->>Page: setViewTarget(row)
     Page->>ViewPop: viewTarget → mở popup
-    ViewPop->>GV: MSV, Họ tên, Lớp, Khoa, Khóa, Bậc, SĐT, Email, Ngày sinh<br/>· DOING → tên DN + MST + địa chỉ<br/>· REPORT_SUBMITTED → file BCTT<br/>· COMPLETED → file BCTT + ĐQT + KTHP + đánh giá
+    ViewPop->>GV: MSV, Họ tên, Lớp, Khoa, Khóa, Bậc, SĐT, Email, Ngày sinh<br/>· DOING → tên DN + MST + địa chỉ<br/>· REPORT_SUBMITTED → file BCTT (mở qua /api/files/internship-report/{id})<br/>· COMPLETED → file BCTT + ĐQT + KTHP + đánh giá
     GV->>ViewPop: Đóng
 
     Note over GV,Mail: ── Cập nhật trạng thái thực tập (NOT_STARTED → SELF_FINANCED) ──
@@ -321,7 +328,7 @@ sequenceDiagram
     ReviewPop->>GV: Hiển thị: MSV, Họ tên, Lớp, Khoa, Khóa, Bậc, file BCTT
 
     alt Duyệt
-        GV->>ReviewPop: Nhập đánh giá (optional) + ĐQT (1-10) + KTHP (1-10) → "Duyệt"
+        GV->>ReviewPop: Chọn "Duyệt BCTT", nhập đánh giá (optional) + ĐQT (1-10) + KTHP (1-10) → "Xác nhận"
         ReviewPop->>Page: submitReview({ action:"approve", evaluation, dqtPoint, kthpPoint })
         Page->>Page: validateGiangVienBaoCaoApprove()<br/>lib/utils/giangvien-bao-cao-thuc-tap.ts
         Page->>ReviewAPI: PATCH /api/giangvien/bao-cao-thuc-tap/{reportId}<br/>{ action:"approve", evaluation, dqtPoint, kthpPoint }
@@ -331,7 +338,7 @@ sequenceDiagram
         ReviewAPI-->>Page: { success, message }
         Page->>GV: Toast "Đã duyệt BCTT"
     else Từ chối
-        GV->>ReviewPop: Nhập lý do từ chối (bắt buộc) → "Từ chối"
+        GV->>ReviewPop: Chọn "Từ chối BCTT", nhập lý do từ chối (bắt buộc) → "Xác nhận"
         ReviewPop->>Page: submitReview({ action:"reject", rejectReason })
         Page->>ReviewAPI: PATCH /api/giangvien/bao-cao-thuc-tap/{reportId}<br/>{ action:"reject", rejectReason }
         ReviewAPI->>DB: $transaction:<br/>internshipReport.update(reviewStatus=REJECTED, rejectReason)<br/>studentProfile.update(internshipStatus=REPORT_REJECTED)<br/>internshipStatusHistory.create
@@ -347,6 +354,7 @@ sequenceDiagram
 | Route | Method | Body | Prisma | Email |
 |-------|--------|------|--------|-------|
 | `/api/giangvien/bao-cao-thuc-tap` | GET | `?q, degree, status` | `supervisorProfile.findFirst` + `supervisorAssignmentStudent.findMany` (nested: `studentProfile`, `internshipReport`, `internshipBatch`) + `jobApplication.findMany` | Không |
+| `/api/files/internship-report/[id]` | GET | `?download=1` (optional) | `internshipReport.findFirst` + check quyền (`admin/giangvien/sinhvien`) | Không |
 | `/api/giangvien/bao-cao-thuc-tap/update-internship-status/[id]` | PATCH | `{ nextStatus }` | `supervisorProfile.findFirst` + `studentProfile.findFirst` + `supervisorAssignmentStudent.findFirst` + `$transaction`: `studentProfile.update` + `internshipStatusHistory.create` | SV |
 | `/api/giangvien/bao-cao-thuc-tap/[id]` | PATCH | `{ action, evaluation?, dqtPoint?, kthpPoint?, rejectReason? }` | `internshipReport.findFirst` + `supervisorAssignmentStudent.findFirst` + `studentProfile.findFirst` + `jobApplication.findFirst` + `$transaction`: `internshipReport.update` + `studentProfile.update` + `internshipStatusHistory.create` | SV |
 
@@ -485,7 +493,8 @@ stateDiagram-v2
 | `/api/giangvien/me` | GET | giangvien | — | Thông tin tài khoản + hồ sơ |
 | `/api/giangvien/me` | PATCH | giangvien | — | Cập nhật SĐT + địa chỉ |
 | `/api/giangvien/sinh-vien-phan-cong` | GET | giangvien | — | Danh sách SV phân công + chi tiết |
-| `/api/giangvien/bao-cao-thuc-tap` | GET | giangvien | — | Danh sách SV + BCTT + ui flags |
+| `/api/giangvien/bao-cao-thuc-tap` | GET | giangvien | — | Danh sách SV + metadata BCTT (đã tách file nặng khỏi payload) |
+| `/api/files/internship-report/[id]` | GET | admin/giangvien/sinhvien | — | Xem/tải file BCTT theo quyền |
 | `/api/giangvien/bao-cao-thuc-tap/update-internship-status/[id]` | PATCH | giangvien | Có | Cập nhật TT thực tập → SELF_FINANCED |
 | `/api/giangvien/bao-cao-thuc-tap/[id]` | PATCH | giangvien | Có | Duyệt / Từ chối BCTT |
 | `/api/giangvien/dashboard/overview` | GET | giangvien | — | Tổng quan dashboard |

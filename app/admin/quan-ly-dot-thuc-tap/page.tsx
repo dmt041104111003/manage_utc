@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
@@ -17,10 +18,10 @@ import { formatDateVi, getTodayStart, parseDateOnly, todayDateInputValue } from 
 
 import AdminInternshipBatchToolbar from "./components/AdminInternshipBatchToolbar";
 import AdminInternshipBatchTableSection from "./components/AdminInternshipBatchTableSection";
-import AdminInternshipBatchDeletePopup from "./components/AdminInternshipBatchDeletePopup";
 import AdminInternshipBatchEditModal from "./components/AdminInternshipBatchEditModal";
-import AdminInternshipBatchStatusPopup from "./components/AdminInternshipBatchStatusPopup";
-import AdminInternshipBatchViewPopup from "./components/AdminInternshipBatchViewPopup";
+const AdminInternshipBatchDeletePopup = dynamic(() => import("./components/AdminInternshipBatchDeletePopup"), { ssr: false });
+const AdminInternshipBatchStatusPopup = dynamic(() => import("./components/AdminInternshipBatchStatusPopup"), { ssr: false });
+const AdminInternshipBatchViewPopup = dynamic(() => import("./components/AdminInternshipBatchViewPopup"), { ssr: false });
 
 export default function AdminQuanLyDotThucTapPage() {
   const [loading, setLoading] = useState(true);

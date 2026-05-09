@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
@@ -17,11 +18,11 @@ import {
 } from "@/lib/utils/doanhnghiep-tuyen-dung";
 import TuyenDungToolbar from "./components/TuyenDungToolbar";
 import TuyenDungTableSection from "./components/TuyenDungTableSection";
-import TuyenDungViewPopup from "./components/TuyenDungViewPopup";
-import TuyenDungStopPopup from "./components/TuyenDungStopPopup";
-import TuyenDungDeletePopup from "./components/TuyenDungDeletePopup";
-import TuyenDungAddPopup from "./components/TuyenDungAddPopup";
-import TuyenDungEditPopup from "./components/TuyenDungEditPopup";
+const TuyenDungViewPopup = dynamic(() => import("./components/TuyenDungViewPopup"), { ssr: false });
+const TuyenDungStopPopup = dynamic(() => import("./components/TuyenDungStopPopup"), { ssr: false });
+const TuyenDungDeletePopup = dynamic(() => import("./components/TuyenDungDeletePopup"), { ssr: false });
+const TuyenDungAddPopup = dynamic(() => import("./components/TuyenDungAddPopup"), { ssr: false });
+const TuyenDungEditPopup = dynamic(() => import("./components/TuyenDungEditPopup"), { ssr: false });
 
 export default function DoanhNghiepTuyenDungPage() {
   const [loading, setLoading] = useState(true);

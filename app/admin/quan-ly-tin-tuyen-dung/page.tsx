@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 
@@ -9,9 +10,9 @@ import { inferDefaultAction } from "@/lib/utils/admin-quan-ly-tin-tuyen-dung";
 
 import AdminTinTuyenDungToolbar from "./components/AdminTinTuyenDungToolbar";
 import AdminTinTuyenDungTableSection from "./components/AdminTinTuyenDungTableSection";
-import AdminTinTuyenDungViewPopup from "./components/AdminTinTuyenDungViewPopup";
-import AdminTinTuyenDungStatusPopup from "./components/AdminTinTuyenDungStatusPopup";
-import AdminTinTuyenDungDeletePopup from "./components/AdminTinTuyenDungDeletePopup";
+const AdminTinTuyenDungViewPopup = dynamic(() => import("./components/AdminTinTuyenDungViewPopup"), { ssr: false });
+const AdminTinTuyenDungStatusPopup = dynamic(() => import("./components/AdminTinTuyenDungStatusPopup"), { ssr: false });
+const AdminTinTuyenDungDeletePopup = dynamic(() => import("./components/AdminTinTuyenDungDeletePopup"), { ssr: false });
 
 export default function AdminQuanLyTinTuyenDungPage() {
   const [loading, setLoading] = useState(true);
