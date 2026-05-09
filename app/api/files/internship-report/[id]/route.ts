@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
-import { buildCloudinaryRawDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
+import { fetchCloudinaryBytesByPublicId, fromCloudinaryRef } from "@/lib/storage/cloudinary";
 
 function safeFilename(name: string): string {
   return String(name || "bctt.pdf").replace(/["\r\n]/g, "").trim() || "bctt.pdf";
@@ -67,23 +67,13 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   let mime = String(report.reportMime || "").trim() || "application/pdf";
   const cloudPublicId = fromCloudinaryRef(stored);
   if (cloudPublicId) {
-    try {
-      const deliveryUrl = buildCloudinaryRawDeliveryUrl(cloudPublicId);
-      if (!deliveryUrl) {
-        return NextResponse.json(
-          { success: false, message: "Cấu hình lưu trữ file chưa sẵn sàng (thiếu tên cloud)." },
-          { status: 503 }
-        );
-      }
-      const upstream = await fetch(deliveryUrl);
-      if (!upstream.ok) return NextResponse.json({ success: false, message: "Không thể tải file BCTT." }, { status: 502 });
-      const ab = await upstream.arrayBuffer();
-      bytes = Buffer.from(ab);
-      const upstreamType = String(upstream.headers.get("content-type") || "").trim().toLowerCase();
-      if (upstreamType && upstreamType !== "application/octet-stream") mime = upstreamType;
-    } catch {
-      return NextResponse.json({ success: false, message: "Không thể tải file BCTT." }, { status: 500 });
+    const fetched = await fetchCloudinaryBytesByPublicId(cloudPublicId);
+    if (!fetched) {
+      return NextResponse.json({ success: false, message: "Không thể tải file BCTT." }, { status: 502 });
     }
+    bytes = fetched.bytes;
+    const upstreamType = fetched.contentType;
+    if (upstreamType && upstreamType !== "application/octet-stream") mime = upstreamType;
   } else {
     try {
       bytes = Buffer.from(stored, "base64");

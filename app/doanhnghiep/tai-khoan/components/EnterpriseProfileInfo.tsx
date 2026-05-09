@@ -1,5 +1,4 @@
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
-import { openFilePreviewInNewTab } from "@/lib/utils/open-file-preview";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 
 type Props = {
@@ -31,18 +30,7 @@ export default function EnterpriseProfileInfo({ me, address, licName, licHref, l
           <th scope="row">File giấy phép kinh doanh</th>
           <td>
             {licHref ? (
-              <a
-                className={adminStyles.detailLink}
-                href={licHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => {
-                  e.preventDefault();
-                  void openFilePreviewInNewTab(licHref).catch(() => {
-                    window.open(licHref, "_blank", "noopener,noreferrer");
-                  });
-                }}
-              >
+              <a className={adminStyles.detailLink} href={licHref} target="_blank" rel="noreferrer">
                 {licName}
               </a>
             ) : (

@@ -5,7 +5,7 @@ import { getAdminSession } from "@/lib/auth/admin-session";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
-import { buildCloudinaryRawDeliveryUrl, enterpriseLicensePublicIdFromStored } from "@/lib/storage/cloudinary";
+import { enterpriseLicensePublicIdFromStored, fetchCloudinaryBytesByPublicId } from "@/lib/storage/cloudinary";
 
 function safeFilename(name: string): string {
   return String(name || "giay-phep.pdf").replace(/["\r\n]/g, "").trim() || "giay-phep.pdf";
@@ -65,36 +65,17 @@ export async function GET(request: Request, ctx: { params: Promise<{ userId: str
   let mime = metaMime || "application/pdf";
 
   if (cloudPublicId) {
-    try {
-      const deliveryUrl = buildCloudinaryRawDeliveryUrl(cloudPublicId);
-      if (!deliveryUrl) {
-        return NextResponse.json(
-          { success: false, message: "Cấu hình lưu trữ file chưa sẵn sàng (thiếu tên cloud)." },
-          { status: 503 }
-        );
-      }
-      const upstream = await fetch(deliveryUrl, {
-        cache: "no-store",
-        headers: {
-          Accept: "*/*",
-          "User-Agent": "UTC-Manage-FileProxy/1.0"
-        }
-      });
-      if (!upstream.ok) {
-        console.error("enterprise-business-license cloudinary fetch", deliveryUrl, upstream.status);
-        return NextResponse.json({ success: false, message: "Không thể tải file giấy phép." }, { status: 502 });
-      }
-      const ab = await upstream.arrayBuffer();
-      bytes = Buffer.from(ab);
-      const upstreamType = String(upstream.headers.get("content-type") || "").trim().toLowerCase();
-      if (!upstreamType || upstreamType === "application/octet-stream") {
-        // Giữ MIME từ hồ sơ (PDF/DOCX) để trình duyệt xem inline đúng
-        mime = metaMime || "application/pdf";
-      } else {
-        mime = upstreamType;
-      }
-    } catch {
-      return NextResponse.json({ success: false, message: "Không thể tải file giấy phép." }, { status: 500 });
+    const fetched = await fetchCloudinaryBytesByPublicId(cloudPublicId);
+    if (!fetched) {
+      console.error("enterprise-business-license cloudinary fetch failed publicId=", cloudPublicId);
+      return NextResponse.json({ success: false, message: "Không thể tải file giấy phép." }, { status: 502 });
+    }
+    bytes = fetched.bytes;
+    const upstreamType = fetched.contentType;
+    if (!upstreamType || upstreamType === "application/octet-stream") {
+      mime = metaMime || "application/pdf";
+    } else {
+      mime = upstreamType;
     }
   } else if (base64) {
     try {

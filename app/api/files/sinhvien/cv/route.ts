@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
-import { buildCloudinaryRawDeliveryUrl } from "@/lib/storage/cloudinary";
+import { fetchCloudinaryBytesByPublicId } from "@/lib/storage/cloudinary";
 
 function safeFilename(name: string): string {
   return String(name || "cv.pdf").replace(/["\r\n]/g, "").trim() || "cv.pdf";
@@ -41,29 +41,17 @@ export async function GET(request: Request) {
   const publicId = String(row.cvPublicId || "").trim();
   if (!publicId) return NextResponse.json({ success: false, message: "Không có file CV." }, { status: 404 });
 
-  let bytes: Buffer;
-  let mime: string;
-  try {
-    const deliveryUrl = buildCloudinaryRawDeliveryUrl(publicId);
-    if (!deliveryUrl) {
-      return NextResponse.json(
-        { success: false, message: "Cấu hình lưu trữ file chưa sẵn sàng (thiếu tên cloud)." },
-        { status: 503 }
-      );
-    }
-    const upstream = await fetch(deliveryUrl);
-    if (!upstream.ok) return NextResponse.json({ success: false, message: "Không thể tải file CV." }, { status: 502 });
-    const ab = await upstream.arrayBuffer();
-    bytes = Buffer.from(ab);
-    const upstreamType = String(upstream.headers.get("content-type") || "").trim().toLowerCase();
-    const fallbackType = String(row.cvMime || "").trim().toLowerCase();
-    mime =
-      !upstreamType || upstreamType === "application/octet-stream"
-        ? fallbackType || "application/pdf"
-        : upstreamType;
-  } catch {
-    return NextResponse.json({ success: false, message: "Không thể tải file CV." }, { status: 500 });
+  const fetched = await fetchCloudinaryBytesByPublicId(publicId);
+  if (!fetched) {
+    return NextResponse.json({ success: false, message: "Không thể tải file CV." }, { status: 502 });
   }
+  const bytes = fetched.bytes;
+  const upstreamType = fetched.contentType;
+  const fallbackType = String(row.cvMime || "").trim().toLowerCase();
+  const mime =
+    !upstreamType || upstreamType === "application/octet-stream"
+      ? fallbackType || "application/pdf"
+      : upstreamType;
 
   const filename = safeFilename(row.cvFileName || "cv.pdf");
   const disposition = `${download ? "attachment" : "inline"}; filename="${filename}"`;

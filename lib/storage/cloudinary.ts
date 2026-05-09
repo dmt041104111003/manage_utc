@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import path from "path";
+import { v2 as cloudinary } from "cloudinary";
 
 export type CloudinaryUploadResult = {
   publicId: string;
@@ -210,6 +211,72 @@ export function buildCloudinaryImageDeliveryUrl(publicId: string): string | null
     .map((seg) => encodeURIComponent(seg))
     .join("/");
   return `https://res.cloudinary.com/${encodeURIComponent(cloudName)}/image/upload/${encodedPid}`;
+}
+
+function cloudinarySigningEnv(): { cloud_name: string; api_key: string; api_secret: string } | null {
+  const cloud_name =
+    String(process.env.CLOUDINARY_CLOUD_NAME || "").trim() ||
+    String(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "").trim();
+  const api_key = String(process.env.CLOUDINARY_API_KEY || "").trim();
+  const api_secret = String(process.env.CLOUDINARY_API_SECRET || "").trim();
+  if (!cloud_name || !api_key || !api_secret) return null;
+  return { cloud_name, api_key, api_secret };
+}
+
+/**
+ * Tải file raw/image từ Cloudinary (proxy API).
+ * Thứ tự: URL ký (SDK) → raw delivery công khai → image delivery (fallback public_id nhầm loại).
+ */
+export async function fetchCloudinaryBytesByPublicId(publicId: string): Promise<{ bytes: Buffer; contentType: string } | null> {
+  const pid = String(publicId || "").trim().replace(/^\/+/, "");
+  if (!pid) return null;
+
+  const urls: string[] = [];
+  const seen = new Set<string>();
+  const push = (u: string | null | undefined) => {
+    const s = String(u || "").trim();
+    if (s && !seen.has(s)) {
+      seen.add(s);
+      urls.push(s);
+    }
+  };
+
+  const cred = cloudinarySigningEnv();
+  if (cred) {
+    cloudinary.config({
+      cloud_name: cred.cloud_name,
+      api_key: cred.api_key,
+      api_secret: cred.api_secret,
+      secure: true
+    });
+    try {
+      push(cloudinary.url(pid, { resource_type: "raw", secure: true, sign_url: true }));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  push(buildCloudinaryRawDeliveryUrl(pid));
+  push(buildCloudinaryImageDeliveryUrl(pid));
+
+  const headers: Record<string, string> = {
+    Accept: "*/*",
+    "User-Agent": "UTC-Manage-FileProxy/1.0"
+  };
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { cache: "no-store", headers });
+      if (!res.ok) continue;
+      const bytes = Buffer.from(await res.arrayBuffer());
+      if (bytes.length === 0) continue;
+      const contentType = String(res.headers.get("content-type") || "").trim().toLowerCase();
+      return { bytes, contentType };
+    } catch {
+      continue;
+    }
+  }
+  return null;
 }
 
 export function toCloudinaryRef(publicId: string): string {
