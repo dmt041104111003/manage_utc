@@ -1,5 +1,8 @@
 export const SCHOOL_NAME = "Đại học GTVT";
 export const SCHOOL_FULL_NAME = "Trường Đại học Giao thông Vận tải";
+/** Logo chính thức (email / banner) — WebP trên Cloudinary */
+export const SCHOOL_EMAIL_LOGO_URL =
+  "https://res.cloudinary.com/dkzd3pz4t/image/upload/v1775884787/logo_vnau6c.webp";
 export const SCHOOL_WEBSITE = "https://utc.edu.vn";
 export const SCHOOL_HOTLINE = "1900 xxx xxx";
 

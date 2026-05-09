@@ -1,33 +1,38 @@
 import {
   Body,
+  Column,
   Container,
   Head,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
-  Section,
-  Text,
   Row,
-  Column
+  Section,
+  Text
 } from "@react-email/components";
 import type { ReactNode } from "react";
 import {
   DEFAULT_SUPPORT_EMAIL,
   ENTERPRISE_MAIL_SIGN_OFF_ADDRESS,
+  SCHOOL_EMAIL_LOGO_URL,
   SCHOOL_FULL_NAME,
   SCHOOL_HOTLINE,
   SCHOOL_WEBSITE
 } from "@/lib/constants/school";
 
+/** Nền header xanh đậm + vàng đặc trưng nhận diện UTC (logo vòng ngoài vàng) */
 const C = {
-  primary: "#005bac",
-  primaryDark: "#004a8a",
-  pageBg: "#f4f7fb",
-  border: "#d5dce5",
+  headerTop: "#c9a227",
+  headerBg: "#121c4a",
+  headerBgMid: "#1a2a6e",
+  pageBg: "#eef2f8",
+  border: "#c5ced9",
   text: "#1f2937",
   muted: "#5b6470",
-  footerBg: "#1f2937"
+  footerBg: "#121c4a",
+  footerDeep: "#0b1029"
 } as const;
 
 const font =
@@ -57,27 +62,46 @@ export function BrandedEmailLayout({ preview, children }: Props) {
             }}
           >
             <Row>
-              <Column style={{ height: 3, backgroundColor: C.primaryDark, lineHeight: 0, fontSize: 0 }}>&nbsp;</Column>
+              <Column style={{ height: 4, backgroundColor: C.headerTop, lineHeight: 0, fontSize: 0 }}>&nbsp;</Column>
             </Row>
-            <Section style={{ backgroundColor: C.primary, padding: "22px 28px 20px" }}>
-              <Text
-                style={{
-                  margin: "0 0 4px",
-                  fontSize: 10,
-                  fontWeight: 700,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.7)"
-                }}
-              >
-                Bộ Giáo dục và Đào tạo
-              </Text>
-              <Text style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: "#ffffff", lineHeight: 1.3 }}>
-                {SCHOOL_FULL_NAME}
-              </Text>
-              <Text style={{ margin: 0, fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.78)" }}>
-                Phòng Đào tạo · Hệ thống Quản lý thực tập
-              </Text>
+            <Section
+              style={{
+                backgroundColor: C.headerBg,
+                backgroundImage: `linear-gradient(135deg, ${C.headerBg} 0%, ${C.headerBgMid} 55%, ${C.headerBg} 100%)`,
+                padding: "20px 26px 22px"
+              }}
+            >
+              <Row>
+                <Column style={{ width: 84, verticalAlign: "middle", paddingRight: 4 }}>
+                  <Img
+                    src={SCHOOL_EMAIL_LOGO_URL}
+                    width="72"
+                    height="72"
+                    alt="Logo Trường Đại học Giao thông Vận tải - UTC"
+                    style={{ display: "block", borderRadius: 8 }}
+                  />
+                </Column>
+                <Column style={{ verticalAlign: "middle" }}>
+                  <Text
+                    style={{
+                      margin: "0 0 6px",
+                      fontSize: 9,
+                      fontWeight: 700,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: "#e8d48a"
+                    }}
+                  >
+                    Bộ Giáo dục và Đào tạo
+                  </Text>
+                  <Text style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700, color: "#ffffff", lineHeight: 1.3 }}>
+                    {SCHOOL_FULL_NAME}
+                  </Text>
+                  <Text style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.88)" }}>
+                    Phòng Đào tạo · Hệ thống Quản lý thực tập
+                  </Text>
+                </Column>
+              </Row>
             </Section>
             <Hr style={{ borderColor: C.border, borderWidth: 1, margin: 0 }} />
             <Section style={{ padding: "28px 28px 26px", fontSize: 14, lineHeight: 1.65, color: C.text }}>{children}</Section>
@@ -107,7 +131,7 @@ export function BrandedEmailLayout({ preview, children }: Props) {
                 </Link>
               </Text>
             </Section>
-            <Section style={{ backgroundColor: "#111827", padding: "12px 28px 14px" }}>
+            <Section style={{ backgroundColor: C.footerDeep, padding: "12px 28px 14px" }}>
               <Text style={{ margin: 0, fontSize: 11, color: "rgba(255,255,255,0.42)", lineHeight: 1.55 }}>
                 Email tự động từ Hệ thống Quản lý thực tập — {SCHOOL_FULL_NAME}. Vui lòng không trả lời trực tiếp email này.
               </Text>
