@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import styles from "../styles/dashboard.module.css";
+import { ADMIN_PENDING_ENTERPRISES_CHANGED_EVENT } from "@/hooks/useAdminPendingEnterpriseCount";
 import { usePendingEnterprises } from "@/hooks/usePendingEnterprises";
 import { IconCheck, IconX } from "../components/PheDuyetIcons";
 import type { PendingEnterpriseItem } from "@/lib/types/admin";
@@ -30,6 +31,7 @@ export default function AdminPheDuyetPage() {
         data.mailError ? `${data.message} (Cảnh báo gửi email: ${data.mailError})` : String(data.message)
       );
       await load();
+      window.dispatchEvent(new Event(ADMIN_PENDING_ENTERPRISES_CHANGED_EVENT));
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Lỗi.");
     } finally {
@@ -63,6 +65,7 @@ export default function AdminPheDuyetPage() {
         data.mailError ? `${data.message} (Cảnh báo gửi email: ${data.mailError})` : String(data.message)
       );
       await load();
+      window.dispatchEvent(new Event(ADMIN_PENDING_ENTERPRISES_CHANGED_EVENT));
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Lỗi.");
     } finally {

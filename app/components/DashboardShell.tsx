@@ -6,8 +6,11 @@ import type { ReactNode } from "react";
 import { DASHBOARD_NAV_BY_ROLE, DASHBOARD_TOPBAR_TITLE_BY_ROLE } from "@/lib/constants/dashboard-shell";
 import type { DashboardRole } from "@/lib/types/dashboard";
 import { isDashboardNavActive } from "@/lib/utils/navigation";
+import { useAdminPendingEnterpriseCount } from "@/hooks/useAdminPendingEnterpriseCount";
 import { useDashboardSidebar } from "@/hooks/useDashboardSidebar";
 import styles from "./dashboard-shell.module.css";
+
+const ADMIN_PHE_DUYET_HREF = "/admin/phe-duyet";
 
 export type { DashboardRole };
 
@@ -19,6 +22,7 @@ type DashboardShellProps = {
 export function DashboardShell({ role, children }: DashboardShellProps) {
   const pathname = usePathname();
   const { menuOpen, closeMenu, toggleMenu, logoutBusy, handleLogout } = useDashboardSidebar();
+  const { count: pendingEnterpriseCount } = useAdminPendingEnterpriseCount(role === "admin");
 
   const navItems = DASHBOARD_NAV_BY_ROLE[role];
 
@@ -36,6 +40,12 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
         <nav className={styles.nav}>
           {navItems.map((item) => {
             const active = isDashboardNavActive(pathname, item.href);
+            const pending =
+              role === "admin" && item.href === ADMIN_PHE_DUYET_HREF ? pendingEnterpriseCount : undefined;
+            const showPendingBadge = typeof pending === "number";
+            const displayCount = showPendingBadge ? (pending > 99 ? "99+" : String(pending)) : "";
+            const badgeText = showPendingBadge ? `(${displayCount})` : "";
+            const badgeLabel = showPendingBadge ? `${pending} doanh nghiệp chờ phê duyệt` : undefined;
             return (
               <Link
                 key={`${item.href}-${item.label}`}
@@ -43,7 +53,18 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
                 className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
                 onClick={closeMenu}
               >
-                {item.label}
+                <span className={styles.navLinkRow}>
+                  <span className={styles.navLinkText}>{item.label}</span>
+                  {showPendingBadge ? (
+                    <span
+                      className={`${styles.navBadge} ${pending === 0 ? styles.navBadgeZero : ""}`}
+                      title={badgeLabel}
+                      aria-label={badgeLabel}
+                    >
+                      {badgeText}
+                    </span>
+                  ) : null}
+                </span>
               </Link>
             );
           })}
