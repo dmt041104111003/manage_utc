@@ -55,7 +55,8 @@ lib/
 │   ├── identifier.ts               # resolveLoginEmail (map "admin" → email thật)
 │   └── admin-session.ts            # getAdminSession (helper server-side)
 ├── mail.ts                         # sendMail (nodemailer)
-├── mail-layout.ts                  # buildMailShell, escapeHtml, mailCalloutHtml
+├── mail-brand.ts                   # MAIL_BRAND (màu/layout email sáng), getSchoolEmailLogoUrl()
+├── mail-layout.ts                  # buildMailShell, escapeHtml, mailCalloutHtml, mailLetterClosingHtml
 ├── mail-password-reset.ts          # buildPasswordResetMail, sendPasswordResetEmail
 ├── mail-enterprise.ts              # sendEnterpriseApprovedEmail, sendEnterpriseRejectedEmail, getPublicAppUrl
 ├── prisma.ts                       # export prisma (PrismaClient singleton)
@@ -63,6 +64,12 @@ lib/
     ├── auth/patterns.ts            # SESSION_COOKIE_NAME, ...
     ├── auth/guards.ts              # AUTH_EXACT_ROUTES_REQUIRE_SESSION, ROLE_PROTECTED_ROUTE_PREFIXES
     └── routing.ts                  # ROLE_HOME (map role → home URL)
+
+emails/
+├── branded-email-layout.tsx        # Khung React Email (cùng MAIL_BRAND + logo ô trắng)
+├── enterprise-approved-email.tsx
+├── enterprise-rejected-email.tsx
+└── password-reset-email.tsx
 
 middleware.ts                       # Bảo vệ route, redirect theo role (dùng jose.jwtVerify trực tiếp)
 ```
@@ -85,8 +92,8 @@ Mật khẩu
 
 Email
   └── lib/mail.ts → sendMail()                          [nodemailer + Gmail SMTP]
-      ├── lib/mail-password-reset.ts → sendPasswordResetEmail()
-      └── lib/mail-enterprise.ts → sendEnterpriseApprovedEmail/RejectedEmail()
+      ├── lib/mail-password-reset.ts → sendPasswordResetEmail() [@react-email/render]
+      └── lib/mail-enterprise.ts → sendEnterpriseApprovedEmail/RejectedEmail() [@react-email/render]
 ```
 
 ---
@@ -99,10 +106,13 @@ Email
 |----------------|-------|
 | `EMAIL_FROM` | Địa chỉ Gmail dùng để gửi (cũng là `auth.user` của SMTP) |
 | `EMAIL_PASSWORD` | App Password của Gmail (không phải mật khẩu đăng nhập Google) |
-| `EMAIL_FROM_NAME` | Tên hiển thị người gửi, mặc định `"Hệ thống thực tập UTC"` |
+| `EMAIL_FROM_NAME` | Tên hiển thị người gửi; mặc định dùng `MAIL_PRODUCT_NAME` trong `lib/constants/school.ts` |
 | `APP_URL` | URL public của ứng dụng — dùng để tạo link trong email (`VERCEL_URL` là fallback) |
 | `SUPPORT_EMAIL` | Email hỗ trợ hiển thị trong footer mail |
 | `SCHOOL_HOTLINE` | Số điện thoại hotline hiển thị trong email |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Upload file (CV, BCTT, GPK DN, …) |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Cùng giá trị cloud name — cần cho URL xem file trên client khi cần |
+| `SCHOOL_EMAIL_LOGO_URL` / `NEXT_PUBLIC_SCHOOL_EMAIL_LOGO_URL` | URL HTTPS logo trong email; nên ảnh **nền trắng hoặc JPEG** (PNG alpha dễ bị client mail tô nền đen) |
 
 **Transport:** `nodemailer.createTransport({ service: "gmail", auth: { user, pass } })` — tạo mới mỗi lần gọi `sendMail()`.
 
@@ -112,66 +122,46 @@ Email
 Caller (API route)
     │
     ├─ lib/mail-password-reset.ts
-    │      buildPasswordResetMail(fullName, role, resetUrl)
-    │        → subject, text (plain), html
-    │      sendPasswordResetEmail(to, fullName, role, resetUrl)
-    │        → gọi sendMail()
+    │      buildPasswordResetMail() → subject, text
+    │      sendPasswordResetEmail()
+    │        → @react-email/render(PasswordResetEmail) → html
+    │        → sendMail(to, subject, text, html)
     │
     ├─ lib/mail-enterprise.ts
-    │      sendEnterpriseApprovedEmail(to, companyName, loginEmail)
-    │        buildApprovedHtml()  → { text, bodyHtml }
-    │        buildMailShell({ bodyHtml }) → html hoàn chỉnh
-    │        → gọi sendMail()
-    │
-    │      sendEnterpriseRejectedEmail(to, reasons[], companyName)
-    │        buildRejectedHtml() → { text, bodyHtml }
-    │        buildMailShell({ bodyHtml }) → html hoàn chỉnh
-    │        → gọi sendMail()
+    │      sendEnterpriseApprovedEmail / sendEnterpriseRejectedEmail
+    │        → @react-email/render + emails/*.tsx + BrandedEmailLayout
+    │        → sendMail(..., html)
     │
     └─ lib/mail.ts → sendMail(to, subject, text, htmlOverride?)
            createTransport()  [nodemailer Gmail SMTP]
-           buildMailShell({ bodyHtml: fallback từ text })  ← nếu không có htmlOverride
+           buildMailShell({ bodyHtml: fallback từ text })  ← chỉ khi không có htmlOverride
            transport.sendMail({ from, to, subject, text, html })
 ```
 
-### Cấu trúc HTML email (`lib/mail-layout.ts`)
+### Cấu trúc HTML email (`lib/mail-layout.ts` + `lib/mail-brand.ts`)
 
-Mọi email đều được bọc trong **`buildMailShell()`** — tạo ra 1 file HTML hoàn chỉnh gồm 3 vùng:
+Email **transactional** (chỉ text hoặc `bodyHtml` fragment → `sendMail` bọc shell): **`buildMailShell()`** dùng palette **`MAIL_BRAND`** (nền sáng, tone UTC xanh `#005bac` + vàng `#c9a227`):
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  HEADER  (buildHeader)                              │
-│  · Nền xanh đậm #005bac                             │
-│  · "Bộ Giáo dục và Đào tạo"                        │
-│  · Tên trường (SCHOOL_FULL_NAME)                    │
-│  · "Phòng Đào tạo · Hệ thống Quản lý Thực tập"    │
+│  HEADER — nền #f0f5fb; chữ tối                      │
+│  · Logo (tuỳ chọn): ô trắng + viền, tránh PNG alpha │
+│  · Bộ GD&ĐT, SCHOOL_FULL_NAME, Phòng ĐT + product   │
 ├─────────────────────────────────────────────────────┤
-│  BODY  (bodyHtml — nội dung từng loại mail)         │
-│  · Màu sắc theo MAIL_ACCENT (primary #005bac)       │
-│  · Callout box: mailCalloutHtml(variant, title, html)│
-│    variants: info / success / warning / danger      │
+│  BODY — nền #fafcfe, full width, căn đều (justify) │
+│  · bodyHtml từng route / mailLetterClosingHtml()   │
+│  · mailCalloutHtml() vẫn dùng MAIL_ACCENT (callout) │
 ├─────────────────────────────────────────────────────┤
-│  BELOW CARD  (belowCardHtml — tuỳ chọn)             │
-│  · Link dự phòng nếu nút CTA không hoạt động        │
-├─────────────────────────────────────────────────────┤
-│  FOOTER  (buildFooter)                              │
-│  · Nền tối #1f2937                                  │
-│  · Địa chỉ, hotline, email hỗ trợ, website          │
-│  · "Email gửi tự động — vui lòng không reply"       │
+│  FOOTER — nền xám nhạt, 2 đoạn (liên hệ + disclaimer)│
+│  · Không dùng line-height:0 bọc footer (tránh chồng chữ)│
 └─────────────────────────────────────────────────────┘
 ```
 
-**Palette màu `MAIL_ACCENT`:**
+Email **React** (duyệt/từ chối DN, quên MK): `emails/branded-email-layout.tsx` — cùng `MAIL_BRAND`, layout song song với `buildMailShell`.
 
-| Key | Mã màu | Dùng cho |
-|-----|--------|----------|
-| `primary` | `#005bac` | Header, nút CTA, link |
-| `primaryDark` | `#004a8a` | Viền trên header |
-| `success` | `#027a48` | Callout duyệt thành công |
-| `danger` | `#b42318` | Callout từ chối / cảnh báo đỏ |
-| `warning` | `#92400e` | Callout cảnh báo vàng |
-| `muted` | `#5b6470` | Text phụ, footer |
-| `text` | `#1f2937` | Text chính |
+**Đăng ký DN nhận thư tiếp nhận:** `register-enterprise/route.ts` → `buildMailShell` + `mailLetterClosingHtml()`; tiêu đề dùng tiền tố `MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX`. Các mail giao dịch khác (ứng tuyển, BCTT, …) dùng cùng tiền tố chủ đề + `MAIL_TRANSACTIONAL_SIGN_OFF` trong plain text.
+
+**Palette `MAIL_ACCENT`:** vẫn dùng cho **`mailCalloutHtml()`** (info / success / warning / danger).
 
 ### Danh sách email theo sự kiện
 
@@ -180,19 +170,18 @@ flowchart TD
     subgraph QMK["Quên & Đặt lại mật khẩu"]
         A1[GV / SV / DN nhập email\n/auth/quenmatkhau] --> A2[forgot-password/route.ts\nsignPasswordResetToken]
         A2 --> A3[sendPasswordResetEmail\nmail-password-reset.ts]
-        A3 --> A4["Email: Đặt lại mật khẩu\nChủ đề: [Tên trường] - Yêu cầu đặt lại mật khẩu\nNội dung: Link JWT 15 phút + nút CTA\nCallout: warning – Lưu ý bảo mật"]
+        A3 --> A4["Email: Đặt lại mật khẩu\nChủ đề: [MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX] - Yêu cầu đặt lại mật khẩu\nNội dung: Link JWT 15 phút + nút CTA (React Email)\nCallout: warning – Lưu ý bảo mật"]
     end
 
     subgraph DN["Đăng ký & Duyệt Doanh nghiệp"]
         B1[DN đăng ký\n/auth/dangky] --> B2[register-enterprise/route.ts\nprisma.user.create]
-        B2 --> B3[sendMail – tiếp nhận hồ sơ cho DN]
-        B2 --> B4[sendMail – thông báo Admin]
+        B2 --> B3[sendMail – tiếp nhận hồ sơ cho DN\nbuildMailShell + mailLetterClosingHtml]
 
         B5[Admin duyệt\n/admin/quan-ly-tai-khoan] --> B6{Kết quả}
         B6 -->|APPROVED| B7[sendEnterpriseApprovedEmail\nmail-enterprise.ts]
-        B7 --> B8["Email: Phê duyệt thành công\nChủ đề: [Phòng ĐT] - Thông báo phê duyệt...\nNội dung: Thông tin đăng nhập\n(URL, email, MK tạm = MST)\nCallout: success"]
+        B7 --> B8["Email: Phê duyệt thành công\nChủ đề: MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX + phê duyệt...\nNội dung: React Email (BrandedEmailLayout)\nCallout: success"]
         B6 -->|REJECTED| B9[sendEnterpriseRejectedEmail\nmail-enterprise.ts]
-        B9 --> B10["Email: Từ chối đăng ký\nChủ đề: [Phòng ĐT] - Thông báo kết quả...\nNội dung: Danh sách lý do từ chối\n+ nút MỞ TRANG ĐĂNG KÝ\nCallout: warning"]
+        B9 --> B10["Email: Từ chối đăng ký\nChủ đề: MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX + kết quả đăng ký...\nNội dung: React Email\nCallout: warning"]
     end
 ```
 
@@ -202,7 +191,7 @@ flowchart TD
 - **File:** `lib/mail-password-reset.ts` → `sendPasswordResetEmail(to, fullName, role, resetUrl)`
 - **Trigger:** `POST /api/auth/forgot-password` (role ≠ admin, tài khoản không khóa)
 - **Người nhận:** GV / SV / DN — địa chỉ email tài khoản
-- **Chủ đề:** `[Tên trường] - Yêu cầu đặt lại mật khẩu tài khoản`
+- **Chủ đề:** `` `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} - Yêu cầu đặt lại mật khẩu tài khoản` `` (`lib/constants/school.ts`)
 - **Nội dung:**
   - Chào đích danh (`fullName`)
   - Xác nhận nhận yêu cầu đặt lại MK
@@ -215,7 +204,7 @@ flowchart TD
 - **File:** `lib/mail-enterprise.ts` → `sendEnterpriseApprovedEmail(to, companyName, loginEmail)`
 - **Trigger:** Admin cập nhật `enterpriseStatus = APPROVED` trong `/admin/quan-ly-tai-khoan`
 - **Người nhận:** Email đăng ký của doanh nghiệp
-- **Chủ đề:** `[Phòng Đào tạo – Tên trường] - Thông báo phê duyệt tài khoản kết nối thực tập thành công`
+- **Chủ đề:** `` `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} - Thông báo phê duyệt tài khoản kết nối thực tập thành công` ``
 - **Nội dung:**
   - Thông báo hồ sơ đã được phê duyệt
   - Bảng thông tin đăng nhập: Truy cập hệ thống để xem thông tin chi tiết, email đăng nhập, mật khẩu tạm = MST
@@ -226,7 +215,7 @@ flowchart TD
 - **File:** `lib/mail-enterprise.ts` → `sendEnterpriseRejectedEmail(to, reasons[], companyName)`
 - **Trigger:** Admin cập nhật `enterpriseStatus = REJECTED`
 - **Người nhận:** Email đăng ký của doanh nghiệp
-- **Chủ đề:** `[Phòng Đào tạo – Tên trường] - Thông báo kết quả đăng ký tài khoản kết nối thực tập`
+- **Chủ đề:** `` `${MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX} - Thông báo kết quả đăng ký tài khoản kết nối thực tập` ``
 - **Nội dung:**
   - Thông báo hồ sơ chưa được phê duyệt
   - Danh sách lý do (`reasons[]`) dạng ordered list với callout `danger`
@@ -240,16 +229,16 @@ sequenceDiagram
     participant API as API Route
     participant PwdReset as lib/mail-password-reset.ts
     participant EntMail as lib/mail-enterprise.ts
-    participant Layout as lib/mail-layout.ts<br/>buildMailShell()
+    participant ReactEmail as @react-email/render<br/>emails/*.tsx
     participant Mail as lib/mail.ts<br/>sendMail()
     participant SMTP as Gmail SMTP<br/>(nodemailer)
     participant Inbox as Hộp thư người nhận
 
     Note over API,Inbox: ── Quên mật khẩu ──
     API->>PwdReset: sendPasswordResetEmail(to, fullName, role, resetUrl)
-    PwdReset->>PwdReset: buildPasswordResetMail()<br/>→ subject, text, bodyHtml
-    PwdReset->>Layout: buildMailShell({ bodyHtml, belowCardHtml })
-    Layout-->>PwdReset: html (full document)
+    PwdReset->>PwdReset: buildPasswordResetMail()<br/>→ subject, text
+    PwdReset->>ReactEmail: render(PasswordResetEmail)
+    ReactEmail-->>PwdReset: html
     PwdReset->>Mail: sendMail(to, subject, text, html)
     Mail->>Mail: createTransport() [nodemailer Gmail]
     Mail->>SMTP: transport.sendMail({ from, to, subject, text, html })
@@ -257,20 +246,18 @@ sequenceDiagram
 
     Note over API,Inbox: ── Doanh nghiệp được duyệt ──
     API->>EntMail: sendEnterpriseApprovedEmail(to, companyName, loginEmail)
-    EntMail->>EntMail: getPublicAppUrl() → loginPath
-    EntMail->>EntMail: buildApprovedHtml() → { text, bodyHtml }
-    EntMail->>Layout: buildMailShell({ bodyHtml })
-    Layout-->>EntMail: html
+    EntMail->>EntMail: getPublicAppUrl() → loginPath<br/>buildApprovedText()
+    EntMail->>ReactEmail: render(EnterpriseApprovedEmail)
+    ReactEmail-->>EntMail: html
     EntMail->>Mail: sendMail(to, subject, text, html)
     Mail->>SMTP: transport.sendMail(...)
     SMTP-->>Inbox: Email "Phê duyệt thành công"
 
     Note over API,Inbox: ── Doanh nghiệp bị từ chối ──
     API->>EntMail: sendEnterpriseRejectedEmail(to, reasons[], companyName)
-    EntMail->>EntMail: getPublicAppUrl() → registerLink
-    EntMail->>EntMail: buildRejectedHtml() → { text, bodyHtml }
-    EntMail->>Layout: buildMailShell({ bodyHtml })
-    Layout-->>EntMail: html
+    EntMail->>EntMail: getPublicAppUrl() → registerLink<br/>buildRejectedText()
+    EntMail->>ReactEmail: render(EnterpriseRejectedEmail)
+    ReactEmail-->>EntMail: html
     EntMail->>Mail: sendMail(to, subject, text, html)
     Mail->>SMTP: transport.sendMail(...)
     SMTP-->>Inbox: Email "Từ chối đăng ký"

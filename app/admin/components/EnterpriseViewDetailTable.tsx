@@ -10,6 +10,7 @@ import {
 import { formatAdminEnterpriseStatusLine } from "@/lib/utils/admin-enterprise-display";
 import { resolveRepresentativeTitle } from "@/lib/utils/enterprise-representative";
 import { buildCloudinaryImageDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
+import { openFilePreviewInNewTab } from "@/lib/utils/open-file-preview";
 import styles from "../styles/dashboard.module.css";
 
 type Props = { item: AdminEnterpriseDetail };
@@ -67,7 +68,18 @@ export function EnterpriseViewDetailTable({ item }: Props) {
             <th scope="row">File giấy phép kinh doanh</th>
             <td>
               {licHref ? (
-                <a className={styles.detailLink} href={licHref} target="_blank" rel="noopener noreferrer" download={licName}>
+                <a
+                  className={styles.detailLink}
+                  href={licHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    void openFilePreviewInNewTab(licHref).catch(() => {
+                      window.open(licHref, "_blank", "noopener,noreferrer");
+                    });
+                  }}
+                >
                   {licName}
                 </a>
               ) : (

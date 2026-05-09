@@ -62,9 +62,6 @@ function buildHeader(): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
        style="background-color:#ffffff;">
   <tr>
-    <td height="4" bgcolor="${MAIL_BRAND.accentBar}" style="background-color:${MAIL_BRAND.accentBar};font-size:4px;line-height:4px;">&nbsp;</td>
-  </tr>
-  <tr>
     <td bgcolor="${MAIL_BRAND.headerStrip}" style="background-color:${MAIL_BRAND.headerStrip};padding:20px 26px 18px;border-bottom:1px solid ${MAIL_BRAND.rule};">
       <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
         <tr>
@@ -100,7 +97,7 @@ function buildFooter(): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${MAIL_BRAND.footerStrip}"
        style="background-color:${MAIL_BRAND.footerStrip};">
   <tr>
-    <td style="padding:18px 28px 16px;border-top:1px solid ${MAIL_BRAND.rule};line-height:1.65;font-size:14px;">
+    <td style="padding:18px 28px 16px;border-top:1px solid ${MAIL_BRAND.rule};line-height:1.65;font-size:14px;text-align:justify;word-wrap:break-word;">
       <p style="margin:0 0 10px;font-family:${FONT};font-size:11px;font-weight:700;
                 letter-spacing:0.1em;text-transform:uppercase;color:${MAIL_BRAND.headerKicker};line-height:1.4;">
         Thông tin liên hệ
@@ -122,7 +119,7 @@ function buildFooter(): string {
     </td>
   </tr>
   <tr>
-    <td bgcolor="${MAIL_BRAND.footerNote}" style="background-color:${MAIL_BRAND.footerNote};padding:14px 28px 16px;border-top:1px solid ${MAIL_BRAND.rule};line-height:1.65;">
+    <td bgcolor="${MAIL_BRAND.footerNote}" style="background-color:${MAIL_BRAND.footerNote};padding:14px 28px 16px;border-top:1px solid ${MAIL_BRAND.rule};line-height:1.65;text-align:justify;word-wrap:break-word;">
       <p style="margin:0 0 8px;font-family:${FONT};font-size:12px;color:${MAIL_BRAND.muted};line-height:1.6;">
         Thư được gửi tự động từ <strong style="color:${MAIL_BRAND.text};">${safeProduct}</strong>.
       </p>
@@ -143,8 +140,8 @@ export function mailLetterClosingHtml(): string {
     <td style="border-top:1px solid ${MAIL_BRAND.rule};height:1px;font-size:1px;line-height:1px;">&nbsp;</td>
   </tr>
 </table>
-<p style="margin:0 0 4px;font-family:${FONT};font-size:15px;line-height:1.65;color:${MAIL_BRAND.contentText};">Trân trọng,</p>
-<p style="margin:0;font-family:${FONT};font-size:15px;line-height:1.7;color:${MAIL_BRAND.contentText};">
+<p style="margin:0 0 4px;font-family:${FONT};font-size:15px;line-height:1.65;color:${MAIL_BRAND.contentText};text-align:justify;">Trân trọng,</p>
+<p style="margin:0;font-family:${FONT};font-size:15px;line-height:1.7;color:${MAIL_BRAND.contentText};text-align:justify;">
   <strong style="color:${MAIL_BRAND.headerTitle};">Phòng Đào tạo</strong><br/>
   <span style="color:${MAIL_BRAND.muted};font-size:14px;">${safeName}</span>
 </p>`.trim();
@@ -156,7 +153,7 @@ export function buildMailShell({ bodyHtml, belowCardHtml }: MailShellOptions): s
               style="max-width:600px;margin:0 auto;">
         <tr>
           <td style="padding:12px 28px 0;font-family:${FONT};font-size:12px;
-                     line-height:1.6;color:${MAIL_ACCENT.muted};">
+                     line-height:1.6;color:${MAIL_ACCENT.muted};text-align:justify;word-wrap:break-word;">
             ${belowCardHtml}
           </td>
         </tr>
@@ -177,23 +174,20 @@ export function buildMailShell({ bodyHtml, belowCardHtml }: MailShellOptions): s
   <tr><td align="center" style="line-height:normal;">
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-           bgcolor="#ffffff" style="max-width:600px;background:#ffffff;border-radius:10px;
+           bgcolor="#ffffff" style="width:100%;max-width:600px;background:#ffffff;border-radius:10px;
                   border:1px solid ${MAIL_BRAND.cardBorder};
-                  box-shadow:0 8px 32px rgba(0,91,172,0.08);">
+                  box-shadow:0 8px 32px rgba(0,91,172,0.08);table-layout:fixed;">
 
       <tr><td style="padding:0;line-height:normal;">${buildHeader()}</td></tr>
 
       <tr>
-        <td bgcolor="#ffffff" style="padding:0;line-height:normal;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-              <td width="5" bgcolor="${MAIL_BRAND.stripe}" style="width:5px;min-width:5px;background-color:${MAIL_BRAND.stripe};font-size:1px;line-height:1px;">&nbsp;</td>
-              <td bgcolor="${MAIL_BRAND.contentBg}" style="background-color:${MAIL_BRAND.contentBg};padding:26px 28px 28px 22px;font-family:${FONT};
-                         font-size:15px;line-height:1.8;color:${MAIL_BRAND.contentText};">
-                ${bodyHtml}
-              </td>
-            </tr>
-          </table>
+        <td
+          width="100%"
+          bgcolor="${MAIL_BRAND.contentBg}"
+          style="width:100%;max-width:600px;box-sizing:border-box;background-color:${MAIL_BRAND.contentBg};padding:26px 28px 30px;
+                 font-family:${FONT};font-size:15px;line-height:1.8;color:${MAIL_BRAND.contentText};
+                 text-align:justify;word-wrap:break-word;overflow-wrap:break-word;hyphens:none;">
+          ${bodyHtml}
         </td>
       </tr>
 

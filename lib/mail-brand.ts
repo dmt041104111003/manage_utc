@@ -3,7 +3,6 @@
  * Dùng chung cho lib/mail-layout (HTML chuỗi) và emails/branded-email-layout (React Email).
  */
 export const MAIL_BRAND = {
-  accentBar: "#c9a227",
   headerStrip: "#f0f5fb",
   headerTitle: "#0a2540",
   headerKicker: "#005bac",
@@ -16,7 +15,6 @@ export const MAIL_BRAND = {
   /** Nội dung thư — tách nền nhẹ, dễ đọc */
   contentBg: "#fafcfe",
   contentText: "#334155",
-  stripe: "#005bac",
 
   footerStrip: "#f4f7fb",
   footerNote: "#eef2f7",

@@ -6,7 +6,7 @@
 
 | Module | Route | API chính | Email |
 |--------|-------|-----------|-------|
-| Tài khoản | `/doanhnghiep/tai-khoan` | `/api/doanhnghiep/me` | Không |
+| Tài khoản | `/doanhnghiep/tai-khoan` | `/api/doanhnghiep/me`, `GET /api/files/enterprise-business-license/[userId]` (GPK) | Không |
 | Quản lý tin tuyển dụng | `/doanhnghiep/tuyen-dung` | `/api/doanhnghiep/tuyen-dung` | Không |
 | Quản lý ứng viên | `/doanhnghiep/ung-vien` | `/api/doanhnghiep/ung-vien` | Có (SV) |
 | Đổi mật khẩu | `/auth/doimatkhau` | `/api/auth/change-password` | Không |
@@ -101,7 +101,8 @@ lib/
 ### Chức năng
 - Xem thông tin doanh nghiệp: tên công ty, MST, lĩnh vực kinh doanh, địa chỉ trụ sở, website, người đại diện, chức danh
 - Chỉnh sửa: tên người đại diện, chức danh, **giới thiệu về doanh nghiệp** (textarea), website
-- File giấy phép + logo ưu tiên lấy từ Cloudinary (`businessLicensePublicId` / `companyLogoPublicId`), fallback dữ liệu cũ base64 nếu còn
+- **GPK:** lưu `businessLicensePublicId` (Cloudinary) hoặc base64 cũ; xem qua `GET /api/files/enterprise-business-license/{userId}` của chính DN (đúng MIME, inline; `?download=1` để tải). Upload mới gắn đuôi file an toàn (`.pdf` / `.doc` / `.docx`) vào `public_id`.
+- **Logo:** `companyLogoPublicId` (Cloudinary) hoặc base64 cũ; URL xem ảnh dùng delivery Cloudinary — cần `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` (hoặc `CLOUDINARY_CLOUD_NAME`) trên môi trường build client.
 
 ### Sơ đồ luồng
 
@@ -155,6 +156,7 @@ sequenceDiagram
 |-------|--------|--------|--------|
 | `/api/doanhnghiep/me` | GET | `user.findUnique` (+ `enterpriseProfile`) | `{ success, item: enterprise fields }` |
 | `/api/doanhnghiep/me` | PATCH | `user.findUnique` + `user.update(enterpriseProfile)` | `{ success, message }` hoặc `{ success: false, field, message }` |
+| `/api/files/enterprise-business-license/[userId]` | GET | Đọc `user` theo `userId` + kiểm tra session = chính user đó | Stream GPK (Cloudinary/base64) |
 
 ### Ghi chú hiệu năng
 - Các popup lớn ở trang doanh nghiệp đã được lazy-load (dynamic import) để giảm thời gian click/mở popup.
@@ -597,6 +599,7 @@ stateDiagram-v2
 |-----------|--------|------|-------|---------|
 | `/api/doanhnghiep/me` | GET | doanhnghiep | — | Thông tin tài khoản DN |
 | `/api/doanhnghiep/me` | PATCH | doanhnghiep | — | Cập nhật thông tin DN |
+| `/api/files/enterprise-business-license/[userId]` | GET | doanhnghiep (chỉ `userId` của mình) | — | Xem/tải GPK |
 | `/api/doanhnghiep/dashboard/overview` | GET | doanhnghiep | — | Tổng quan dashboard |
 | `/api/doanhnghiep/tuyen-dung` | GET | doanhnghiep | — | Danh sách tin + auto-stop hết hạn |
 | `/api/doanhnghiep/tuyen-dung` | POST | doanhnghiep | — | Tạo tin tuyển dụng mới |

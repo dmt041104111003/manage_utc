@@ -6,7 +6,7 @@
 
 | Module | Route | API chính | Email |
 |--------|-------|-----------|-------|
-| Quản lý doanh nghiệp | `/admin/quan-ly-doanh-nghiep` | `/api/admin/enterprises` | Có (DN: duyệt/từ chối) |
+| Quản lý doanh nghiệp | `/admin/quan-ly-doanh-nghiep` | `/api/admin/enterprises`, `GET /api/files/enterprise-business-license/[userId]` (GPK) | Có (DN: duyệt/từ chối) |
 | Quản lý đợt thực tập | `/admin/quan-ly-dot-thuc-tap` | `/api/admin/internship-batches` | Không |
 | Quản lý tài khoản | `/admin/quan-ly-tai-khoan` | `/api/admin/accounts` | Không |
 | Phân công GVHD | `/admin/phan-cong-gvhd` | `/api/admin/assignments` | Có (GV + SV) |
@@ -178,6 +178,7 @@ lib/
 ### Chức năng
 - Xem danh sách doanh nghiệp (lọc theo từ khoá, trạng thái)
 - Xem chi tiết hồ sơ doanh nghiệp
+- **Giấy phép kinh doanh (GPK):** link mở `GET /api/files/enterprise-business-license/{userId}` (proxy Cloudinary/base64, `Content-Disposition: inline` như BCTT; `?download=1` để tải)
 - Duyệt / Từ chối đăng ký doanh nghiệp
 - Xoá doanh nghiệp
 
@@ -226,7 +227,7 @@ sequenceDiagram
     DetailAPI->>DB: user.findUnique (+ enterpriseProfile)
     DB-->>DetailAPI: { item }
     DetailAPI-->>Page: detail
-    Page->>ViewPop: viewDetail → mở popup
+    Page->>ViewPop: viewDetail → mở popup<br/>(GPK: GET /api/files/enterprise-business-license/{id})
 
     Note over Admin,Mail: ── Duyệt doanh nghiệp ──
     Admin->>Table: Nhấn "Duyệt"
@@ -275,6 +276,7 @@ sequenceDiagram
 | `/api/admin/enterprises/[id]` | GET | `user.findUnique` (+ `enterpriseProfile`) | Không |
 | `/api/admin/enterprises/[id]` | DELETE | `jobApplication.count` + `jobPost.deleteMany` + `user.delete` | Không |
 | `/api/admin/enterprises/[id]/status` | POST | `user.findUnique` + `user.update(enterpriseStatus)` | Có: DN (duyệt hoặc từ chối) |
+| `/api/files/enterprise-business-license/[userId]` | GET | Stream file từ Cloudinary hoặc base64 trong `enterpriseMeta` | Không |
 
 ---
 
@@ -951,4 +953,5 @@ sequenceDiagram
 | `/api/admin/tien-do-thuc-tap` | GET | — | Danh sách SV + tiến độ |
 | `/api/admin/tien-do-thuc-tap/[id]` | GET, PATCH | Có (SV + GVHD) | Chi tiết + cập nhật cuối |
 | `/api/files/internship-report/[id]` | GET | — | Xem/tải file BCTT theo quyền (mặc định inline) |
+| `/api/files/enterprise-business-license/[userId]` | GET | — | Admin: mọi `userId` DN; stream GPK (inline / `?download=1`) |
 | `/api/admin/pending-enterprises/count` | GET | — | Số DN chờ duyệt (badge) |

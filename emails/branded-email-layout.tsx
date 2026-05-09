@@ -44,6 +44,7 @@ export function BrandedEmailLayout({ preview, children }: Props) {
         <Section style={{ padding: "32px 16px 40px" }}>
           <Container
             style={{
+              width: "100%",
               maxWidth: 600,
               margin: "0 auto",
               backgroundColor: "#ffffff",
@@ -52,9 +53,6 @@ export function BrandedEmailLayout({ preview, children }: Props) {
               boxShadow: "0 8px 32px rgba(0,91,172,0.08)"
             }}
           >
-            <Row>
-              <Column style={{ height: 4, backgroundColor: B.accentBar, lineHeight: "4px", fontSize: "4px" }}>&nbsp;</Column>
-            </Row>
             <Section
               style={{
                 backgroundColor: B.headerStrip,
@@ -114,16 +112,32 @@ export function BrandedEmailLayout({ preview, children }: Props) {
                 </Column>
               </Row>
             </Section>
-            <Section style={{ padding: 0, lineHeight: "normal" }}>
-              <Row>
-                <Column style={{ width: 5, backgroundColor: B.stripe, fontSize: "1px", lineHeight: "1px" }}>&nbsp;</Column>
-                <Column style={{ backgroundColor: B.contentBg, padding: "26px 28px 28px 22px" }}>
-                  <Section style={{ fontSize: 15, lineHeight: "1.8", color: B.contentText }}>{children}</Section>
-                </Column>
-              </Row>
+            <Section
+              style={{
+                width: "100%",
+                maxWidth: 600,
+                boxSizing: "border-box",
+                backgroundColor: B.contentBg,
+                padding: "26px 28px 30px",
+                fontSize: 15,
+                lineHeight: "1.8",
+                color: B.contentText,
+                textAlign: "justify",
+                wordBreak: "break-word"
+              }}
+            >
+              {children}
             </Section>
             <Hr style={{ borderColor: B.rule, borderWidth: 1, margin: 0 }} />
-            <Section style={{ backgroundColor: B.footerStrip, padding: "18px 28px 16px", lineHeight: "1.65" }}>
+            <Section
+              style={{
+                backgroundColor: B.footerStrip,
+                padding: "18px 28px 16px",
+                lineHeight: "1.65",
+                textAlign: "justify",
+                wordBreak: "break-word"
+              }}
+            >
               <Text
                 style={{
                   margin: "0 0 10px",
@@ -163,7 +177,9 @@ export function BrandedEmailLayout({ preview, children }: Props) {
                 backgroundColor: B.footerNote,
                 padding: "14px 28px 16px",
                 borderTop: `1px solid ${B.rule}`,
-                lineHeight: "1.65"
+                lineHeight: "1.65",
+                textAlign: "justify",
+                wordBreak: "break-word"
               }}
             >
               <Text style={{ margin: "0 0 8px", fontSize: 12, color: B.muted, lineHeight: "1.6" }}>
