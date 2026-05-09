@@ -194,20 +194,37 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  border: 1px solid #94a3b8;
+  background: #fff;
 }
 
 .dataTable th,
 .dataTable td {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #cbd5e1;
   padding: 10px 12px;
   text-align: left;
   vertical-align: top;
 }
 
-.dataTable th {
-  background: #f9fafb;
+.dataTable thead th {
+  background: #e2e8f0;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.01em;
+  border-color: #94a3b8;
+  border-bottom: 2px solid #64748b;
+}
+
+.dataTable tbody th {
+  background: #f1f5f9;
   font-weight: 600;
-  color: #374151;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.dataTable tbody td {
+  background: #fff;
+  color: #111827;
 }
 
 /** Bảng chi tiết trong modal «Xem thông tin doanh nghiệp» */
@@ -221,26 +238,31 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  border: 1px solid #94a3b8;
+  background: #fff;
 }
 
 .viewModalDetailTable th,
 .viewModalDetailTable td {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #cbd5e1;
   padding: 10px 12px;
   text-align: left;
   vertical-align: top;
 }
 
 .viewModalDetailTable thead th {
-  background: #f9fafb;
-  font-weight: 600;
-  color: #374151;
+  background: #e2e8f0;
+  font-weight: 700;
+  color: #0f172a;
+  border-color: #94a3b8;
+  border-bottom: 2px solid #64748b;
 }
 
 .viewModalDetailTable tbody th {
-  background: #f9fafb;
-  font-weight: 500;
-  color: #6b7280;
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #475569;
+  border-color: #cbd5e1;
   width: 32%;
   max-width: 14rem;
 }
