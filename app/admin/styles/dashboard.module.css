@@ -612,12 +612,69 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
-/* Cùng tone trung tính cho mọi ô trong grid (nhãn xám, số đậm trên nền trắng) */
-.statCardTintPending,
-.statCardTintApproved,
+/* Màu khác nhau theo vị trí trong grid (không trùng nhau trong cùng hàng) */
+.statsGrid2 > .statCard:nth-child(1) {
+  background: linear-gradient(145deg, rgba(239, 246, 255, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(59, 130, 246, 0.28);
+}
+.statsGrid2 > .statCard:nth-child(2) {
+  background: linear-gradient(145deg, rgba(241, 245, 249, 0.95) 0%, #ffffff 55%);
+  border-color: rgba(100, 116, 139, 0.3);
+}
+
+.statsGrid3 > .statCard:nth-child(6n + 1) {
+  background: linear-gradient(145deg, rgba(255, 251, 235, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.statsGrid3 > .statCard:nth-child(6n + 2) {
+  background: linear-gradient(145deg, rgba(239, 246, 255, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(59, 130, 246, 0.28);
+}
+.statsGrid3 > .statCard:nth-child(6n + 3) {
+  background: linear-gradient(145deg, rgba(240, 253, 244, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(34, 197, 94, 0.26);
+}
+.statsGrid3 > .statCard:nth-child(6n + 4) {
+  background: linear-gradient(145deg, rgba(254, 242, 242, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(239, 68, 68, 0.24);
+}
+.statsGrid3 > .statCard:nth-child(6n + 5) {
+  background: linear-gradient(145deg, rgba(250, 245, 255, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(139, 92, 246, 0.26);
+}
+.statsGrid3 > .statCard:nth-child(6n + 6) {
+  background: linear-gradient(145deg, rgba(236, 254, 255, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(14, 165, 233, 0.28);
+}
+
+.statsGrid4 > .statCard:nth-child(4n + 1) {
+  background: linear-gradient(145deg, rgba(255, 251, 235, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.statsGrid4 > .statCard:nth-child(4n + 2) {
+  background: linear-gradient(145deg, rgba(239, 246, 255, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(59, 130, 246, 0.28);
+}
+.statsGrid4 > .statCard:nth-child(4n + 3) {
+  background: linear-gradient(145deg, rgba(240, 253, 244, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(34, 197, 94, 0.26);
+}
+.statsGrid4 > .statCard:nth-child(4n + 4) {
+  background: linear-gradient(145deg, rgba(254, 242, 242, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(239, 68, 68, 0.24);
+}
+
+.statCardTintPending {
+  background: linear-gradient(145deg, rgba(255, 251, 235, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(245, 158, 11, 0.32);
+}
+.statCardTintApproved {
+  background: linear-gradient(145deg, rgba(239, 246, 255, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(59, 130, 246, 0.28);
+}
 .statCardTintRejected {
-  background: #ffffff;
-  border-color: #e5e7eb;
+  background: linear-gradient(145deg, rgba(254, 242, 242, 0.92) 0%, #ffffff 55%);
+  border-color: rgba(239, 68, 68, 0.26);
 }
 
 .statLabel {
