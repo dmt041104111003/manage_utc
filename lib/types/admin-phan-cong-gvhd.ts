@@ -25,6 +25,7 @@ export type AssignmentItem = {
   };
   supervisor: { id: string | null; fullName: string; degree: SupervisorDegree | null };
   student: { id: string | null; msv: string; fullName: string; degree: StudentDegree | null };
+  students?: { id: string | null; msv: string; fullName: string; degree: StudentDegree | null }[];
 };
 
 export type SupervisorOption = { id: string; fullName: string; degree: SupervisorDegree; faculty: string };

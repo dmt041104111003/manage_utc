@@ -61,7 +61,7 @@ export function EnterpriseViewDetailTable({ item }: Props) {
             <th scope="row">File giấy phép kinh doanh</th>
             <td>
               {licHref ? (
-                <a className={styles.licenseLink} href={licHref} download={licName}>
+                <a className={styles.licenseLink} href={licHref} target="_blank" rel="noopener noreferrer">
                   {licName}
                 </a>
               ) : (

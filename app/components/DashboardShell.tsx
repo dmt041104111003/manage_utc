@@ -11,6 +11,12 @@ import { useDashboardSidebar } from "@/hooks/useDashboardSidebar";
 import styles from "./dashboard-shell.module.css";
 
 const ADMIN_QUAN_LY_DOANH_NGHIEP_HREF = "/admin/quan-ly-doanh-nghiep";
+const ROLE_LABEL: Record<DashboardRole, string> = {
+  admin: "Admin",
+  giangvien: "Giảng viên",
+  sinhvien: "Sinh viên",
+  doanhnghiep: "Doanh nghiệp"
+};
 
 export type { DashboardRole };
 
@@ -36,6 +42,7 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
         <div className={styles.brand}>
           <p className={styles.brandTitle}>Hệ thống quản lý thực tập</p>
           <p className={styles.brandSub}>Trường Đại học Giao thông Vận tải</p>
+          <p className={styles.brandRole}>Trang: {ROLE_LABEL[role]}</p>
         </div>
         <nav className={styles.nav}>
           {navItems.map((item) => {

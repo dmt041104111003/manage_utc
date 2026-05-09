@@ -1,6 +1,7 @@
 "use client";
 
 import type { AssignmentItem } from "@/lib/types/admin-phan-cong-gvhd";
+import { useState } from "react";
 import {
   ADMIN_PHAN_CONG_GVHD_PAGE_SIZE,
   ADMIN_PHAN_CONG_GVHD_STATUS_LABEL
@@ -20,6 +21,7 @@ export type Props = {
 
 export default function AdminPhanCongGVHDTable(props: Props) {
   const { paged, page, busyId, onView, onDelete } = props;
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   return (
     <div className={styles.tableWrap}>
@@ -48,7 +50,33 @@ export default function AdminPhanCongGVHDTable(props: Props) {
                   {(page - 1) * ADMIN_PHAN_CONG_GVHD_PAGE_SIZE + idx + 1}
                 </td>
                 <td data-label="MSV-Họ tên-Bậc">
-                  {it.student?.msv ? studentDisplay(it.student as any) : "—"}
+                  {(() => {
+                    const students = Array.isArray(it.students) ? it.students : it.student?.msv ? [it.student] : [];
+                    if (!students.length) return "—";
+                    const isOpen = Boolean(expanded[it.supervisorAssignmentId]);
+                    const visible = isOpen ? students : students.slice(0, 1);
+                    return (
+                      <div style={{ display: "grid", gap: 4 }}>
+                        {visible.map((s) => (
+                          <span key={String(s.id || `${s.msv}-${s.fullName}`)}>{studentDisplay(s as any)}</span>
+                        ))}
+                        {students.length > 1 ? (
+                          <button
+                            type="button"
+                            className={styles.textLinkBtn}
+                            onClick={() =>
+                              setExpanded((prev) => ({
+                                ...prev,
+                                [it.supervisorAssignmentId]: !prev[it.supervisorAssignmentId]
+                              }))
+                            }
+                          >
+                            {isOpen ? "Thu gọn" : `Xem thêm (${students.length - 1})`}
+                          </button>
+                        ) : null}
+                      </div>
+                    );
+                  })()}
                 </td>
                 <td data-label="Bậc-Họ tên GVHD">{supervisorDisplay(it.supervisor as any)}</td>
                 <td data-label="Khoa">{it.faculty}</td>

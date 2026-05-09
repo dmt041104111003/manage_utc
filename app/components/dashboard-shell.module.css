@@ -36,6 +36,14 @@
   line-height: 1.4;
 }
 
+.brandRole {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
 .nav {
   flex: 1;
   padding: 12px 10px;
@@ -112,12 +120,12 @@
   padding: 10px 12px;
   border-radius: 6px;
   font-size: 13px;
-  color: #6b7280;
+  color: #b42318;
   text-decoration: none;
 }
 .logout:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: #fef3f2;
+  color: #912018;
 }
 
 .main {
