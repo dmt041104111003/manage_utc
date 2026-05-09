@@ -57,10 +57,16 @@ export function buildPasswordResetMail(fullName: string, role: Role, resetUrl: s
 </td></tr>
 </table>
 ${mailCalloutHtml("warning", "Lưu ý quan trọng", notesList)}
-<p style="margin:18px 0 0;font-size:14px;color:#374151;">Nếu gặp khó khăn trong quá trình khôi phục mật khẩu, bạn có thể liên hệ <strong>bộ phận kỹ thuật</strong> của nhà trường qua số hotline: <strong style="color:${MAIL_ACCENT.primary};">${safeHotline}</strong>.</p>
-<p style="margin:28px 0 0;font-size:14px;color:${MAIL_ACCENT.text};">Trân trọng,</p>
-<p style="margin:6px 0 0;font-size:14px;line-height:1.5;"><strong>Ban Quản trị Hệ thống ${safeSchool}</strong><br/>
-<a href="${hrefSite}" style="color:${MAIL_ACCENT.primary};text-decoration:none;font-weight:500;">${safeWebsite}</a></p>
+<p style="margin:18px 0 0;font-size:14px;color:#374151;">Nếu gặp khó khăn trong quá trình khôi phục mật khẩu, vui lòng liên hệ <strong>bộ phận kỹ thuật</strong> của Nhà trường qua số hotline: <strong style="color:${MAIL_ACCENT.primary};">${safeHotline}</strong>.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;">
+  <tr><td height="1" style="background:#d1d9e6;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+<p style="margin:16px 0 0;font-size:14px;color:${MAIL_ACCENT.text};">Trân trọng,</p>
+<p style="margin:8px 0 0;font-size:14px;line-height:1.7;color:#374151;">
+<strong style="color:${MAIL_ACCENT.primary};">Ban Quản trị Hệ thống</strong><br/>
+<strong>${safeSchool}</strong><br/>
+<a href="${hrefSite}" style="color:${MAIL_ACCENT.primary};text-decoration:none;font-size:13px;">${safeWebsite}</a>
+</p>
 `.trim();
 
   const html = buildMailShell({

@@ -104,12 +104,15 @@ ${mailCalloutHtml("success", "Lưu ý quan trọng", noteInner)}
 <tr><td style="padding:6px 16px 0 0;color:#64748b;vertical-align:top;">Điện thoại</td><td style="padding-top:6px;"><strong style="color:${MAIL_ACCENT.text};">${safeHotline}</strong></td></tr>
 </table>
 <p style="margin:18px 0 0;font-size:14px;line-height:1.55;">Chúng tôi rất mong đợi sự hợp tác tốt đẹp giữa Quý doanh nghiệp và Nhà trường trong đào tạo và phát triển nguồn nhân lực trẻ.</p>
-<p style="margin:28px 0 0;font-size:14px;color:${MAIL_ACCENT.text};">Trân trọng,</p>
-<p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:#374151;">
-<strong style="color:${MAIL_ACCENT.text};">${safeName}</strong><br/>
-${safeTitle}<br/>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;">
+  <tr><td height="1" style="background:#d1d9e6;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+<p style="margin:16px 0 0;font-size:14px;color:${MAIL_ACCENT.text};">Trân trọng,</p>
+<p style="margin:8px 0 0;font-size:14px;line-height:1.7;color:#374151;">
+<strong style="color:${MAIL_ACCENT.primary};">${safeName}</strong><br/>
+<em>${safeTitle}</em><br/>
 <strong>${safeSchoolSign}</strong><br/>
-<span style="color:#64748b;">${safeAddr}</span>
+<span style="color:#64748b;font-size:13px;">${safeAddr}</span>
 </p>
 `.trim();
 
@@ -162,10 +165,13 @@ ${reasons.map((r, i) => `<li style="margin-bottom:10px;"><strong style="color:${
       : `<p style="margin:0;color:#64748b;font-style:italic;">${escapeHtml("[Lý do: không được nêu chi tiết]")}</p>`;
 
   const reasonsBox = `
-<div style="margin:16px 0;padding:16px 18px;background:#fef2f2;">
-<p style="margin:0 0 10px;font-size:13px;font-weight:700;color:${MAIL_ACCENT.danger};text-transform:uppercase;letter-spacing:0.03em;">Lý do cụ thể</p>
-${reasonsOl}
-</div>`;
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+       style="margin:16px 0;border-left:4px solid #fca5a5;background:#fff1f0;">
+  <tr><td style="padding:12px 16px;">
+    <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:${MAIL_ACCENT.danger};text-transform:uppercase;letter-spacing:0.04em;">Lý do cụ thể</p>
+    ${reasonsOl}
+  </td></tr>
+</table>`;
 
   const guideInner = `
 <p style="margin:0 0 10px;">Nếu lý do liên quan đến hồ sơ hoặc thông tin sai sót, vui lòng <strong>cập nhật lại</strong> tại trang đăng ký.</p>
@@ -183,14 +189,17 @@ ${reasonsOl}
 <p style="margin:0 0 14px">Lời đầu tiên, <strong>${safeSchool}</strong> xin chân thành cảm ơn Quý doanh nghiệp đã quan tâm và gửi hồ sơ đăng ký tham gia hệ thống quản lý thực tập.</p>
 <p style="margin:0 0 14px">Sau khi xem xét thông tin và hồ sơ đính kèm, chúng tôi rất tiếc phải thông báo rằng yêu cầu <strong>chưa được phê duyệt</strong> tại thời điểm này.</p>
 ${reasonsBox}
-${mailCalloutHtml("info", "Hướng dẫn xử lý", guideInner)}
+${mailCalloutHtml("warning", "Hướng dẫn xử lý", guideInner)}
 <p style="margin:18px 0 0;font-size:14px;line-height:1.55;">Chúng tôi rất hy vọng sẽ có cơ hội hợp tác trong các chương trình hoặc học kỳ tiếp theo khi điều kiện phù hợp hơn.</p>
-<p style="margin:28px 0 0;font-size:14px;color:${MAIL_ACCENT.text};">Trân trọng,</p>
-<p style="margin:8px 0 0;font-size:14px;line-height:1.6;color:#374151;">
-<strong style="color:${MAIL_ACCENT.text};">${safeName}</strong><br/>
-${safeTitle}<br/>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0 0;">
+  <tr><td height="1" style="background:#d1d9e6;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+<p style="margin:16px 0 0;font-size:14px;color:${MAIL_ACCENT.text};">Trân trọng,</p>
+<p style="margin:8px 0 0;font-size:14px;line-height:1.7;color:#374151;">
+<strong style="color:${MAIL_ACCENT.primary};">${safeName}</strong><br/>
+<em>${safeTitle}</em><br/>
 <strong>${safeSchoolSign}</strong><br/>
-<span style="color:${MAIL_ACCENT.danger};font-weight:600;">Số điện thoại hỗ trợ: ${safeHotline}</span>
+<span style="color:#64748b;font-size:13px;">&#9742;&nbsp; ${safeHotline}</span>
 </p>
 <p style="margin:14px 0 0;font-size:12px;color:${MAIL_ACCENT.muted};">Liên kết đăng ký (dự phòng): <span style="word-break:break-all;">${escapeHtml(registerLink)}</span></p>
 `.trim();

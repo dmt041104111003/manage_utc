@@ -84,32 +84,32 @@ export default function AdminInternshipBatchEditModal(props: Props) {
               {fieldErrors.schoolYear ? <p className={formStyles.error}>{fieldErrors.schoolYear}</p> : null}
             </div>
 
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                Thời gian bắt đầu <span className={formStyles.required}>*</span>
-              </label>
-              <input
-                className={formStyles.input}
-                type="date"
-                value={form.startDate}
-                onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))}
-                placeholder="Chọn ngày"
-              />
-              {fieldErrors.startDate ? <p className={formStyles.error}>{fieldErrors.startDate}</p> : null}
-            </div>
+            <div className={formStyles.grid2}>
+              <div className={formStyles.field}>
+                <label className={formStyles.label}>
+                  Thời gian bắt đầu <span className={formStyles.required}>*</span>
+                </label>
+                <input
+                  className={formStyles.input}
+                  type="date"
+                  value={form.startDate}
+                  onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))}
+                />
+                {fieldErrors.startDate ? <p className={formStyles.error}>{fieldErrors.startDate}</p> : null}
+              </div>
 
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                Thời gian kết thúc <span className={formStyles.required}>*</span>
-              </label>
-              <input
-                className={formStyles.input}
-                type="date"
-                value={form.endDate}
-                onChange={(e) => setForm((p) => ({ ...p, endDate: e.target.value }))}
-                placeholder="Chọn ngày"
-              />
-              {fieldErrors.endDate ? <p className={formStyles.error}>{fieldErrors.endDate}</p> : null}
+              <div className={formStyles.field}>
+                <label className={formStyles.label}>
+                  Thời gian kết thúc <span className={formStyles.required}>*</span>
+                </label>
+                <input
+                  className={formStyles.input}
+                  type="date"
+                  value={form.endDate}
+                  onChange={(e) => setForm((p) => ({ ...p, endDate: e.target.value }))}
+                />
+                {fieldErrors.endDate ? <p className={formStyles.error}>{fieldErrors.endDate}</p> : null}
+              </div>
             </div>
 
             <div className={formStyles.field}>
