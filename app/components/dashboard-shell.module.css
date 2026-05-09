@@ -80,6 +80,19 @@
   width: 100%;
 }
 
+.navLinkInner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.navIcon {
+  flex-shrink: 0;
+  opacity: 0.92;
+}
+
 .navLinkText {
   min-width: 0;
   line-height: 1.35;
@@ -128,6 +141,12 @@
   font-size: 13px;
   color: #fca5a5;
   text-decoration: none;
+}
+
+.logoutRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 .logout:hover {
   background: rgba(239, 68, 68, 0.15);

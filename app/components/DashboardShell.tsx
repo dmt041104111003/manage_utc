@@ -3,6 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import type { IconType } from "react-icons";
+import {
+  FiBarChart2,
+  FiBriefcase,
+  FiCalendar,
+  FiFileText,
+  FiFolder,
+  FiGrid,
+  FiInbox,
+  FiKey,
+  FiLogOut,
+  FiSearch,
+  FiUser,
+  FiUserCheck,
+  FiUserPlus,
+  FiUsers
+} from "react-icons/fi";
+import type { DashboardNavIcon } from "@/lib/constants/dashboard-nav";
 import { DASHBOARD_NAV_BY_ROLE, DASHBOARD_TOPBAR_TITLE_BY_ROLE } from "@/lib/constants/dashboard-shell";
 import type { DashboardRole } from "@/lib/types/dashboard";
 import { isDashboardNavActive } from "@/lib/utils/navigation";
@@ -11,6 +29,25 @@ import { useDashboardSidebar } from "@/hooks/useDashboardSidebar";
 import styles from "./dashboard-shell.module.css";
 
 const ADMIN_QUAN_LY_DOANH_NGHIEP_HREF = "/admin/quan-ly-doanh-nghiep";
+
+const DASHBOARD_NAV_ICON: Record<DashboardNavIcon, IconType> = {
+  overview: FiGrid,
+  building: FiBriefcase,
+  calendar: FiCalendar,
+  accounts: FiUsers,
+  assign: FiUserCheck,
+  students: FiUsers,
+  instructors: FiUser,
+  documents: FiFileText,
+  progress: FiBarChart2,
+  account: FiUser,
+  report: FiFileText,
+  password: FiKey,
+  search: FiSearch,
+  applications: FiInbox,
+  profile: FiFolder,
+  candidates: FiUserPlus
+};
 const ROLE_LABEL: Record<DashboardRole, string> = {
   admin: "Admin",
   giangvien: "Giảng viên",
@@ -55,6 +92,7 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
         </div>
         <nav className={styles.nav}>
           {navItems.map((item) => {
+            const NavIcon = DASHBOARD_NAV_ICON[item.icon];
             const active = isDashboardNavActive(pathname, item.href);
             const pending =
               role === "admin" && item.href === ADMIN_QUAN_LY_DOANH_NGHIEP_HREF
@@ -72,7 +110,10 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
                 onClick={closeMenu}
               >
                 <span className={styles.navLinkRow}>
-                  <span className={styles.navLinkText}>{item.label}</span>
+                  <span className={styles.navLinkInner}>
+                    <NavIcon className={styles.navIcon} size={18} aria-hidden />
+                    <span className={styles.navLinkText}>{item.label}</span>
+                  </span>
                   {showPendingBadge ? (
                     <span
                       className={`${styles.navBadge} ${pending === 0 ? styles.navBadgeZero : ""}`}
@@ -98,7 +139,10 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
               void handleLogout(e);
             }}
           >
-            {logoutBusy ? "Đang đăng xuất…" : "Đăng xuất"}
+            <span className={styles.logoutRow}>
+              <FiLogOut className={styles.navIcon} size={18} aria-hidden />
+              {logoutBusy ? "Đang đăng xuất…" : "Đăng xuất"}
+            </span>
           </Link>
         </div>
       </aside>
