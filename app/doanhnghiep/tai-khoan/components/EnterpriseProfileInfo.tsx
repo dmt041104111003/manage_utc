@@ -1,4 +1,7 @@
+"use client";
+
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
+import { downloadWithCredentials } from "@/lib/utils/client-download-blob";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 
 type Props = {
@@ -33,8 +36,13 @@ export default function EnterpriseProfileInfo({ me, address, licName, licHref, l
               <a
                 className={adminStyles.detailLink}
                 href={licHref}
-                download={licName !== "—" ? licName : undefined}
                 rel="noreferrer"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  const fn = licName !== "—" ? licName : "giay-phep.pdf";
+                  const r = await downloadWithCredentials(licHref, fn);
+                  if (!r.ok) window.alert(r.message);
+                }}
               >
                 {licName}
               </a>

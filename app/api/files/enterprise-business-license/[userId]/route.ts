@@ -7,8 +7,19 @@ import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 import { enterpriseLicensePublicIdFromStored, fetchCloudinaryBytesByPublicId } from "@/lib/storage/cloudinary";
 
+export const maxDuration = 60;
+
 function safeFilename(name: string): string {
   return String(name || "giay-phep.pdf").replace(/["\r\n]/g, "").trim() || "giay-phep.pdf";
+}
+
+function contentDispositionHeader(download: boolean, filename: string): string {
+  const safe = safeFilename(filename);
+  const quoted = safe.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const star = encodeURIComponent(safe);
+  return download
+    ? `attachment; filename="${quoted}"; filename*=UTF-8''${star}`
+    : `inline; filename="${quoted}"; filename*=UTF-8''${star}`;
 }
 
 function readLicenseMeta(meta: unknown): {
@@ -96,14 +107,14 @@ export async function GET(request: Request, ctx: { params: Promise<{ userId: str
     return NextResponse.json({ success: false, message: "Không có file giấy phép." }, { status: 404 });
   }
 
-  const filename = safeFilename(fileName);
-  const disposition = `${download ? "attachment" : "inline"}; filename="${filename}"`;
+  const body = new Uint8Array(bytes);
 
-  return new NextResponse(new Uint8Array(bytes), {
+  return new NextResponse(body, {
     status: 200,
     headers: {
       "Content-Type": mime,
-      "Content-Disposition": disposition,
+      "Content-Disposition": contentDispositionHeader(download, fileName),
+      "Content-Length": String(body.byteLength),
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff"
     }

@@ -14,6 +14,7 @@ import {
   enterpriseLicensePublicIdFromStored,
   fromCloudinaryRef
 } from "@/lib/storage/cloudinary-public";
+import { downloadWithCredentials } from "@/lib/utils/client-download-blob";
 import styles from "../styles/dashboard.module.css";
 
 type Props = { item: AdminEnterpriseDetail };
@@ -76,8 +77,13 @@ export function EnterpriseViewDetailTable({ item }: Props) {
                 <a
                   className={styles.detailLink}
                   href={licHref}
-                  download={licName !== "—" ? licName : undefined}
                   rel="noreferrer"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    const fn = licName !== "—" ? licName : "giay-phep.pdf";
+                    const r = await downloadWithCredentials(licHref, fn);
+                    if (!r.ok) window.alert(r.message);
+                  }}
                 >
                   {licName}
                 </a>
