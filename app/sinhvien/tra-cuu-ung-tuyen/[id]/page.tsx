@@ -11,6 +11,7 @@ import {
   SINHVIEN_TRA_CUU_UNG_TUYEN_TITLE,
   SINHVIEN_TRA_CUU_UNG_TUYEN_SUBMIT_ERROR_DEFAULT
 } from "@/lib/constants/sinhvien-tra-cuu-ung-tuyen-detail";
+import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import {
   buildSinhVienTraCuuUngTuyenApplyPayload,
   buildSinhVienTraCuuUngTuyenApplyUrl,
@@ -45,11 +46,13 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
   const [removeCv, setRemoveCv] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  async function loadDetail() {
-    setLoading(true);
+  async function loadDetail(opts?: { force?: boolean }) {
+    const force = Boolean(opts?.force);
+    const cacheKey = `sv:tra-cuu-ung-tuyen:detail:${jobId}`;
+    if (!force && !hasCachedValue(cacheKey)) setLoading(true);
     setError("");
     try {
-      const data = await fetchSinhVienTraCuuUngTuyenDetail(jobId);
+      const data = await getOrFetchCached(cacheKey, () => fetchSinhVienTraCuuUngTuyenDetail(jobId), { force });
       setJob(data.item ?? null);
     } catch (e: any) {
       setError(e?.message || SINHVIEN_TRA_CUU_UNG_TUYEN_LOAD_DETAIL_ERROR_DEFAULT);
@@ -135,7 +138,7 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
       }
       setApplyOpen(false);
       setToast(getSinhVienTraCuuUngTuyenSubmitSuccessMessage(data?.message));
-      await loadDetail();
+      await loadDetail({ force: true });
     } catch (e: any) {
       setToast(getSinhVienTraCuuUngTuyenSubmitErrorMessage(e?.message));
     } finally {

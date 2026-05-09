@@ -8,6 +8,7 @@ import {
   DOANHNGHIEP_UNG_VIEN_ERROR_DEFAULT,
   DOANHNGHIEP_UNG_VIEN_PAGE_SIZE
 } from "@/lib/constants/doanhnghiep-ung-vien";
+import { DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE } from "@/lib/constants/doanhnghiep-ung-vien-detail";
 import { buildDoanhNghiepUngVienListUrl, getDoanhNghiepUngVienLoadErrorMessage } from "@/lib/utils/doanhnghiep-ung-vien";
 import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import UngVienToolbar from "./components/UngVienToolbar";
@@ -88,6 +89,22 @@ export default function DoanhNghiepUngVienPage() {
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, q, createdDate, deadlineDate, status]);
+
+  useEffect(() => {
+    if (!items.length) return;
+    void Promise.allSettled(
+      items.map((row) => {
+        const url = `/api/doanhnghiep/ung-vien/${row.id}?page=1&pageSize=${DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE}`;
+        const cacheKey = `enterprise:ung-vien:detail:${row.id}:1`;
+        return getOrFetchCached(cacheKey, async () => {
+          const res = await fetch(url);
+          const payload = await res.json();
+          if (!res.ok || !payload?.success) throw new Error(payload?.message || DOANHNGHIEP_UNG_VIEN_ERROR_DEFAULT);
+          return payload;
+        });
+      })
+    );
+  }, [items]);
 
   return (
     <main className={styles.page}>

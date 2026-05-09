@@ -14,6 +14,7 @@ import {
   getSinhVienTraCuuUngTuyenStatusNoteText
 } from "@/lib/constants/sinhvien-tra-cuu-ung-tuyen";
 import { fetchSinhVienTraCuuUngTuyenList } from "@/lib/utils/sinhvien-tra-cuu-ung-tuyen";
+import { fetchSinhVienTraCuuUngTuyenDetail } from "@/lib/utils/sinhvien-tra-cuu-ung-tuyen-detail";
 import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import TraCuuUngTuyenToolbar from "./components/TraCuuUngTuyenToolbar";
 import TraCuuUngTuyenJobGrid from "./components/TraCuuUngTuyenJobGrid";
@@ -65,6 +66,15 @@ export default function SinhVienTraCuuUngTuyenPage() {
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, workType, province]);
+
+  useEffect(() => {
+    if (!items.length) return;
+    void Promise.allSettled(
+      items.map((it) =>
+        getOrFetchCached(`sv:tra-cuu-ung-tuyen:detail:${it.id}`, () => fetchSinhVienTraCuuUngTuyenDetail(it.id))
+      )
+    );
+  }, [items]);
 
   const statusNote = useMemo(() => {
     return getSinhVienTraCuuUngTuyenStatusNoteText(canApply, internshipStatus);
