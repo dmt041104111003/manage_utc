@@ -6,47 +6,31 @@ import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import cardStyles from "./styles.module.css";
 
-type WorkType = "PART_TIME" | "FULL_TIME";
-type InternshipStatus = "NOT_STARTED" | "DOING" | "SELF_FINANCED" | "REPORT_SUBMITTED" | "COMPLETED";
-type Item = {
-  id: string;
-  title: string;
-  companyName: string;
-  address: string;
-  businessField: string;
-  expertise: string;
-  salary: string;
-  experienceRequirement: string;
-  workType: WorkType;
-  deadlineAt: string | null;
-  hasApplied: boolean;
-};
-
-const workTypeLabel: Record<WorkType, string> = { PART_TIME: "Part-time", FULL_TIME: "Full-time" };
-const internshipLabel: Record<InternshipStatus, string> = {
-  NOT_STARTED: "Chưa thực tập",
-  DOING: "Đang thực tập",
-  SELF_FINANCED: "Tự túc",
-  REPORT_SUBMITTED: "Đã nộp báo cáo",
-  COMPLETED: "Hoàn thành"
-};
-
-function formatDateVi(iso: string | null) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("vi-VN");
-}
+import type { SinhVienTraCuuUngTuyenItem, WorkTypeFilter } from "@/lib/types/sinhvien-tra-cuu-ung-tuyen";
+import {
+  SINHVIEN_TRA_CUU_UNG_TUYEN_EMPTY_TEXT,
+  SINHVIEN_TRA_CUU_UNG_TUYEN_LOADING_TEXT,
+  SINHVIEN_TRA_CUU_UNG_TUYEN_LOAD_ERROR_DEFAULT,
+  SINHVIEN_TRA_CUU_UNG_TUYEN_SEARCH_BUTTON_TEXT,
+  SINHVIEN_TRA_CUU_UNG_TUYEN_SUBTITLE,
+  SINHVIEN_TRA_CUU_UNG_TUYEN_TITLE,
+  appliedStatusText,
+  canApplyStatusText,
+  getSinhVienTraCuuUngTuyenStatusNoteText,
+  internshipLabel,
+  workTypeLabel
+} from "@/lib/constants/sinhvien-tra-cuu-ung-tuyen";
+import { fetchSinhVienTraCuuUngTuyenList, formatDateVi } from "@/lib/utils/sinhvien-tra-cuu-ung-tuyen";
 
 export default function SinhVienTraCuuUngTuyenPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<SinhVienTraCuuUngTuyenItem[]>([]);
   const [canApply, setCanApply] = useState(false);
-  const [internshipStatus, setInternshipStatus] = useState<InternshipStatus>("NOT_STARTED");
+  const [internshipStatus, setInternshipStatus] = useState<"NOT_STARTED" | "DOING" | "SELF_FINANCED" | "REPORT_SUBMITTED" | "COMPLETED" | "REJECTED">("NOT_STARTED");
 
   const [q, setQ] = useState("");
-  const [workType, setWorkType] = useState<"all" | WorkType>("all");
+  const [workType, setWorkType] = useState<WorkTypeFilter>("all");
   const [field, setField] = useState("all");
   const [fieldOptions, setFieldOptions] = useState<string[]>([]);
 
@@ -54,28 +38,13 @@ export default function SinhVienTraCuuUngTuyenPage() {
     setLoading(true);
     setError("");
     try {
-      const sp = new URLSearchParams();
-      if (q.trim()) sp.set("q", q.trim());
-      if (workType !== "all") sp.set("workType", workType);
-      if (field !== "all") sp.set("field", field);
-      const res = await fetch(`/api/sinhvien/tra-cuu-ung-tuyen?${sp.toString()}`);
-      const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải danh sách tin tuyển dụng.");
-      const nextItems = Array.isArray(data.items) ? data.items : [];
-      setItems(nextItems);
-      setCanApply(Boolean(data.canApply));
-      setInternshipStatus((data.internshipStatus || "NOT_STARTED") as InternshipStatus);
-      const setFields = new Set<string>();
-      nextItems.forEach((x: Item) =>
-        String(x.businessField || "—")
-          .split(",")
-          .map((v) => v.trim())
-          .filter(Boolean)
-          .forEach((v) => setFields.add(v))
-      );
-      setFieldOptions(Array.from(setFields.values()));
+      const result = await fetchSinhVienTraCuuUngTuyenList({ q, workType, field });
+      setItems(result.items);
+      setCanApply(result.canApply);
+      setInternshipStatus(result.internshipStatus);
+      setFieldOptions(result.fieldOptions);
     } catch (e: any) {
-      setError(e?.message || "Không thể tải danh sách tin tuyển dụng.");
+      setError(e?.message || SINHVIEN_TRA_CUU_UNG_TUYEN_LOAD_ERROR_DEFAULT);
     } finally {
       setLoading(false);
     }
@@ -87,15 +56,14 @@ export default function SinhVienTraCuuUngTuyenPage() {
   }, []);
 
   const statusNote = useMemo(() => {
-    if (canApply) return "Bạn có thể ứng tuyển.";
-    return `Nút ứng tuyển bị khóa vì trạng thái thực tập hiện tại là "${internshipLabel[internshipStatus]}".`;
+    return getSinhVienTraCuuUngTuyenStatusNoteText(canApply, internshipStatus);
   }, [canApply, internshipStatus]);
 
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Tra cứu và ứng tuyển</h1>
-        <p className={styles.subtitle}>Danh sách tin tuyển dụng đã duyệt và còn hạn cho sinh viên.</p>
+        <h1 className={styles.title}>{SINHVIEN_TRA_CUU_UNG_TUYEN_TITLE}</h1>
+        <p className={styles.subtitle}>{SINHVIEN_TRA_CUU_UNG_TUYEN_SUBTITLE}</p>
       </header>
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
@@ -125,16 +93,16 @@ export default function SinhVienTraCuuUngTuyenPage() {
           </select>
         </div>
         <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={() => void load()}>
-          Tìm kiếm
+          {SINHVIEN_TRA_CUU_UNG_TUYEN_SEARCH_BUTTON_TEXT}
         </button>
       </div>
 
       <p className={cardStyles.statusNote}>{statusNote}</p>
 
       {loading ? (
-        <p className={styles.modulePlaceholder}>Đang tải…</p>
+        <p className={styles.modulePlaceholder}>{SINHVIEN_TRA_CUU_UNG_TUYEN_LOADING_TEXT}</p>
       ) : items.length === 0 ? (
-        <p className={styles.modulePlaceholder}>Không có tin tuyển dụng phù hợp.</p>
+        <p className={styles.modulePlaceholder}>{SINHVIEN_TRA_CUU_UNG_TUYEN_EMPTY_TEXT}</p>
       ) : (
         <div className={cardStyles.cardGrid}>
           {items.map((item) => (
@@ -157,7 +125,9 @@ export default function SinhVienTraCuuUngTuyenPage() {
               </div>
               <div className={cardStyles.footer}>
                 <span className={cardStyles.field}>{item.businessField}</span>
-                <span className={item.hasApplied ? cardStyles.applied : cardStyles.open}>{item.hasApplied ? "Đã ứng tuyển" : "Có thể ứng tuyển"}</span>
+                <span className={item.hasApplied ? cardStyles.applied : cardStyles.open}>
+                  {item.hasApplied ? appliedStatusText : canApplyStatusText}
+                </span>
               </div>
             </article>
           ))}

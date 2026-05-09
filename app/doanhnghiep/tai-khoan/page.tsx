@@ -6,33 +6,32 @@ import adminStyles from "../../admin/styles/dashboard.module.css";
 import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import {
-  DOANHNGHIEP_BUSINESS_FIELD_OPTIONS,
-  DOANHNGHIEP_REGISTER_LETTER_ONLY_PATTERN,
-  DOANHNGHIEP_REGISTER_WEBSITE_PATTERN
+  DOANHNGHIEP_BUSINESS_FIELD_OPTIONS
 } from "@/lib/constants/doanhnghiep";
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
-import { metaRecord } from "@/lib/utils/enterprise-meta";
+import type { ApiResponse } from "@/lib/types/doanhnghiep-tai-khoan";
+import type { EnterpriseAccountFormState } from "@/lib/types/doanhnghiep-tai-khoan";
+import {
+  ENTERPRISE_ACCOUNT_EMPTY_FORM,
+  ENTERPRISE_ACCOUNT_LOAD_ERROR_DEFAULT,
+  ENTERPRISE_ACCOUNT_ME_ENDPOINT,
+  ENTERPRISE_ACCOUNT_NOT_FOUND_ERROR_DEFAULT,
+  ENTERPRISE_ACCOUNT_SUBMIT_ERROR_DEFAULT,
+  ENTERPRISE_ACCOUNT_SUBMIT_SUCCESS_DEFAULT
+} from "@/lib/constants/doanhnghiep-tai-khoan";
 import {
   buildEnterpriseHeadquartersAddress,
   dataUrlFromBase64
 } from "@/lib/utils/enterprise-admin-display";
+import { metaRecord } from "@/lib/utils/enterprise-meta";
 import { formatAdminEnterpriseStatusLine } from "@/lib/utils/admin-enterprise-display";
+import {
+  buildEnterpriseAccountPatchPayload,
+  mapEnterpriseAccountFormFromMe,
+  validateEnterpriseAccountForm
+} from "@/lib/utils/doanhnghiep-tai-khoan";
 
-type ApiResponse<T> = { success: boolean; message?: string; item?: T };
-
-type FormState = {
-  representativeName: string;
-  representativeTitle: string;
-  businessFields: string[];
-  website: string;
-};
-
-const EMPTY_FORM: FormState = {
-  representativeName: "",
-  representativeTitle: "",
-  businessFields: [],
-  website: ""
-};
+type FormState = EnterpriseAccountFormState;
 
 export default function EnterpriseAccountPage() {
   const [loading, setLoading] = useState(true);
@@ -44,38 +43,8 @@ export default function EnterpriseAccountPage() {
   const dismissErrorToast = () => setError("");
 
   const [me, setMe] = useState<AdminEnterpriseDetail | null>(null);
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [form, setForm] = useState<FormState>(ENTERPRISE_ACCOUNT_EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-
-  const syncFormFromMe = (item: AdminEnterpriseDetail) => {
-    const m = metaRecord(item.enterpriseMeta);
-    const representativeName =
-      typeof m.representativeName === "string" && m.representativeName.trim()
-        ? m.representativeName.trim()
-        : item.fullName || "";
-
-    const representativeTitle =
-      typeof m.representativeTitle === "string" && m.representativeTitle.trim()
-        ? m.representativeTitle.trim()
-        : typeof item.representativeTitle === "string"
-          ? item.representativeTitle
-          : "";
-
-    const businessFieldsRaw = Array.isArray(m.businessFields) ? m.businessFields : [];
-    const businessFields = businessFieldsRaw
-      .map((x) => String(x).trim())
-      .filter(Boolean)
-      .filter((x) => (DOANHNGHIEP_BUSINESS_FIELD_OPTIONS as readonly string[]).includes(x));
-
-    const website = typeof m.website === "string" ? m.website.trim() : "";
-
-    setForm({
-      representativeName,
-      representativeTitle,
-      businessFields,
-      website
-    });
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -83,16 +52,16 @@ export default function EnterpriseAccountPage() {
       try {
         setLoading(true);
         setError("");
-        const res = await fetch("/api/doanhnghiep/me");
+        const res = await fetch(ENTERPRISE_ACCOUNT_ME_ENDPOINT);
         const data = (await res.json()) as ApiResponse<AdminEnterpriseDetail>;
-        if (!res.ok || !data.success) throw new Error(data.message || "Lỗi tải thông tin.");
+        if (!res.ok || !data.success) throw new Error(data.message || ENTERPRISE_ACCOUNT_LOAD_ERROR_DEFAULT);
         if (cancelled) return;
-        if (!data.item) throw new Error("Không tìm thấy tài khoản.");
+        if (!data.item) throw new Error(ENTERPRISE_ACCOUNT_NOT_FOUND_ERROR_DEFAULT);
         setMe(data.item);
-        syncFormFromMe(data.item);
+        setForm(mapEnterpriseAccountFormFromMe(data.item));
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Lỗi tải thông tin.");
+        setError(e instanceof Error ? e.message : ENTERPRISE_ACCOUNT_LOAD_ERROR_DEFAULT);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -110,21 +79,9 @@ export default function EnterpriseAccountPage() {
   };
 
   const validate = () => {
-    const next: Record<string, string> = {};
-    if (!form.representativeName || !DOANHNGHIEP_REGISTER_LETTER_ONLY_PATTERN.test(form.representativeName)) {
-      next.representativeName = "Họ và tên chỉ gồm ký tự chữ, dài 1-255.";
-    }
-    if (!form.representativeTitle || !DOANHNGHIEP_REGISTER_LETTER_ONLY_PATTERN.test(form.representativeTitle)) {
-      next.representativeTitle = "Chức vụ chỉ gồm ký tự chữ, dài 1-255.";
-    }
-    if (!form.businessFields.length) {
-      next.businessFields = "Vui lòng chọn ít nhất 1 lĩnh vực hoạt động.";
-    }
-    if (form.website && !DOANHNGHIEP_REGISTER_WEBSITE_PATTERN.test(form.website.trim())) {
-      next.website = "Website không đúng định dạng.";
-    }
-    setFieldErrors(next);
-    return Object.keys(next).length === 0;
+    const { isValid, errors } = validateEnterpriseAccountForm(form);
+    setFieldErrors(errors);
+    return isValid;
   };
 
   const submit = async () => {
@@ -138,30 +95,27 @@ export default function EnterpriseAccountPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          representativeName: form.representativeName.trim(),
-          representativeTitle: form.representativeTitle.trim(),
-          businessFields: form.businessFields,
-          website: form.website.trim() ? form.website.trim() : null
+          ...buildEnterpriseAccountPatchPayload(form)
         })
       });
       const data = (await res.json()) as ApiResponse<unknown>;
-      if (!res.ok || !data.success) throw new Error(data.message || "Cập nhật thất bại.");
-      setToast(data.message || "Cập nhật thành công.");
+      if (!res.ok || !data.success) throw new Error(data.message || ENTERPRISE_ACCOUNT_SUBMIT_ERROR_DEFAULT);
+      setToast(data.message || ENTERPRISE_ACCOUNT_SUBMIT_SUCCESS_DEFAULT);
       await reloadMe();
       setIsEditing(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Cập nhật thất bại.");
+      setError(e instanceof Error ? e.message : ENTERPRISE_ACCOUNT_SUBMIT_ERROR_DEFAULT);
     } finally {
       setSaving(false);
     }
   };
 
   const reloadMe = async () => {
-    const res = await fetch("/api/doanhnghiep/me");
+    const res = await fetch(ENTERPRISE_ACCOUNT_ME_ENDPOINT);
     const data = (await res.json()) as ApiResponse<AdminEnterpriseDetail>;
     if (res.ok && data.success && data.item) {
       setMe(data.item);
-      syncFormFromMe(data.item);
+      setForm(mapEnterpriseAccountFormFromMe(data.item));
     }
   };
 
@@ -195,7 +149,7 @@ export default function EnterpriseAccountPage() {
   };
 
   const cancelEdit = () => {
-    syncFormFromMe(me);
+    setForm(mapEnterpriseAccountFormFromMe(me));
     setFieldErrors({});
     setIsEditing(false);
   };

@@ -5,46 +5,37 @@ import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 
-type AppStatus = "PENDING_REVIEW" | "INTERVIEW_INVITED" | "OFFERED" | "REJECTED" | "STUDENT_DECLINED";
-type ResponseStatus = "PENDING" | "ACCEPTED" | "DECLINED";
-type WorkType = "PART_TIME" | "FULL_TIME";
-type Row = {
-  id: string;
-  status: AppStatus;
-  response: ResponseStatus;
-  appliedAt: string | null;
-  interviewAt: string | null;
-  responseAt: string | null;
-  job: {
-    id: string;
-    title: string;
-    expertise: string;
-    workType: WorkType;
-    deadlineAt: string | null;
-    companyName: string;
-  };
-};
-
-const statusLabel: Record<AppStatus, string> = {
-  PENDING_REVIEW: "Chờ xem xét",
-  INTERVIEW_INVITED: "Mời phỏng vấn",
-  OFFERED: "Trúng tuyển",
-  REJECTED: "Từ chối",
-  STUDENT_DECLINED: "Từ chối"
-};
-
-function formatDateVi(iso: string | null) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("vi-VN");
-}
+import type {
+  RespondAction,
+  SinhVienQuanLyDangKyUngTuyenRow,
+  StatusFilter
+} from "@/lib/types/sinhvien-quan-ly-dang-ky-ung-tuyen";
+import {
+  SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_EMPTY_TEXT,
+  SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_CONFIRM_INTERNSHIP_TEXT,
+  SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_CONFIRM_INTERVIEW_TEXT,
+  SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_DECLINE_INTERNSHIP_TEXT,
+  SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_DECLINE_INTERVIEW_TEXT,
+  SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_FIND_BUTTON_TEXT,
+  SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_LOAD_ERROR_DEFAULT,
+  SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_RESPOND_NETWORK_ERROR_DEFAULT,
+  SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_RESPOND_SUCCESS_DEFAULT,
+  sinhvienQuanLyDangKyUngTuyenResponseLabel,
+  sinhvienQuanLyDangKyUngTuyenStatusLabel
+} from "@/lib/constants/sinhvien-quan-ly-dang-ky-ung-tuyen";
+import {
+  buildSinhVienQuanLyDangKyUngTuyenRespondEndpoint,
+  buildSinhVienQuanLyDangKyUngTuyenListUrl,
+  formatDateVi,
+  getSinhVienQuanLyDangKyUngTuyenResponseText,
+  parseStatusFilterValue
+} from "@/lib/utils/sinhvien-quan-ly-dang-ky-ung-tuyen";
 
 export default function SinhVienQuanLyUngTuyenPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [rows, setRows] = useState<Row[]>([]);
-  const [statusFilter, setStatusFilter] = useState<"all" | AppStatus | "REJECTED">("all");
+  const [rows, setRows] = useState<SinhVienQuanLyDangKyUngTuyenRow[]>([]);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [toast, setToast] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -52,14 +43,12 @@ export default function SinhVienQuanLyUngTuyenPage() {
     setLoading(true);
     setError("");
     try {
-      const sp = new URLSearchParams();
-      if (statusFilter !== "all") sp.set("status", statusFilter);
-      const res = await fetch(`/api/sinhvien/ung-tuyen?${sp.toString()}`);
+      const res = await fetch(buildSinhVienQuanLyDangKyUngTuyenListUrl(statusFilter));
       const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải danh sách ứng tuyển.");
+      if (!res.ok || !data?.success) throw new Error(data?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_LOAD_ERROR_DEFAULT);
       setRows(Array.isArray(data.items) ? data.items : []);
     } catch (e: any) {
-      setError(e?.message || "Không thể tải danh sách ứng tuyển.");
+      setError(e?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_LOAD_ERROR_DEFAULT);
     } finally {
       setLoading(false);
     }
@@ -70,20 +59,20 @@ export default function SinhVienQuanLyUngTuyenPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function respond(applicationId: string, action: "CONFIRM_INTERVIEW" | "DECLINE_INTERVIEW" | "CONFIRM_INTERNSHIP" | "DECLINE_INTERNSHIP") {
+  async function respond(applicationId: string, action: RespondAction) {
     setBusyId(applicationId);
     try {
-      const res = await fetch(`/api/sinhvien/ung-tuyen/${applicationId}`, {
+      const res = await fetch(buildSinhVienQuanLyDangKyUngTuyenRespondEndpoint(applicationId), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action })
       });
       const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể cập nhật phản hồi.");
-      setToast(data?.message || "Cập nhật phản hồi thành công.");
+      if (!res.ok || !data?.success) throw new Error(data?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_RESPOND_NETWORK_ERROR_DEFAULT);
+      setToast(data?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_RESPOND_SUCCESS_DEFAULT);
       await load();
     } catch (e: any) {
-      setToast(e?.message || "Không thể cập nhật phản hồi.");
+      setToast(e?.message || SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_RESPOND_NETWORK_ERROR_DEFAULT);
     } finally {
       setBusyId(null);
     }
@@ -100,7 +89,11 @@ export default function SinhVienQuanLyUngTuyenPage() {
       <div className={adminStyles.searchToolbar}>
         <div className={adminStyles.searchField} style={{ maxWidth: 280 }}>
           <label>Trạng thái</label>
-          <select className={adminStyles.selectInput} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
+          <select
+            className={adminStyles.selectInput}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(parseStatusFilterValue(e.target.value))}
+          >
             <option value="all">Tất cả</option>
             <option value="PENDING_REVIEW">Chờ xem xét</option>
             <option value="INTERVIEW_INVITED">Mời phỏng vấn</option>
@@ -109,7 +102,7 @@ export default function SinhVienQuanLyUngTuyenPage() {
           </select>
         </div>
         <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={() => void load()}>
-          Tìm kiếm
+          {SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_FIND_BUTTON_TEXT}
         </button>
       </div>
 
@@ -134,7 +127,7 @@ export default function SinhVienQuanLyUngTuyenPage() {
               {rows.length === 0 ? (
                 <tr>
                   <td colSpan={8} className={styles.modulePlaceholder}>
-                    Bạn chưa ứng tuyển tin nào.
+                    {SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_EMPTY_TEXT}
                   </td>
                 </tr>
               ) : (
@@ -149,9 +142,9 @@ export default function SinhVienQuanLyUngTuyenPage() {
                     <td>{r.job.companyName}</td>
                     <td>{r.job.expertise}</td>
                     <td>{formatDateVi(r.appliedAt)}</td>
-                    <td>{statusLabel[r.status]}</td>
+                    <td>{sinhvienQuanLyDangKyUngTuyenStatusLabel[r.status]}</td>
                     <td>
-                      {r.response === "ACCEPTED" ? "Đã xác nhận" : r.response === "DECLINED" ? "Đã từ chối" : "Chưa phản hồi"}
+                      {getSinhVienQuanLyDangKyUngTuyenResponseText(r)}
                     </td>
                     <td>
                       {r.status === "INTERVIEW_INVITED" && r.response === "PENDING" ? (
@@ -162,7 +155,7 @@ export default function SinhVienQuanLyUngTuyenPage() {
                             disabled={busyId !== null}
                             onClick={() => void respond(r.id, "CONFIRM_INTERVIEW")}
                           >
-                            Xác nhận phỏng vấn
+                            {SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_CONFIRM_INTERVIEW_TEXT}
                           </button>
                           <button
                             type="button"
@@ -170,7 +163,7 @@ export default function SinhVienQuanLyUngTuyenPage() {
                             disabled={busyId !== null}
                             onClick={() => void respond(r.id, "DECLINE_INTERVIEW")}
                           >
-                            Từ chối phỏng vấn
+                            {SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_DECLINE_INTERVIEW_TEXT}
                           </button>
                         </>
                       ) : null}
@@ -182,7 +175,7 @@ export default function SinhVienQuanLyUngTuyenPage() {
                             disabled={busyId !== null}
                             onClick={() => void respond(r.id, "CONFIRM_INTERNSHIP")}
                           >
-                            Xác nhận thực tập
+                            {SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_CONFIRM_INTERNSHIP_TEXT}
                           </button>
                           <button
                             type="button"
@@ -190,7 +183,7 @@ export default function SinhVienQuanLyUngTuyenPage() {
                             disabled={busyId !== null}
                             onClick={() => void respond(r.id, "DECLINE_INTERNSHIP")}
                           >
-                            Từ chối thực tập
+                            {SINHVIEN_QUAN_LY_DANG_KY_UNG_TUYEN_DECLINE_INTERNSHIP_TEXT}
                           </button>
                         </>
                       ) : null}

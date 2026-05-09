@@ -4,6 +4,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useMemo, useState } from "react";
 import { AuthShell } from "../components/AuthShell";
 import styles from "../styles/forgot-password.module.css";
+import {
+  getResetPasswordRedirectPath,
+  getResetPasswordSubmitErrorMessage,
+  getResetPasswordSuccessMessage,
+  mapResetPasswordApiError,
+  validateResetPasswordForm
+} from "@/lib/utils/auth/reset-password";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -26,27 +33,11 @@ function ResetPasswordForm() {
     setSubmitError("");
     setSuccessMessage("");
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
-
-    if (!newPassword.trim()) {
-      setNewPasswordError("Vui lòng nhập mật khẩu mới.");
-      return;
-    }
-    if (!passwordRegex.test(newPassword)) {
-      setNewPasswordError("Mật khẩu phải có ít nhất 8 ký tự bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
-      return;
-    }
-    if (!confirmPassword.trim()) {
-      setConfirmPasswordError("Vui lòng nhập xác nhận mật khẩu mới.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setConfirmPasswordError("Xác nhận mật khẩu mới không khớp.");
-      return;
-    }
-
-    if (!resetToken.trim()) {
-      setSubmitError("Thiếu liên kết hợp lệ. Vui lòng mở lại đường link trong email đặt lại mật khẩu.");
+    const validation = validateResetPasswordForm({ newPassword, confirmPassword, resetToken });
+    if (!validation.isValid) {
+      if (validation.errors.newPassword) setNewPasswordError(validation.errors.newPassword);
+      if (validation.errors.confirmPassword) setConfirmPasswordError(validation.errors.confirmPassword);
+      if (validation.errors.submitError) setSubmitError(validation.errors.submitError);
       return;
     }
 
@@ -64,20 +55,21 @@ function ResetPasswordForm() {
       });
       const data = await response.json();
       if (!response.ok) {
-        if (data.code === "WEAK_PASSWORD") setNewPasswordError(data.message);
-        else if (data.code === "CONFIRM_NOT_MATCH") setConfirmPasswordError(data.message);
-        else setSubmitError(data.message || "Đặt lại mật khẩu thất bại.");
+        const mapped = mapResetPasswordApiError({ code: data.code, message: data.message });
+        if (mapped.newPasswordError !== undefined) setNewPasswordError(mapped.newPasswordError);
+        if (mapped.confirmPasswordError !== undefined) setConfirmPasswordError(mapped.confirmPasswordError);
+        if (mapped.submitError !== undefined) setSubmitError(mapped.submitError);
         setIsSubmitting(false);
         return;
       }
 
-      setSuccessMessage(data.message || "Đặt lại mật khẩu thành công.");
+      setSuccessMessage(getResetPasswordSuccessMessage({ responseMessage: data.message }));
       setIsSubmitting(false);
       setTimeout(() => {
-        router.replace(data.redirectPath || "/auth/dangnhap");
+        router.replace(getResetPasswordRedirectPath({ redirectPath: data.redirectPath }));
       }, 1200);
     } catch {
-      setSubmitError("Không thể kết nối hệ thống. Vui lòng thử lại.");
+      setSubmitError(getResetPasswordSubmitErrorMessage());
       setIsSubmitting(false);
     }
   };

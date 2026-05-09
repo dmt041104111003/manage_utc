@@ -11,7 +11,7 @@ const CLASS_PATTERN = /^[\p{L}\d]{1,255}$/u;
 const KHOL_PATTERN = /^[\p{L}\d]{1,10}$/u;
 const GENDER_VALUES = ["MALE", "FEMALE", "OTHER"] as const;
 const DEGREE_VALUES = ["BACHELOR", "ENGINEER"] as const;
-const INTERNSHIP_STATUS_VALUES = ["NOT_STARTED", "DOING", "SELF_FINANCED", "REPORT_SUBMITTED", "COMPLETED"] as const;
+const INTERNSHIP_STATUS_VALUES = ["NOT_STARTED", "DOING", "SELF_FINANCED", "REPORT_SUBMITTED", "COMPLETED", "REJECTED"] as const;
 
 type Degree = (typeof DEGREE_VALUES)[number];
 type Gender = (typeof GENDER_VALUES)[number];

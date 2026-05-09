@@ -1,0 +1,1 @@
+export const ADMIN_QUAN_LY_DOANH_NGHIEP_PAGE_SIZE = 10;

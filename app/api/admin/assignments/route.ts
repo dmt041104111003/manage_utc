@@ -174,6 +174,17 @@ export async function POST(request: Request) {
         },
         select: { id: true }
       });
+
+      await tx.supervisorAssignmentStatusHistory.create({
+        data: {
+          supervisorAssignmentId: assignment.id,
+          fromStatus: "GUIDING",
+          toStatus: "GUIDING",
+          byRole: "admin",
+          message: "Khởi tạo phân công GVHD"
+        }
+      });
+
       for (const sid of studentProfileIds) {
         await tx.supervisorAssignmentStudent.create({
           data: { supervisorAssignmentId: assignment.id, studentProfileId: sid }

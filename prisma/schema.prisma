@@ -57,6 +57,13 @@ enum StudentInternshipStatus {
   SELF_FINANCED
   REPORT_SUBMITTED
   COMPLETED
+  REJECTED
+}
+
+enum InternshipReportReviewStatus {
+  PENDING
+  REJECTED
+  APPROVED
 }
 
 enum StudentGender {
@@ -80,6 +87,25 @@ enum SupervisorDegree {
 enum SupervisorAssignmentStatus {
   GUIDING
   COMPLETED
+}
+
+model SupervisorAssignmentStatusHistory {
+  id String @id @default(cuid())
+
+  supervisorAssignmentId String
+
+  fromStatus SupervisorAssignmentStatus
+  toStatus SupervisorAssignmentStatus
+
+  byRole Role
+  message String?
+
+  at DateTime @default(now())
+  meta Json?
+
+  supervisorAssignment SupervisorAssignment @relation(fields: [supervisorAssignmentId], references: [id])
+
+  @@index([supervisorAssignmentId, at])
 }
 
 enum InternshipBatchSemester {
@@ -238,6 +264,9 @@ model StudentProfile {
   user User @relation(fields: [userId], references: [id])
 
   assignmentLinks SupervisorAssignmentStudent[]
+
+  internshipReport InternshipReport?
+  internshipStatusHistory InternshipStatusHistory[]
 }
 
 model SupervisorProfile {
@@ -280,6 +309,8 @@ model SupervisorAssignment {
 
   students SupervisorAssignmentStudent[]
 
+  statusHistory SupervisorAssignmentStatusHistory[]
+
   @@unique([internshipBatchId, supervisorProfileId])
 }
 
@@ -295,4 +326,54 @@ model SupervisorAssignmentStudent {
   studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
 
   @@unique([studentProfileId, supervisorAssignmentId])
+}
+
+model InternshipReport {
+  id String @id @default(cuid())
+
+  studentProfileId String @unique
+
+  reportFileName String
+  reportMime String
+  reportBase64 String
+
+  reviewStatus InternshipReportReviewStatus @default(PENDING)
+
+  submittedAt DateTime @default(now())
+  reviewedAt DateTime?
+
+  supervisorRejectReason String?
+
+  supervisorEvaluation String?
+  supervisorPoint Float?
+
+  enterpriseEvaluation String?
+  enterprisePoint Float?
+
+  history Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
+}
+
+model InternshipStatusHistory {
+  id String @id @default(cuid())
+
+  studentProfileId String
+
+  fromStatus StudentInternshipStatus
+  toStatus StudentInternshipStatus
+
+  byRole Role
+  message String?
+
+  at DateTime @default(now())
+
+  meta Json?
+
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id])
+
+  @@index([studentProfileId, at])
 }

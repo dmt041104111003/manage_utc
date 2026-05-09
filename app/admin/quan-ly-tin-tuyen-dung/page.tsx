@@ -5,90 +5,13 @@ import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import Pagination from "../../components/Pagination";
 
-type JobStatus = "PENDING" | "REJECTED" | "ACTIVE" | "STOPPED";
-type WorkType = "PART_TIME" | "FULL_TIME";
-
-type ApiResponse<T> = { success: boolean; message?: string; item?: T; items?: T[]; errors?: Record<string, string> };
-
-type InternshipBatchRow = {
-  id: string;
-  name: string;
-  semester: string;
-  schoolYear: string;
-};
-
-type JobListItem = {
-  id: string;
-  title: string;
-  createdAt: string | null;
-  recruitmentCount: number;
-  expertise: string;
-  workType: WorkType;
-  status: JobStatus;
-  deadlineAt: string | null;
-  enterpriseName: string | null;
-  batchName: string | null;
-  enterpriseTaxCode: string | null;
-  rejectionReason: string | null;
-};
-
-type JobDetailResponse = {
-  job: {
-    id: string;
-    title: string;
-    createdAt: string | null;
-    recruitmentCount: number;
-    expertise: string;
-    workType: WorkType;
-    status: JobStatus;
-    deadlineAt: string | null;
-    salary: string;
-    experienceRequirement: string;
-    jobDescription: string;
-    candidateRequirements: string;
-    benefits: string;
-    workLocation: string;
-    workTime: string;
-    applicationMethod: string | null;
-    companyIntro: string | null;
-    companyWebsite: string | null;
-    rejectionReason: string | null;
-  };
-  enterprise: {
-    companyName: string | null;
-    taxCode: string | null;
-    businessFields: string;
-    headquartersAddress: string;
-  };
-  batch: { id: string | null; name: string | null };
-};
-
-const statusLabel: Record<JobStatus, string> = {
-  PENDING: "Chờ duyệt",
-  REJECTED: "Từ chối duyệt",
-  ACTIVE: "Đang hoạt động",
-  STOPPED: "Dừng hoạt động"
-};
-
-const workTypeLabel: Record<WorkType, string> = {
-  PART_TIME: "part-time",
-  FULL_TIME: "full-time"
-};
-
-const TITLE_DATE_TH: Record<string, string> = {};
-
-function formatDateVi(iso: string | null | undefined) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("vi-VN");
-}
-
-function inferDefaultAction(status: JobStatus): "approve" | "reject" | "stop" {
-  if (status === "REJECTED") return "reject";
-  if (status === "PENDING") return "approve";
-  return "stop";
-}
+import type { ApiResponse, InternshipBatchRow, JobDetailResponse, JobListItem, JobStatus, StatusAction, WorkType } from "@/lib/types/admin-quan-ly-tin-tuyen-dung";
+import {
+  ADMIN_QUAN_LY_TIN_TUYEN_DUNG_PAGE_SIZE,
+  statusLabel,
+  workTypeLabel
+} from "@/lib/constants/admin-quan-ly-tin-tuyen-dung";
+import { formatDateVi, inferDefaultAction } from "@/lib/utils/admin-quan-ly-tin-tuyen-dung";
 
 export default function AdminQuanLyTinTuyenDungPage() {
   const [loading, setLoading] = useState(true);
@@ -106,14 +29,13 @@ export default function AdminQuanLyTinTuyenDungPage() {
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
 
   const [viewTarget, setViewTarget] = useState<JobListItem | null>(null);
   const [viewDetail, setViewDetail] = useState<JobDetailResponse | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
 
   const [statusTarget, setStatusTarget] = useState<JobListItem | null>(null);
-  const [statusAction, setStatusAction] = useState<"approve" | "reject" | "stop">("approve");
+  const [statusAction, setStatusAction] = useState<StatusAction>("approve");
   const [rejectReason, setRejectReason] = useState("");
 
   const [deleteTarget, setDeleteTarget] = useState<JobListItem | null>(null);
@@ -244,7 +166,10 @@ export default function AdminQuanLyTinTuyenDungPage() {
     await load();
   };
 
-  const pagedItems = items.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE);
+  const pagedItems = items.slice(
+    (page - 1) * ADMIN_QUAN_LY_TIN_TUYEN_DUNG_PAGE_SIZE,
+    (page - 1) * ADMIN_QUAN_LY_TIN_TUYEN_DUNG_PAGE_SIZE + ADMIN_QUAN_LY_TIN_TUYEN_DUNG_PAGE_SIZE
+  );
 
   const viewOrLoading = viewTarget || viewLoading;
 
@@ -293,8 +218,8 @@ export default function AdminQuanLyTinTuyenDungPage() {
       {loading ? (
         <p className={styles.modulePlaceholder}>Đang tải…</p>
       ) : (
-        <div className={`${styles.tableWrap} data-table-responsive-wrap`}>
-          <table className={`${styles.dataTable} data-table-responsive`}>
+        <div className={styles.tableWrap}>
+          <table className={styles.dataTable}>
             <thead>
               <tr>
                 <th>STT</th>
@@ -316,22 +241,26 @@ export default function AdminQuanLyTinTuyenDungPage() {
               ) : (
                 pagedItems.map((row, idx) => (
                   <tr key={row.id}>
-                    <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
+                    <td data-label="STT">
+                      {(page - 1) * ADMIN_QUAN_LY_TIN_TUYEN_DUNG_PAGE_SIZE + idx + 1}
+                    </td>
                     <td data-label="Tiêu đề">{row.title}</td>
                     <td data-label="Tên doanh nghiệp">{row.enterpriseName || "—"}</td>
                     <td data-label="Ngày đăng tin">{formatDateVi(row.createdAt)}</td>
                     <td data-label="Đợt thực tập">{row.batchName || "—"}</td>
                     <td data-label="Trạng thái tin">{statusLabel[row.status]}</td>
                     <td data-label="Thao tác">
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => void openView(row)}>
-                        Xem
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => openStatus(row)}>
-                        Duyệt tin
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => setDeleteTarget(row)}>
-                        Xóa
-                      </button>
+                      <div className={styles.rowActions} style={{ gap: 10 }}>
+                        <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => void openView(row)}>
+                          Xem
+                        </button>
+                        <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => openStatus(row)}>
+                          Duyệt tin
+                        </button>
+                        <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => setDeleteTarget(row)}>
+                          Xóa
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -344,7 +273,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
       {!loading ? (
         <Pagination
           page={page}
-          pageSize={PAGE_SIZE}
+          pageSize={ADMIN_QUAN_LY_TIN_TUYEN_DUNG_PAGE_SIZE}
           totalItems={items.length}
           onPageChange={setPage}
           buttonClassName={styles.btn}

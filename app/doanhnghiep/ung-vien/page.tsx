@@ -4,32 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import Pagination from "../../components/Pagination";
-
-type JobStatus = "PENDING" | "REJECTED" | "ACTIVE" | "STOPPED";
-
-type JobRow = {
-  id: string;
-  title: string;
-  createdAt: string | null;
-  deadlineAt: string | null;
-  recruitmentCount: number;
-  applicantCount: number;
-  status: JobStatus;
-};
-
-const statusLabel: Record<JobStatus, string> = {
-  PENDING: "Chờ duyệt",
-  REJECTED: "Từ chối",
-  ACTIVE: "Đang tuyển",
-  STOPPED: "Dừng tuyển"
-};
-
-function formatDateVi(iso: string | null) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("vi-VN");
-}
+import type { JobRow, JobStatus } from "@/lib/types/doanhnghiep-ung-vien";
+import {
+  DOANHNGHIEP_UNG_VIEN_ERROR_DEFAULT,
+  DOANHNGHIEP_UNG_VIEN_PAGE_SIZE,
+  DOANHNGHIEP_UNG_VIEN_STATUS_LABEL
+} from "@/lib/constants/doanhnghiep-ung-vien";
+import { buildDoanhNghiepUngVienListUrl, formatDateVi, getDoanhNghiepUngVienLoadErrorMessage } from "@/lib/utils/doanhnghiep-ung-vien";
 
 export default function DoanhNghiepUngVienPage() {
   const [loading, setLoading] = useState(true);
@@ -42,7 +23,7 @@ export default function DoanhNghiepUngVienPage() {
   const [status, setStatus] = useState<JobStatus | "all">("all");
 
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = DOANHNGHIEP_UNG_VIEN_PAGE_SIZE;
 
   const paged = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
@@ -53,19 +34,21 @@ export default function DoanhNghiepUngVienPage() {
     setLoading(true);
     setError("");
     try {
-      const url = new URL("/api/doanhnghiep/ung-vien", window.location.origin);
-      if (q.trim()) url.searchParams.set("q", q.trim());
-      if (createdDate) url.searchParams.set("createdDate", createdDate);
-      if (deadlineDate) url.searchParams.set("deadlineDate", deadlineDate);
-      if (status !== "all") url.searchParams.set("status", status);
-
+      const url = buildDoanhNghiepUngVienListUrl({
+        origin: window.location.origin,
+        q,
+        createdDate,
+        deadlineDate,
+        status
+      });
       const res = await fetch(url.toString());
       const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải danh sách tin tuyển dụng.");
+      if (!res.ok || !data?.success)
+        throw new Error(data?.message || DOANHNGHIEP_UNG_VIEN_ERROR_DEFAULT);
       setItems(Array.isArray(data.items) ? data.items : []);
       setPage(nextPage);
     } catch (e: any) {
-      setError(e?.message || "Không thể tải danh sách tin tuyển dụng.");
+      setError(getDoanhNghiepUngVienLoadErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -159,7 +142,7 @@ export default function DoanhNghiepUngVienPage() {
                     <td data-label="Hạn tuyển dụng">{formatDateVi(row.deadlineAt)}</td>
                     <td data-label="Số lượng tuyển">{row.recruitmentCount}</td>
                     <td data-label="Số lượng ứng viên">{row.applicantCount}</td>
-                    <td data-label="Trạng thái tin">{statusLabel[row.status]}</td>
+                    <td data-label="Trạng thái tin">{DOANHNGHIEP_UNG_VIEN_STATUS_LABEL[row.status]}</td>
                     <td data-label="Thao tác">
                       <a className={adminStyles.detailLink} href={`/doanhnghiep/ung-vien/${row.id}`}>
                         Xem chi tiết

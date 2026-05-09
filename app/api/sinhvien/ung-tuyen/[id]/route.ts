@@ -99,10 +99,29 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
         history: [...prevHistory, historyEvent]
       }
     });
+
+    const student = await tx.studentProfile.findFirst({
+      where: { userId },
+      select: { id: true, internshipStatus: true }
+    });
+    if (!student) throw new Error("Missing studentProfile");
+
+    const prevStatus = student.internshipStatus;
     await tx.studentProfile.update({
       where: { userId },
       data: { internshipStatus: "DOING" }
     });
+    if (prevStatus !== "DOING") {
+      await tx.internshipStatusHistory.create({
+        data: {
+          studentProfileId: student.id,
+          fromStatus: prevStatus,
+          toStatus: "DOING",
+          byRole: "sinhvien",
+          message: "Xác nhận thực tập"
+        }
+      });
+    }
   });
 
   return NextResponse.json({ success: true, message: "Xác nhận thực tập thành công. Trạng thái thực tập đã chuyển sang Đang thực tập." });

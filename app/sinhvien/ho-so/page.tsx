@@ -5,60 +5,40 @@ import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
-import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
 import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
-
-type StudentDegree = "BACHELOR" | "ENGINEER";
-type StudentGender = "MALE" | "FEMALE" | "OTHER";
-type SupervisorDegree = "MASTER" | "PHD" | "ASSOC_PROF" | "PROF";
-
-type StudentAccount = {
-  msv: string;
-  fullName: string;
-  className: string;
-  faculty: string;
-  cohort: string;
-  degree: StudentDegree;
-  phone: string | null;
-  email: string;
-  birthDate: string | null;
-  gender: StudentGender;
-  address: string | null;
-};
-
-type SupervisorInfo = {
-  fullName: string;
-  phone: string | null;
-  email: string;
-  gender: StudentGender | null;
-  degree: SupervisorDegree | null;
-} | null;
-
-type Province = { code: number; name: string };
-type Ward = { code: number; name: string };
-
-const studentDegreeLabel: Record<StudentDegree, string> = { BACHELOR: "Cử nhân", ENGINEER: "Kỹ sư" };
-const supervisorDegreeLabel: Record<SupervisorDegree, string> = {
-  MASTER: "Thạc sĩ",
-  PHD: "Tiến sĩ",
-  ASSOC_PROF: "Phó giáo sư",
-  PROF: "Giáo sư"
-};
-const genderLabel: Record<StudentGender, string> = { MALE: "Nam", FEMALE: "Nữ", OTHER: "Khác" };
-const PHONE_PATTERN = /^\d{8,12}$/;
-const CV_ALLOWED = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-];
-
-function formatDateVi(iso: string | null) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("vi-VN");
-}
+import type { Province, SinhVienHoSoDraft, SinhVienHoSoProfile, StudentAccount, SupervisorInfo, Ward } from "@/lib/types/sinhvien-ho-so";
+import {
+  CV_ALLOWED_MIMES,
+  CURRENT_PROVINCE_CODE_ERROR,
+  CURRENT_WARD_CODE_ERROR,
+  CV_ERROR_INVALID_MIME,
+  CV_ERROR_REQUIRED,
+  INTRO_ERROR_MAX_LENGTH,
+  INTRO_ERROR_REQUIRED,
+  PHONE_ERROR,
+  SINHVIEN_HO_SO_LOAD_ACCOUNT_ERROR_DEFAULT,
+  SINHVIEN_HO_SO_LOAD_PROFILE_ERROR_DEFAULT,
+  SINHVIEN_HO_SO_PROFILE_ENDPOINT,
+  SINHVIEN_HO_SO_TAI_KHOAN_ENDPOINT,
+  SINHVIEN_HO_SO_SUBMIT_ERROR_DEFAULT,
+  SINHVIEN_HO_SO_SUBMIT_SUCCESS_DEFAULT,
+  genderLabel,
+  studentDegreeLabel,
+  supervisorDegreeLabel
+} from "@/lib/constants/sinhvien-ho-so";
+import {
+  buildSinhVienHoSoPatchPayload,
+  formatDateVi,
+  getCvFileValidationError,
+  getSinhVienHoSoLoadAccountErrorMessage,
+  getSinhVienHoSoLoadProfileErrorMessage,
+  getSinhVienHoSoSubmitErrorMessage,
+  getSinhVienHoSoSubmitSuccessMessage,
+  isCvMimeAllowed,
+  mapProfileToDraft,
+  validateSinhVienHoSoDraft
+} from "@/lib/utils/sinhvien-ho-so";
 
 export default function SinhVienHoSoPage() {
   const [loading, setLoading] = useState(true);
@@ -69,7 +49,7 @@ export default function SinhVienHoSoPage() {
 
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState("");
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<SinhVienHoSoProfile | null>(null);
 
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -87,15 +67,16 @@ export default function SinhVienHoSoPage() {
   const [wards, setWards] = useState<Ward[]>([]);
   const [wardLoading, setWardLoading] = useState(false);
 
-  const syncDraftFromProfile = (p: any) => {
-    setPhone(String(p?.phone || ""));
-    setEmail(String(p?.email || ""));
-    setCurrentProvinceCode(String(p?.currentProvinceCode || ""));
-    setCurrentWardCode(String(p?.currentWardCode || ""));
-    setIntro(String(p?.intro || ""));
-    setCvFileName(p?.cvFileName || null);
-    setCvMime(p?.cvMime || null);
-    setCvBase64(p?.cvBase64 || null);
+  const syncDraftFromProfile = (p: SinhVienHoSoProfile | null) => {
+    const draft = mapProfileToDraft(p);
+    setPhone(draft.phone);
+    setEmail(draft.email);
+    setCurrentProvinceCode(draft.currentProvinceCode);
+    setCurrentWardCode(draft.currentWardCode);
+    setIntro(draft.intro);
+    setCvFileName(draft.cvFileName);
+    setCvMime(draft.cvMime);
+    setCvBase64(draft.cvBase64);
     setFieldErrors({});
   };
 
@@ -104,13 +85,14 @@ export default function SinhVienHoSoPage() {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch("/api/sinhvien/tai-khoan");
+        const res = await fetch(SINHVIEN_HO_SO_TAI_KHOAN_ENDPOINT);
         const data = await res.json();
-        if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải thông tin tài khoản.");
+        if (!res.ok || !data?.success)
+          throw new Error(data?.message || SINHVIEN_HO_SO_LOAD_ACCOUNT_ERROR_DEFAULT);
         setStudent(data.student ?? null);
         setSupervisor(data.supervisor ?? null);
       } catch (e: any) {
-        setError(e?.message || "Không thể tải thông tin tài khoản.");
+        setError(e?.message || SINHVIEN_HO_SO_LOAD_ACCOUNT_ERROR_DEFAULT);
       } finally {
         setLoading(false);
       }
@@ -123,13 +105,14 @@ export default function SinhVienHoSoPage() {
       try {
         setProfileLoading(true);
         setProfileError("");
-        const res = await fetch("/api/sinhvien/ho-so-sinh-vien");
+        const res = await fetch(SINHVIEN_HO_SO_PROFILE_ENDPOINT);
         const data = await res.json();
-        if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải hồ sơ sinh viên.");
-        setProfile(data.item ?? null);
-        syncDraftFromProfile(data.item ?? null);
+        if (!res.ok || !data?.success)
+          throw new Error(data?.message || SINHVIEN_HO_SO_LOAD_PROFILE_ERROR_DEFAULT);
+        setProfile((data.item ?? null) as SinhVienHoSoProfile | null);
+        syncDraftFromProfile((data.item ?? null) as SinhVienHoSoProfile | null);
       } catch (e: any) {
-        setProfileError(e?.message || "Không thể tải hồ sơ sinh viên.");
+        setProfileError(e?.message || SINHVIEN_HO_SO_LOAD_PROFILE_ERROR_DEFAULT);
       } finally {
         setProfileLoading(false);
       }
@@ -160,23 +143,26 @@ export default function SinhVienHoSoPage() {
   }, [currentProvinceCode]);
 
   const validateProfile = () => {
-    const next: Record<string, string> = {};
-    if (!PHONE_PATTERN.test(phone.trim())) next.phone = "Số điện thoại chỉ gồm số (8–12 ký tự).";
-    if (!AUTH_EMAIL_REGISTER_PATTERN.test(email.trim())) next.email = "Email không đúng định dạng (ví dụ: example@domain.com).";
-    if (!currentProvinceCode) next.currentProvinceCode = "Tỉnh/thành không hợp lệ.";
-    if (!currentWardCode) next.currentWardCode = "Phường/xã không hợp lệ.";
-    if (!intro.trim()) next.intro = "Thư giới thiệu bản thân bắt buộc.";
-    if (intro.trim().length > 3000) next.intro = "Thư giới thiệu bản thân tối đa 3000 ký tự.";
-    if (!cvBase64) next.cv = "File CV đính kèm bắt buộc.";
-    setFieldErrors(next);
-    return Object.keys(next).length === 0;
+    const draft: SinhVienHoSoDraft = {
+      phone,
+      email,
+      currentProvinceCode,
+      currentWardCode,
+      intro,
+      cvFileName,
+      cvMime,
+      cvBase64
+    };
+    const { isValid, errors } = validateSinhVienHoSoDraft(draft);
+    setFieldErrors(errors);
+    return isValid;
   };
 
   const onPickCv = async (file: File | null) => {
     if (!file) return;
     const payload = await readFileAsBase64Payload(file);
-    if (!CV_ALLOWED.includes(payload.mime)) {
-      setFieldErrors((p) => ({ ...p, cv: "Chỉ cho phép file .doc, .docx, .pdf." }));
+    if (!isCvMimeAllowed(payload.mime)) {
+      setFieldErrors((p) => ({ ...p, cv: getCvFileValidationError(payload.mime) ?? CV_ERROR_INVALID_MIME }));
       return;
     }
     setCvFileName(file.name);
@@ -190,27 +176,27 @@ export default function SinhVienHoSoPage() {
     if (!validateProfile()) return;
     setSaving(true);
     try {
-      const res = await fetch("/api/sinhvien/ho-so-sinh-vien", {
+      const res = await fetch(SINHVIEN_HO_SO_PROFILE_ENDPOINT, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: phone.trim(),
-          email: email.trim(),
+        body: JSON.stringify(buildSinhVienHoSoPatchPayload({
+          phone,
+          email,
           currentProvinceCode,
           currentWardCode,
-          intro: intro.trim(),
-          cvFileName: cvFileName || undefined,
-          cvMime: cvMime || undefined,
-          cvBase64: cvBase64 || undefined
-        })
+          intro,
+          cvFileName,
+          cvMime,
+          cvBase64
+        }))
       });
       const data = await res.json();
       if (!res.ok || !data?.success) {
         if (data?.errors) setFieldErrors(data.errors);
-        throw new Error(data?.message || "Không thể cập nhật hồ sơ sinh viên.");
+        throw new Error(data?.message || SINHVIEN_HO_SO_SUBMIT_ERROR_DEFAULT);
       }
-      setToast(data?.message || "Cập nhật hồ sơ sinh viên thành công.");
-      const ref = await fetch("/api/sinhvien/ho-so-sinh-vien");
+      setToast(getSinhVienHoSoSubmitSuccessMessage({ message: data?.message }));
+      const ref = await fetch(SINHVIEN_HO_SO_PROFILE_ENDPOINT);
       const refData = await ref.json();
       if (ref.ok && refData?.success) {
         setProfile(refData.item ?? null);
@@ -218,7 +204,7 @@ export default function SinhVienHoSoPage() {
       }
       setIsEditing(false);
     } catch (e: any) {
-      setToast(e?.message || "Không thể cập nhật hồ sơ sinh viên.");
+      setToast(e?.message || getSinhVienHoSoSubmitErrorMessage({ message: e?.message }));
     } finally {
       setSaving(false);
     }
@@ -278,7 +264,7 @@ export default function SinhVienHoSoPage() {
                 </tr>
                 <tr>
                   <th scope="row">Bậc</th>
-                  <td>{studentDegreeLabel[student.degree]}</td>
+                  <td>{studentDegreeLabel[student.degree as keyof typeof studentDegreeLabel]}</td>
                 </tr>
                 <tr>
                   <th scope="row">Ngày sinh</th>
@@ -286,7 +272,7 @@ export default function SinhVienHoSoPage() {
                 </tr>
                 <tr>
                   <th scope="row">Giới tính</th>
-                  <td>{genderLabel[student.gender]}</td>
+                  <td>{genderLabel[student.gender as keyof typeof genderLabel]}</td>
                 </tr>
                 <tr>
                   <th scope="row">Địa chỉ thường trú</th>
@@ -313,11 +299,11 @@ export default function SinhVienHoSoPage() {
                   </tr>
                   <tr>
                     <th scope="row">Giới tính</th>
-                    <td>{supervisor.gender ? genderLabel[supervisor.gender] : "—"}</td>
+                    <td>{supervisor.gender ? genderLabel[supervisor.gender as keyof typeof genderLabel] : "—"}</td>
                   </tr>
                   <tr>
                     <th scope="row">Bậc</th>
-                    <td>{supervisor.degree ? supervisorDegreeLabel[supervisor.degree] : "—"}</td>
+                    <td>{supervisor.degree ? supervisorDegreeLabel[supervisor.degree as keyof typeof supervisorDegreeLabel] : "—"}</td>
                   </tr>
                 </tbody>
               </table>

@@ -12,11 +12,18 @@ import {
 import { ADMIN_PENDING_ENTERPRISES_CHANGED_EVENT } from "@/hooks/useAdminPendingEnterpriseCount";
 import { buildEnterpriseHeadquartersAddress, normalizeEnterpriseStatus } from "@/lib/utils/enterprise-admin-display";
 import { companyTaxLabel } from "@/lib/utils/admin-enterprise-display";
-import { EnterpriseStatusCell } from "../components/EnterpriseStatusCell";
-import { EnterpriseViewDetailTable } from "../components/EnterpriseViewDetailTable";
+import { ADMIN_QUAN_LY_DOANH_NGHIEP_PAGE_SIZE } from "@/lib/constants/admin-quan-ly-doanh-nghiep";
+import {
+  buildAdminEnterprisesListQueryParams,
+  parseAdminEnterprisesStatusQueryParam
+} from "@/lib/utils/admin-quan-ly-doanh-nghiep";
 import MessagePopup from "../../components/MessagePopup";
 import Pagination from "../../components/Pagination";
 import styles from "../styles/dashboard.module.css";
+import AdminEnterpriseToolbar from "./components/AdminEnterpriseToolbar";
+import AdminEnterpriseTable from "./components/AdminEnterpriseTable";
+import AdminEnterpriseStatusPopup from "./components/AdminEnterpriseStatusPopup";
+import AdminEnterpriseViewPopup from "./components/AdminEnterpriseViewPopup";
 
 export default function AdminQuanLyDoanhNghiepPage() {
   const [items, setItems] = useState<AdminEnterpriseListItem[]>([]);
@@ -32,7 +39,6 @@ export default function AdminQuanLyDoanhNghiepPage() {
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
 
   const [viewDetail, setViewDetail] = useState<AdminEnterpriseDetail | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
@@ -68,9 +74,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams();
-      if (appliedQ.trim()) params.set("q", appliedQ.trim());
-      if (appliedStatus !== "all") params.set("status", appliedStatus);
+      const params = buildAdminEnterprisesListQueryParams(appliedQ, appliedStatus);
       const res = await fetch(`/api/admin/enterprises?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || ADMIN_ENTERPRISE_MSG.listLoadFail);
@@ -91,13 +95,10 @@ export default function AdminQuanLyDoanhNghiepPage() {
     if (urlSynced.current || typeof window === "undefined") return;
     urlSynced.current = true;
     const st = new URLSearchParams(window.location.search).get("status");
-    if (
-      st === EnterpriseStatus.PENDING ||
-      st === EnterpriseStatus.APPROVED ||
-      st === EnterpriseStatus.REJECTED
-    ) {
-      setSearchStatus(st);
-      setAppliedStatus(st);
+    const parsed = parseAdminEnterprisesStatusQueryParam(st);
+    if (parsed) {
+      setSearchStatus(parsed);
+      setAppliedStatus(parsed);
     }
   }, []);
 
@@ -122,7 +123,10 @@ export default function AdminQuanLyDoanhNghiepPage() {
     setPage(1);
   };
 
-  const pagedItems = items.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE);
+  const pagedItems = items.slice(
+    (page - 1) * ADMIN_QUAN_LY_DOANH_NGHIEP_PAGE_SIZE,
+    (page - 1) * ADMIN_QUAN_LY_DOANH_NGHIEP_PAGE_SIZE + ADMIN_QUAN_LY_DOANH_NGHIEP_PAGE_SIZE
+  );
 
   const dismissToast = () => setToast("");
 
@@ -234,221 +238,64 @@ export default function AdminQuanLyDoanhNghiepPage() {
 
       {toast ? <MessagePopup open message={toast} onClose={dismissToast} /> : null}
 
-      <div className={styles.searchToolbar}>
-        <div className={styles.searchField}>
-          <label htmlFor="admin-dn-q">Tìm theo tên / MST</label>
-          <input
-            id="admin-dn-q"
-            className={styles.textInputSearch}
-            value={searchQ}
-            onChange={(e) => setSearchQ(e.target.value)}
-            placeholder="Tên doanh nghiệp hoặc mã số thuế"
-          />
-        </div>
-        <div className={styles.searchField}>
-          <label htmlFor="admin-dn-status">Trạng thái</label>
-          <select
-            id="admin-dn-status"
-            className={styles.selectInput}
-            value={searchStatus}
-            onChange={(e) => setSearchStatus(e.target.value)}
-          >
-            <option value="all">Tất cả</option>
-            <option value={EnterpriseStatus.PENDING}>Chờ phê duyệt</option>
-            <option value={EnterpriseStatus.APPROVED}>Đã phê duyệt</option>
-            <option value={EnterpriseStatus.REJECTED}>Từ chối</option>
-          </select>
-        </div>
-        <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => applySearch()}>
-          Tìm kiếm
-        </button>
-      </div>
+      <AdminEnterpriseToolbar
+        searchQ={searchQ}
+        searchStatus={searchStatus}
+        onChangeSearchQ={setSearchQ}
+        onChangeSearchStatus={setSearchStatus}
+        onSearch={applySearch}
+      />
 
       {loading ? <p className={styles.modulePlaceholder}>Đang tải…</p> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
 
       {!loading && !error ? (
-        <div className={`${styles.tableWrap} data-table-responsive-wrap`}>
-          <table className={`${styles.dataTable} data-table-responsive`}>
-            <thead>
-              <tr>
-                <th>STT</th>
-                <th>Tên doanh nghiệp</th>
-                <th>Mã số thuế</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className={styles.modulePlaceholder}>
-                    Không có doanh nghiệp phù hợp.
-                  </td>
-                </tr>
-              ) : (
-                pagedItems.map((row, idx) => (
-                  <tr key={row.id}>
-                    <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
-                    <td data-label="Tên doanh nghiệp">{row.companyName || "—"}</td>
-                    <td data-label="MST">{row.taxCode || "—"}</td>
-                    <td data-label="Trạng thái">
-                      <EnterpriseStatusCell status={row.enterpriseStatus} />
-                    </td>
-                    <td data-label="Thao tác">
-                      <button
-                        type="button"
-                        className={styles.textLinkBtn}
-                        disabled={busyId !== null}
-                        onClick={() => void openView(row)}
-                      >
-                        Xem
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.textLinkBtn}
-                        disabled={busyId !== null}
-                        onClick={() => void deleteEnterprise(row)}
-                      >
-                        Xóa
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.textLinkBtn}
-                        disabled={busyId !== null}
-                        onClick={() => openStatusModal(row)}
-                      >
-                        Cập nhật trạng thái phê duyệt
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <AdminEnterpriseTable
+          items={items}
+          page={page}
+          busyId={busyId}
+          onView={(row) => void openView(row)}
+          onDelete={(row) => void deleteEnterprise(row)}
+          onOpenStatus={(row) => openStatusModal(row)}
+        />
       ) : null}
 
       {!loading && !error ? (
-        <Pagination page={page} pageSize={PAGE_SIZE} totalItems={items.length} onPageChange={setPage} buttonClassName={styles.btn} />
+        <Pagination
+          page={page}
+          pageSize={ADMIN_QUAN_LY_DOANH_NGHIEP_PAGE_SIZE}
+          totalItems={items.length}
+          onPageChange={setPage}
+          buttonClassName={styles.btn}
+        />
       ) : null}
 
-      {viewDetail || viewLoading ? (
-        <MessagePopup open title="Xem thông tin doanh nghiệp" size="extraWide">
-          {viewLoading ? <p>Đang tải…</p> : null}
-          {!viewLoading && viewDetail ? <EnterpriseViewDetailTable item={viewDetail} /> : null}
-          <div className={styles.modalActions}>
-            <button
-              type="button"
-              className={styles.btn}
-              onClick={() => {
-                setViewDetail(null);
-                setViewLoading(false);
-              }}
-            >
-              Đóng
-            </button>
-          </div>
-        </MessagePopup>
-      ) : null}
+      <AdminEnterpriseViewPopup
+        viewLoading={viewLoading}
+        viewDetail={viewDetail}
+        onClose={() => {
+          setViewDetail(null);
+          setViewLoading(false);
+        }}
+      />
 
-      {statusTarget ? (
-        <MessagePopup open title="Cập nhật trạng thái phê duyệt" size="wide">
-          {!rejectOpen ? (
-            <>
-              <div className={styles.statusCurrentRow}>
-                <strong>Trạng thái hiện tại:</strong> <EnterpriseStatusCell status={statusTarget.enterpriseStatus} />
-              </div>
-              <p>
-                <strong>Tên doanh nghiệp:</strong> {statusTarget.companyName || "—"}
-                <br />
-                <strong>Mã số thuế:</strong> {statusTarget.taxCode || "—"}
-                <br />
-                <strong>Email:</strong> {statusTarget.email}
-                <br />
-                <strong>Địa chỉ:</strong>{" "}
-                {statusDetail ? buildEnterpriseHeadquartersAddress(statusDetail.enterpriseMeta) : "Đang tải…"}
-              </p>
-
-              <div className={styles.modalActions}>
-                <button type="button" className={styles.btn} onClick={closeStatusModal}>
-                  Đóng
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnDanger}`}
-                  disabled={
-                    busyId !== null ||
-                    normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.REJECTED
-                  }
-                  title={
-                    normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.REJECTED
-                      ? "Hồ sơ đã bị từ chối — không thể từ chối thêm lần nữa."
-                      : undefined
-                  }
-                  onClick={startReject}
-                >
-                  Từ chối
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnPrimary}`}
-                  disabled={
-                    busyId !== null ||
-                    normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.APPROVED
-                  }
-                  title={
-                    normalizeEnterpriseStatus(statusTarget.enterpriseStatus) === EnterpriseStatus.APPROVED
-                      ? "Hồ sơ đã được phê duyệt — không cần phê duyệt lại."
-                      : undefined
-                  }
-                  onClick={submitApprove}
-                >
-                  Phê duyệt
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p>
-                <strong>Từ chối:</strong> {statusTarget.companyName || "—"} — MST {statusTarget.taxCode || "—"}
-              </p>
-              <p>Lý do từ chối (mỗi dòng một ý, hiển thị trong email).</p>
-              <textarea
-                value={rejectText}
-                disabled={busyId !== null}
-                onChange={(e) => setRejectText(e.target.value)}
-                placeholder="Ví dụ: Hồ sơ chưa đầy đủ."
-              />
-              {rejectTextError ? (
-                <p className={styles.error} style={{ marginTop: 6 }}>
-                  {rejectTextError}
-                </p>
-              ) : null}
-              <div className={styles.modalActions}>
-                <button
-                  type="button"
-                  className={styles.btn}
-                  onClick={() => {
-                    setRejectOpen(false);
-                    setRejectText("");
-                  }}
-                >
-                  Quay lại
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnDanger}`}
-                  disabled={busyId !== null}
-                  onClick={() => void submitReject()}
-                >
-                  Gửi từ chối
-                </button>
-              </div>
-            </>
-          )}
-        </MessagePopup>
-      ) : null}
+      <AdminEnterpriseStatusPopup
+        statusTarget={statusTarget}
+        statusDetail={statusDetail}
+        rejectOpen={rejectOpen}
+        rejectText={rejectText}
+        rejectTextError={rejectTextError}
+        busyId={busyId}
+        onClose={closeStatusModal}
+        onStartReject={startReject}
+        onSubmitApprove={submitApprove}
+        onSubmitReject={() => void submitReject()}
+        onChangeRejectText={setRejectText}
+        onBackFromReject={() => {
+          setRejectOpen(false);
+          setRejectText("");
+        }}
+      />
     </main>
   );
 }

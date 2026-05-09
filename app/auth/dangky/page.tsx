@@ -12,52 +12,15 @@ import {
 } from "@/lib/constants/doanhnghiep";
 import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
 import { DEMO_ENTERPRISE_REGISTER_FORM } from "./demo-register-data";
-
-type VnProvince = { code: number; name: string };
-type VnWard = { code: number; name: string };
-
-type FormDataState = {
-  companyName: string;
-  taxCode: string;
-  businessFields: string[];
-  provinceCode: string;
-  wardCode: string;
-  provinceName: string;
-  wardName: string;
-  addressDetail: string;
-  website: string;
-  representativeName: string;
-  representativeTitle: string;
-  phone: string;
-  email: string;
-};
-
-const EMPTY_FORM: FormDataState = {
-  companyName: "",
-  taxCode: "",
-  businessFields: [],
-  provinceCode: "",
-  wardCode: "",
-  provinceName: "",
-  wardName: "",
-  addressDetail: "",
-  website: "",
-  representativeName: "",
-  representativeTitle: "",
-  phone: "",
-  email: ""
-};
-
-function initialRegisterForm(): FormDataState {
-  if (process.env.NEXT_PUBLIC_PREFILL_REGISTER === "1") {
-    return { ...EMPTY_FORM, ...DEMO_ENTERPRISE_REGISTER_FORM };
-  }
-  return EMPTY_FORM;
-}
+import type { FormDataState, VnProvince, VnWard } from "@/lib/types/enterprise-register";
+import { EMPTY_ENTERPRISE_REGISTER_FORM } from "@/lib/constants/auth/enterprise-register";
+import { getInitialRegisterForm, validateEnterpriseRegisterForm } from "@/lib/utils/auth/enterprise-register";
 
 export default function EnterpriseRegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState<FormDataState>(initialRegisterForm);
+  const [form, setForm] = useState<FormDataState>(() =>
+    getInitialRegisterForm(EMPTY_ENTERPRISE_REGISTER_FORM, DEMO_ENTERPRISE_REGISTER_FORM, process.env.NEXT_PUBLIC_PREFILL_REGISTER)
+  );
   const [provinces, setProvinces] = useState<VnProvince[]>([]);
   const [wards, setWards] = useState<VnWard[]>([]);
   const [addressLoading, setAddressLoading] = useState({ provinces: true, wards: false });
@@ -160,51 +123,13 @@ export default function EnterpriseRegisterPage() {
   };
 
   const validate = () => {
-    const nextErrors: Record<string, string> = {};
-    const addressPattern = /^[\p{L}\d\s]{1,255}$/u;
-    const letterOnly = /^[\p{L}\s]{1,255}$/u;
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    const websiteRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/[\w./?%&=-]*)?$/i;
-
-    if (!form.companyName || form.companyName.length > 255) {
-      nextErrors.companyName = "Tên doanh nghiệp từ 1-255 ký tự.";
-    }
-    if (!/^\d{10,15}$/.test(form.taxCode)) {
-      nextErrors.taxCode = "Mã số thuế chỉ gồm số, dài 10-15 ký tự.";
-    }
-    if (!form.businessFields.length) {
-      nextErrors.businessFields = "Vui lòng chọn ít nhất 1 lĩnh vực hoạt động.";
-    }
-    if (!form.provinceCode || !form.provinceName) {
-      nextErrors.province = "Vui lòng chọn tỉnh thành.";
-    }
-    if (!form.wardCode || !form.wardName) {
-      nextErrors.ward = "Vui lòng chọn phường xã.";
-    }
-    if (!addressPattern.test(form.addressDetail)) {
-      nextErrors.addressDetail =
-        "Địa chỉ chi tiết chỉ gồm chữ, số và khoảng trắng (không ký tự đặc biệt), dài 1-255 ký tự.";
-    }
-    if (!businessLicense) nextErrors.businessLicense = "Vui lòng đính kèm giấy phép kinh doanh.";
-    else if (businessLicense.size > MAX_ENTERPRISE_UPLOAD_BYTES) {
-      nextErrors.businessLicense = `Giấy phép tối đa ${DOANHNGHIEP_MAX_UPLOAD_FILE_LABEL} / file.`;
-    }
-    if (!companyLogo) nextErrors.companyLogo = "Vui lòng tải lên logo công ty.";
-    else if (companyLogo.size > MAX_ENTERPRISE_UPLOAD_BYTES) {
-      nextErrors.companyLogo = `Logo tối đa ${DOANHNGHIEP_MAX_UPLOAD_FILE_LABEL} / file.`;
-    }
-    if (form.website && !websiteRegex.test(form.website)) nextErrors.website = "Website không đúng định dạng.";
-    if (!letterOnly.test(form.representativeName)) {
-      nextErrors.representativeName = "Họ và tên chỉ gồm ký tự chữ, dài 1-255.";
-    }
-    if (!letterOnly.test(form.representativeTitle)) {
-      nextErrors.representativeTitle = "Chức vụ chỉ gồm ký tự chữ, dài 1-255.";
-    }
-    if (!/^\d{8,12}$/.test(form.phone)) nextErrors.phone = "Số điện thoại chỉ gồm số, dài 8-12 ký tự.";
-    if (!emailRegex.test(form.email)) nextErrors.email = "Email phải đúng định dạng example@domain.com.";
-
+    const { errors: nextErrors, isValid } = validateEnterpriseRegisterForm({
+      form,
+      businessLicense,
+      companyLogo
+    });
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    return isValid;
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

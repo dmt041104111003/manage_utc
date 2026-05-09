@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { buildMailShell, escapeHtml } from "@/lib/mail-layout";
 
 function createTransport() {
   const user = process.env.EMAIL_FROM;
@@ -15,9 +16,20 @@ function createTransport() {
 export async function sendMail(to: string, subject: string, text: string, htmlOverride?: string) {
   const transport = createTransport();
   const from = `"${process.env.EMAIL_FROM_NAME || "Hệ thống thực tập UTC"}" <${process.env.EMAIL_FROM}>`;
-  const html =
-    htmlOverride ??
-    text.split("\n").map((line) => (line ? `<p>${escapeHtml(line)}</p>` : "<br/>")).join("");
+
+  const isFullDocument = (s: string) => /^\s*<!DOCTYPE|^\s*<html/i.test(s);
+
+  const fallbackBodyHtml = text
+    .split("\n")
+    .map((line) => (line.trim() ? `<p style="margin:0 0 14px;">${escapeHtml(line)}</p>` : "<br/>"))
+    .join("");
+
+  const html = htmlOverride
+    ? isFullDocument(htmlOverride)
+      ? htmlOverride
+      : buildMailShell({ bodyHtml: htmlOverride })
+    : buildMailShell({ bodyHtml: fallbackBodyHtml });
+
   await transport.sendMail({
     from,
     to,
@@ -25,8 +37,4 @@ export async function sendMail(to: string, subject: string, text: string, htmlOv
     text,
     html
   });
-}
-
-function escapeHtml(s: string) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }

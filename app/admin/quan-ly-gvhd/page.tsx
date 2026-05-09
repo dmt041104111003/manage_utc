@@ -2,91 +2,31 @@
 
 import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
-import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
-import FormPopup from "../../components/FormPopup";
-import Pagination from "../../components/Pagination";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { ADMIN_SUPERVISOR_EXCEL_HEADER, ADMIN_SUPERVISOR_EXCEL_SAMPLE_ROWS } from "@/lib/constants/admin-supervisors-excel";
 
-type Gender = "MALE" | "FEMALE" | "OTHER";
-type Degree = "MASTER" | "PHD" | "ASSOC_PROF" | "PROF";
+import type {
+  Degree,
+  Province,
+  SupervisorFormState,
+  SupervisorListItem,
+  Ward
+} from "@/lib/types/admin-quan-ly-gvhd";
+import {
+  ADMIN_QUAN_LY_GVHD_FACULTY_CUSTOM_VALUE,
+  ADMIN_QUAN_LY_GVHD_NAME_PATTERN,
+  ADMIN_QUAN_LY_GVHD_PHONE_PATTERN
+} from "@/lib/constants/admin-quan-ly-gvhd";
+import { calcAgeFromBirthDate, toBirthDateInputValue } from "@/lib/utils/admin-quan-ly-gvhd-dates";
+import { buildEmptySupervisorFormState } from "@/lib/utils/admin-quan-ly-gvhd-form";
 
-type SupervisorListItem = {
-  id: string;
-  fullName: string;
-  phone: string | null;
-  email: string;
-  faculty: string;
-  degree: Degree;
-  birthDate: string | null;
-  gender: Gender;
-  permanentProvinceCode: string;
-  permanentWardCode: string;
-  permanentProvinceName: string | null;
-  permanentWardName: string | null;
-};
-
-type Province = { code: number; name: string };
-type Ward = { code: number; name: string };
-
-type SupervisorFormState = {
-  fullName: string;
-  phone: string;
-  email: string;
-  birthDate: string;
-  gender: Gender | "";
-  permanentProvinceCode: string;
-  permanentWardCode: string;
-  faculty: string;
-  facultyCustom: string;
-  degree: Degree | "";
-};
-
-const NAME_PATTERN = /^[\p{L}\s]{1,255}$/u;
-const PHONE_PATTERN = /^\d{8,12}$/;
-const FACULTY_CUSTOM_VALUE = "__custom__";
-
-const genderLabel: Record<Gender, string> = { MALE: "Nam", FEMALE: "Nữ", OTHER: "Khác" };
-const degreeLabel: Record<Degree, string> = {
-  MASTER: "Thạc sĩ",
-  PHD: "Tiến sĩ",
-  ASSOC_PROF: "Phó giáo sư",
-  PROF: "Giáo sư"
-};
-
-function todayDateInputValue() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function calcAgeFromBirthDate(birthDate: string) {
-  const birth = new Date(`${birthDate}T00:00:00.000Z`);
-  if (Number.isNaN(birth.getTime())) return null;
-  const now = new Date();
-  let age = now.getUTCFullYear() - birth.getUTCFullYear();
-  const m = now.getUTCMonth() - birth.getUTCMonth();
-  if (m < 0 || (m === 0 && now.getUTCDate() < birth.getUTCDate())) age -= 1;
-  return age;
-}
-
-function toBirthDateInputValue(iso: string | null) {
-  if (!iso) return "";
-  return new Date(iso).toISOString().slice(0, 10);
-}
-
-const EMPTY_FORM: SupervisorFormState = {
-  fullName: "",
-  phone: "",
-  email: "",
-  birthDate: todayDateInputValue(),
-  gender: "",
-  permanentProvinceCode: "",
-  permanentWardCode: "",
-  faculty: "",
-  facultyCustom: "",
-  degree: ""
-};
+import AdminGiangVienToolbar from "./components/AdminGiangVienToolbar";
+import AdminGiangVienTableSection from "./components/AdminGiangVienTableSection";
+import AdminGiangVienViewPopup from "./components/AdminGiangVienViewPopup";
+import AdminGiangVienDeletePopup from "./components/AdminGiangVienDeletePopup";
+import AdminGiangVienFormPopup from "./components/AdminGiangVienFormPopup";
+import AdminGiangVienImportPopup from "./components/AdminGiangVienImportPopup";
 
 export default function AdminQuanLyGVHDPage() {
   const [items, setItems] = useState<SupervisorListItem[]>([]);
@@ -112,11 +52,10 @@ export default function AdminQuanLyGVHDPage() {
   const [importBusy, setImportBusy] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
-  const [form, setForm] = useState<SupervisorFormState>(EMPTY_FORM);
+  const [form, setForm] = useState<SupervisorFormState>(() => buildEmptySupervisorFormState());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
 
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
@@ -187,15 +126,13 @@ export default function AdminQuanLyGVHDPage() {
     }
   };
 
-  const pagedItems = items.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE);
-
   useEffect(() => {
     void load();
   }, []);
 
   const resetForm = () => {
     setFieldErrors({});
-    setForm({ ...EMPTY_FORM, birthDate: todayDateInputValue() });
+    setForm(buildEmptySupervisorFormState());
   };
 
   const openAdd = () => {
@@ -223,10 +160,15 @@ export default function AdminQuanLyGVHDPage() {
 
   const computeValidationErrors = (draft: SupervisorFormState) => {
     const next: Record<string, string> = {};
-    const effectiveFaculty = draft.faculty === FACULTY_CUSTOM_VALUE ? draft.facultyCustom.trim() : draft.faculty.trim();
+    const effectiveFaculty =
+      draft.faculty === ADMIN_QUAN_LY_GVHD_FACULTY_CUSTOM_VALUE
+        ? draft.facultyCustom.trim()
+        : draft.faculty.trim();
 
-    if (!draft.fullName || !NAME_PATTERN.test(draft.fullName.trim())) next.fullName = "Họ tên chỉ gồm chữ và dấu cách (1–255 ký tự).";
-    if (!draft.phone || !PHONE_PATTERN.test(draft.phone.trim())) next.phone = "Số điện thoại chỉ gồm số (8–12 ký tự).";
+    if (!draft.fullName || !ADMIN_QUAN_LY_GVHD_NAME_PATTERN.test(draft.fullName.trim()))
+      next.fullName = "Họ tên chỉ gồm chữ và dấu cách (1–255 ký tự).";
+    if (!draft.phone || !ADMIN_QUAN_LY_GVHD_PHONE_PATTERN.test(draft.phone.trim()))
+      next.phone = "Số điện thoại chỉ gồm số (8–12 ký tự).";
     if (!draft.email || !AUTH_EMAIL_REGISTER_PATTERN.test(draft.email.trim())) next.email = "Email không đúng định dạng (ví dụ: example@domain.com).";
 
     if (!draft.birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(draft.birthDate)) next.birthDate = "Ngày sinh không hợp lệ (YYYY-MM-DD).";
@@ -241,7 +183,11 @@ export default function AdminQuanLyGVHDPage() {
     if (!draft.permanentWardCode || !/^\d+$/.test(draft.permanentWardCode)) next.permanentWardCode = "Phường/xã không hợp lệ.";
 
     if (!effectiveFaculty) next.faculty = "Khoa bắt buộc.";
-    if (draft.faculty === FACULTY_CUSTOM_VALUE && draft.facultyCustom && !NAME_PATTERN.test(draft.facultyCustom.trim())) {
+    if (
+      draft.faculty === ADMIN_QUAN_LY_GVHD_FACULTY_CUSTOM_VALUE &&
+      draft.facultyCustom &&
+      !ADMIN_QUAN_LY_GVHD_NAME_PATTERN.test(draft.facultyCustom.trim())
+    ) {
       next.facultyCustom = "Khoa chỉ gồm chữ và dấu cách (1–255 ký tự).";
     }
 
@@ -269,7 +215,7 @@ export default function AdminQuanLyGVHDPage() {
           gender: form.gender,
           permanentProvinceCode: form.permanentProvinceCode,
           permanentWardCode: form.permanentWardCode,
-          faculty: (form.faculty === FACULTY_CUSTOM_VALUE ? form.facultyCustom : form.faculty).trim(),
+          faculty: (form.faculty === ADMIN_QUAN_LY_GVHD_FACULTY_CUSTOM_VALUE ? form.facultyCustom : form.faculty).trim(),
           degree: form.degree
         })
       });
@@ -311,7 +257,7 @@ export default function AdminQuanLyGVHDPage() {
           gender: form.gender,
           permanentProvinceCode: form.permanentProvinceCode,
           permanentWardCode: form.permanentWardCode,
-          faculty: (form.faculty === FACULTY_CUSTOM_VALUE ? form.facultyCustom : form.faculty).trim(),
+          faculty: (form.faculty === ADMIN_QUAN_LY_GVHD_FACULTY_CUSTOM_VALUE ? form.facultyCustom : form.faculty).trim(),
           degree: form.degree
         })
       });
@@ -499,19 +445,6 @@ export default function AdminQuanLyGVHDPage() {
     }
   };
 
-  const degreeOptions: { value: Degree; label: string }[] = [
-    { value: "MASTER", label: "Thạc sĩ" },
-    { value: "PHD", label: "Tiến sĩ" },
-    { value: "ASSOC_PROF", label: "Phó giáo sư" },
-    { value: "PROF", label: "Giáo sư" }
-  ];
-
-  const genderOptions: { value: Gender; label: string }[] = [
-    { value: "MALE", label: "Nam" },
-    { value: "FEMALE", label: "Nữ" },
-    { value: "OTHER", label: "Khác" }
-  ];
-
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -520,511 +453,87 @@ export default function AdminQuanLyGVHDPage() {
 
       {error ? <p className={styles.error}>{error}</p> : null}
 
-      <div className={styles.searchToolbar}>
-        <div className={styles.searchField}>
-          <label>Tìm theo Họ tên / SĐT / Email</label>
-          <input className={styles.textInputSearch} value={searchQ} onChange={(e) => setSearchQ(e.target.value)} placeholder="Nhập từ khóa" />
-        </div>
-        <div className={styles.searchField}>
-          <label>Khoa</label>
-          <select className={styles.selectInput} value={filterFaculty} onChange={(e) => setFilterFaculty(e.target.value)}>
-            <option value="all">Tất cả</option>
-            {faculties.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className={styles.searchField}>
-          <label>Bậc</label>
-          <select className={styles.selectInput} value={filterDegree} onChange={(e) => setFilterDegree(e.target.value as any)}>
-            <option value="all">Tất cả</option>
-            {degreeOptions.map((d) => (
-              <option key={d.value} value={d.value}>
-                {d.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => void load()}>
-          Tìm kiếm
-        </button>
-      </div>
+      <AdminGiangVienToolbar
+        searchQ={searchQ}
+        filterFaculty={filterFaculty}
+        filterDegree={filterDegree}
+        faculties={faculties}
+        busy={busyId !== null}
+        onChangeSearchQ={setSearchQ}
+        onChangeFilterFaculty={setFilterFaculty}
+        onChangeFilterDegree={setFilterDegree}
+        onSearch={() => void load()}
+        onOpenAdd={openAdd}
+        onOpenImport={() => setImportOpen(true)}
+      />
 
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginBottom: 12 }}>
-        <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={openAdd} disabled={busyId !== null}>
-          Thêm GVHD
-        </button>
-        <button type="button" className={styles.btn} onClick={() => setImportOpen(true)} disabled={busyId !== null}>
-          Thêm danh sách (Excel)
-        </button>
-      </div>
+      <AdminGiangVienTableSection
+        loading={loading}
+        items={items}
+        page={page}
+        busyId={busyId}
+        onPageChange={setPage}
+        onView={(row) => void openView(row)}
+        onEdit={openEdit}
+        onDelete={setDeleteTarget}
+      />
 
-      {loading ? (
-        <p className={styles.modulePlaceholder}>Đang tải…</p>
-      ) : (
-        <div className={`${styles.tableWrap} data-table-responsive-wrap`}>
-          <table className={`${styles.dataTable} data-table-responsive`}>
-            <thead>
-              <tr>
-                <th>STT</th>
-                <th>Họ tên</th>
-                <th>Số điện thoại</th>
-                <th>Email</th>
-                <th>Khoa</th>
-                <th>Bậc</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className={styles.modulePlaceholder}>
-                    Không có GVHD phù hợp.
-                  </td>
-                </tr>
-              ) : (
-                pagedItems.map((row, idx) => (
-                  <tr key={row.id}>
-                    <td data-label="STT">{(page - 1) * PAGE_SIZE + idx + 1}</td>
-                    <td data-label="Họ tên">{row.fullName}</td>
-                    <td data-label="Số điện thoại">{row.phone ?? "—"}</td>
-                    <td data-label="Email">{row.email}</td>
-                    <td data-label="Khoa">{row.faculty}</td>
-                    <td data-label="Bậc">{degreeLabel[row.degree]}</td>
-                    <td data-label="Thao tác">
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => void openView(row)}>
-                        Xem
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => openEdit(row)}>
-                        Sửa
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => setDeleteTarget(row)}>
-                        Xóa
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <AdminGiangVienViewPopup
+        open={viewOpen}
+        item={viewItem}
+        onClose={() => { setViewOpen(false); setViewItem(null); }}
+      />
 
-      {!loading ? (
-        <Pagination
-          page={page}
-          pageSize={PAGE_SIZE}
-          totalItems={items.length}
-          onPageChange={setPage}
-          buttonClassName={styles.btn}
-          activeButtonClassName={`${styles.btn} ${styles.btnPrimary}`}
-        />
-      ) : null}
+      <AdminGiangVienDeletePopup
+        target={deleteTarget}
+        busy={busyId !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => void submitDelete()}
+      />
 
-      {viewOpen && viewItem ? (
-        <MessagePopup open title="Xem thông tin GVHD" size="extraWide" onClose={() => (setViewOpen(false), setViewItem(null))}>
-          <table className={styles.viewModalDetailTable}>
-            <tbody>
-              <tr>
-                <th scope="row">Họ tên</th>
-                <td>{viewItem.fullName}</td>
-              </tr>
-              <tr>
-                <th scope="row">Số điện thoại</th>
-                <td>{viewItem.phone ?? "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">Email</th>
-                <td>{viewItem.email}</td>
-              </tr>
-              <tr>
-                <th scope="row">Ngày sinh</th>
-                <td>{viewItem.birthDate ? toBirthDateInputValue(viewItem.birthDate) : "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">Giới tính</th>
-                <td>{genderLabel[viewItem.gender]}</td>
-              </tr>
-              <tr>
-                <th scope="row">Địa chỉ thường trú</th>
-                <td>{[viewItem.permanentProvinceName, viewItem.permanentWardName].filter(Boolean).join(" - ") || "—"}</td>
-              </tr>
-              <tr>
-                <th scope="row">Khoa</th>
-                <td>{viewItem.faculty}</td>
-              </tr>
-              <tr>
-                <th scope="row">Bậc</th>
-                <td>{degreeLabel[viewItem.degree]}</td>
-              </tr>
-            </tbody>
-          </table>
-        </MessagePopup>
-      ) : null}
+      <AdminGiangVienFormPopup
+        open={addOpen}
+        mode="create"
+        busy={busyId !== null}
+        form={form}
+        fieldErrors={fieldErrors}
+        faculties={faculties}
+        provinces={provinces}
+        wards={wards}
+        addrLoading={addrLoading}
+        onClose={() => { setAddOpen(false); resetForm(); }}
+        onSubmit={() => void submitCreate()}
+        setForm={setForm}
+      />
 
-      {deleteTarget ? (
-        <MessagePopup
-          open
-          title="Xóa GVHD"
-          size="wide"
-          onClose={() => setDeleteTarget(null)}
-          actions={
-            <>
-              <button type="button" className={styles.btn} onClick={() => setDeleteTarget(null)} disabled={busyId !== null}>
-                Hủy
-              </button>
-              <button type="button" className={`${styles.btn} ${styles.btnDanger}`} disabled={busyId !== null} onClick={() => void submitDelete()}>
-                Xóa
-              </button>
-            </>
-          }
-        >
-          <p>
-            Bạn có chắc chắn muốn xóa GVHD <strong>[{degreeLabel[deleteTarget.degree]}]</strong>-<strong>[{deleteTarget.fullName}]</strong>-<strong>[{deleteTarget.faculty}]</strong> không?
-          </p>
-        </MessagePopup>
-      ) : null}
+      <AdminGiangVienFormPopup
+        open={editTarget !== null}
+        mode="edit"
+        busy={busyId !== null}
+        form={form}
+        fieldErrors={fieldErrors}
+        faculties={faculties}
+        provinces={provinces}
+        wards={wards}
+        addrLoading={addrLoading}
+        editEmail={editTarget?.email}
+        onClose={() => { setEditTarget(null); resetForm(); }}
+        onSubmit={() => void submitEdit()}
+        setForm={setForm}
+      />
 
-      {addOpen ? (
-        <FormPopup
-          open
-          title="Thêm từng GV"
-          busy={busyId !== null}
-          onClose={() => {
-            setAddOpen(false);
-            resetForm();
-          }}
-          size="extraWide"
-          actions={
-            <>
-              <button type="button" className={styles.btn} onClick={() => setAddOpen(false)} disabled={busyId !== null}>
-                Hủy
-              </button>
-              <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => void submitCreate()} disabled={busyId !== null}>
-                Tạo
-              </button>
-            </>
-          }
-        >
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>
-              Họ tên <span className={formStyles.required}>*</span>
-            </label>
-            <input className={formStyles.input} value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} placeholder="Nhập họ tên" />
-            {fieldErrors.fullName ? <p className={formStyles.error}>{fieldErrors.fullName}</p> : null}
-          </div>
-
-          <div className={formStyles.grid2}>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                SĐT <span className={formStyles.required}>*</span>
-              </label>
-              <input className={formStyles.input} value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value.replace(/[^\d]/g, "").slice(0, 12) }))} placeholder="Nhập số điện thoại" />
-              {fieldErrors.phone ? <p className={formStyles.error}>{fieldErrors.phone}</p> : null}
-            </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                Email <span className={formStyles.required}>*</span>
-              </label>
-              <input className={formStyles.input} value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} placeholder="example@domain.com" />
-              {fieldErrors.email ? <p className={formStyles.error}>{fieldErrors.email}</p> : null}
-            </div>
-          </div>
-
-          <div className={formStyles.grid2}>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                Ngày sinh <span className={formStyles.required}>*</span>
-              </label>
-              <input type="date" className={formStyles.input} value={form.birthDate} onChange={(e) => setForm((p) => ({ ...p, birthDate: e.target.value }))} />
-              {fieldErrors.birthDate ? <p className={formStyles.error}>{fieldErrors.birthDate}</p> : null}
-            </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                Giới tính <span className={formStyles.required}>*</span>
-              </label>
-              <div style={{ display: "flex", gap: 14, paddingTop: 6 }}>
-                {genderOptions.map((g) => (
-                  <label key={g.value} style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <input type="radio" checked={form.gender === g.value} onChange={() => setForm((p) => ({ ...p, gender: g.value }))} />
-                    {g.label}
-                  </label>
-                ))}
-              </div>
-              {fieldErrors.gender ? <p className={formStyles.error}>{fieldErrors.gender}</p> : null}
-            </div>
-          </div>
-
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>
-              Địa chỉ thường trú (Tỉnh/Phường) <span className={formStyles.required}>*</span>
-            </label>
-            <div className={formStyles.grid2}>
-              <div className={formStyles.field} style={{ marginBottom: 0 }}>
-                <select className={formStyles.select} value={form.permanentProvinceCode} onChange={(e) => setForm((p) => ({ ...p, permanentProvinceCode: e.target.value, permanentWardCode: "" }))}>
-                  <option value="">{addrLoading.provinces ? "Đang tải…" : "Chọn tỉnh/thành"}</option>
-                  {provinces.map((p) => (
-                    <option key={p.code} value={String(p.code)}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                {fieldErrors.permanentProvinceCode ? <p className={formStyles.error}>{fieldErrors.permanentProvinceCode}</p> : null}
-              </div>
-              <div className={formStyles.field} style={{ marginBottom: 0 }}>
-                <select className={formStyles.select} value={form.permanentWardCode} onChange={(e) => setForm((p) => ({ ...p, permanentWardCode: e.target.value }))} disabled={!form.permanentProvinceCode || addrLoading.wards}>
-                  <option value="">{addrLoading.wards ? "Đang tải…" : !form.permanentProvinceCode ? "Chọn tỉnh trước" : "Chọn phường/xã"}</option>
-                  {wards.map((w) => (
-                    <option key={w.code} value={String(w.code)}>
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
-                {fieldErrors.permanentWardCode ? <p className={formStyles.error}>{fieldErrors.permanentWardCode}</p> : null}
-              </div>
-            </div>
-          </div>
-
-          <div className={formStyles.grid2}>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                Khoa <span className={formStyles.required}>*</span>
-              </label>
-              <select
-                className={formStyles.select}
-                value={form.faculty}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setForm((p) => ({ ...p, faculty: v, facultyCustom: v === FACULTY_CUSTOM_VALUE ? "" : p.facultyCustom }));
-                }}
-              >
-                <option value="">Chọn khoa</option>
-                {faculties.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-                <option value={FACULTY_CUSTOM_VALUE}>Tự nhập</option>
-              </select>
-              {fieldErrors.faculty ? <p className={formStyles.error}>{fieldErrors.faculty}</p> : null}
-              {form.faculty === FACULTY_CUSTOM_VALUE ? (
-                <div style={{ marginTop: 8 }}>
-                  <input className={formStyles.input} value={form.facultyCustom} onChange={(e) => setForm((p) => ({ ...p, facultyCustom: e.target.value }))} placeholder="Nhập khoa" />
-                  {fieldErrors.facultyCustom ? <p className={formStyles.error}>{fieldErrors.facultyCustom}</p> : null}
-                </div>
-              ) : null}
-            </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                Bậc <span className={formStyles.required}>*</span>
-              </label>
-              <select className={formStyles.select} value={form.degree} onChange={(e) => setForm((p) => ({ ...p, degree: e.target.value as any }))}>
-                <option value="">Chọn bậc</option>
-                {degreeOptions.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.degree ? <p className={formStyles.error}>{fieldErrors.degree}</p> : null}
-            </div>
-          </div>
-        </FormPopup>
-      ) : null}
-
-      {editTarget ? (
-        <FormPopup
-          open
-          title="Sửa thông tin GV"
-          busy={busyId !== null}
-          onClose={() => {
-            setEditTarget(null);
-            resetForm();
-          }}
-          size="extraWide"
-          actions={
-            <>
-              <button type="button" className={styles.btn} onClick={() => setEditTarget(null)} disabled={busyId !== null}>
-                Hủy
-              </button>
-              <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => void submitEdit()} disabled={busyId !== null}>
-                Lưu
-              </button>
-            </>
-          }
-        >
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>
-              Họ tên <span className={formStyles.required}>*</span>
-            </label>
-            <input className={formStyles.input} value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} placeholder="Họ tên" />
-            {fieldErrors.fullName ? <p className={formStyles.error}>{fieldErrors.fullName}</p> : null}
-          </div>
-
-          <div className={formStyles.grid2}>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                SĐT <span className={formStyles.required}>*</span>
-              </label>
-              <input className={formStyles.input} value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value.replace(/[^\d]/g, "").slice(0, 12) }))} placeholder="SĐT" />
-              {fieldErrors.phone ? <p className={formStyles.error}>{fieldErrors.phone}</p> : null}
-            </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>Email</label>
-              <input className={formStyles.input} value={editTarget.email} disabled />
-            </div>
-          </div>
-
-          <div className={formStyles.grid2}>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                Ngày sinh <span className={formStyles.required}>*</span>
-              </label>
-              <input type="date" className={formStyles.input} value={form.birthDate} onChange={(e) => setForm((p) => ({ ...p, birthDate: e.target.value }))} />
-              {fieldErrors.birthDate ? <p className={formStyles.error}>{fieldErrors.birthDate}</p> : null}
-            </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                Giới tính <span className={formStyles.required}>*</span>
-              </label>
-              <div style={{ display: "flex", gap: 14, paddingTop: 6 }}>
-                {genderOptions.map((g) => (
-                  <label key={g.value} style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <input type="radio" checked={form.gender === g.value} onChange={() => setForm((p) => ({ ...p, gender: g.value }))} />
-                    {g.label}
-                  </label>
-                ))}
-              </div>
-              {fieldErrors.gender ? <p className={formStyles.error}>{fieldErrors.gender}</p> : null}
-            </div>
-          </div>
-
-          <div className={formStyles.field}>
-            <label className={formStyles.label}>
-              Địa chỉ thường trú (Tỉnh/Phường) <span className={formStyles.required}>*</span>
-            </label>
-            <div className={formStyles.grid2}>
-              <div className={formStyles.field} style={{ marginBottom: 0 }}>
-                <select className={formStyles.select} value={form.permanentProvinceCode} onChange={(e) => setForm((p) => ({ ...p, permanentProvinceCode: e.target.value, permanentWardCode: "" }))}>
-                  <option value="">{addrLoading.provinces ? "Đang tải…" : "Chọn tỉnh/thành"}</option>
-                  {provinces.map((p) => (
-                    <option key={p.code} value={String(p.code)}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                {fieldErrors.permanentProvinceCode ? <p className={formStyles.error}>{fieldErrors.permanentProvinceCode}</p> : null}
-              </div>
-              <div className={formStyles.field} style={{ marginBottom: 0 }}>
-                <select className={formStyles.select} value={form.permanentWardCode} onChange={(e) => setForm((p) => ({ ...p, permanentWardCode: e.target.value }))} disabled={!form.permanentProvinceCode || addrLoading.wards}>
-                  <option value="">{addrLoading.wards ? "Đang tải…" : !form.permanentProvinceCode ? "Chọn tỉnh trước" : "Chọn phường/xã"}</option>
-                  {wards.map((w) => (
-                    <option key={w.code} value={String(w.code)}>
-                      {w.name}
-                    </option>
-                  ))}
-                </select>
-                {fieldErrors.permanentWardCode ? <p className={formStyles.error}>{fieldErrors.permanentWardCode}</p> : null}
-              </div>
-            </div>
-          </div>
-
-          <div className={formStyles.grid2}>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                Khoa <span className={formStyles.required}>*</span>
-              </label>
-              <select
-                className={formStyles.select}
-                value={form.faculty}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setForm((p) => ({ ...p, faculty: v, facultyCustom: v === FACULTY_CUSTOM_VALUE ? "" : p.facultyCustom }));
-                }}
-              >
-                <option value="">Chọn khoa</option>
-                {faculties.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-                <option value={FACULTY_CUSTOM_VALUE}>Tự nhập</option>
-              </select>
-              {fieldErrors.faculty ? <p className={formStyles.error}>{fieldErrors.faculty}</p> : null}
-              {form.faculty === FACULTY_CUSTOM_VALUE ? (
-                <div style={{ marginTop: 8 }}>
-                  <input className={formStyles.input} value={form.facultyCustom} onChange={(e) => setForm((p) => ({ ...p, facultyCustom: e.target.value }))} placeholder="Nhập khoa" />
-                  {fieldErrors.facultyCustom ? <p className={formStyles.error}>{fieldErrors.facultyCustom}</p> : null}
-                </div>
-              ) : null}
-            </div>
-            <div className={formStyles.field}>
-              <label className={formStyles.label}>
-                Bậc <span className={formStyles.required}>*</span>
-              </label>
-              <select className={formStyles.select} value={form.degree} onChange={(e) => setForm((p) => ({ ...p, degree: e.target.value as any }))}>
-                <option value="">Chọn bậc</option>
-                {degreeOptions.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.degree ? <p className={formStyles.error}>{fieldErrors.degree}</p> : null}
-            </div>
-          </div>
-        </FormPopup>
-      ) : null}
-
-      {importOpen ? (
-        <MessagePopup
-          open
-          title="Thêm danh sách GV"
-          size="wide"
-          onClose={() => {
-            setImportOpen(false);
-            setImportFile(null);
-            setImportBusy(false);
-          }}
-          actions={
-            <>
-              <button type="button" className={styles.btn} onClick={() => setImportOpen(false)} disabled={importBusy}>
-                Hủy
-              </button>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                disabled={importBusy}
-                onClick={() => {
-                  if (!importFile) {
-                    showPopup("Vui lòng chọn file Excel để import.");
-                    return;
-                  }
-                  void handleImportFile(importFile);
-                }}
-              >
-                Tạo
-              </button>
-            </>
-          }
-        >
-          <div style={{ marginTop: 8 }}>
-            <p style={{ marginTop: 0 }}>Tải file Excel mẫu:</p>
-            <button type="button" className={styles.btn} onClick={() => void downloadExcelTemplate()} disabled={importBusy}>
-              Tải mẫu Excel
-            </button>
-          </div>
-          <div style={{ marginTop: 14 }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151" }}>Upload file Excel</label>
-            <input type="file" accept=".xlsx,.xls" disabled={importBusy} style={{ width: "100%", marginTop: 6 }} onChange={(e) => setImportFile(e.target.files?.[0] || null)} />
-            <p className={styles.modulePlaceholder} style={{ marginTop: 10 }}>
-              Khi import thành công, hệ thống sẽ cấp tài khoản đăng nhập cho GVHD (mật khẩu = ngày sinh).
-            </p>
-          </div>
-        </MessagePopup>
-      ) : null}
+      <AdminGiangVienImportPopup
+        open={importOpen}
+        importBusy={importBusy}
+        importFile={importFile}
+        onClose={() => { setImportOpen(false); setImportFile(null); setImportBusy(false); }}
+        onSetImportFile={setImportFile}
+        onDownloadTemplate={() => void downloadExcelTemplate()}
+        onSubmitImport={() => {
+          if (!importFile) { showPopup("Vui lòng chọn file Excel để import."); return; }
+          void handleImportFile(importFile);
+        }}
+      />
 
       {toastPopup.open ? (
         <MessagePopup open title="Thông báo" message={toastPopup.message} onClose={() => setToastPopup({ open: false, message: "" })} />

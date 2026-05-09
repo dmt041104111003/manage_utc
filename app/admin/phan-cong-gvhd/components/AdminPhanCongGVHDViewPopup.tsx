@@ -1,0 +1,76 @@
+"use client";
+
+import type { AssignmentItem } from "@/lib/types/admin-phan-cong-gvhd";
+import { ADMIN_PHAN_CONG_GVHD_STATUS_LABEL } from "@/lib/constants/admin-phan-cong-gvhd";
+import { studentDisplay, supervisorDisplay } from "@/lib/utils/admin-phan-cong-gvhd-display";
+
+import MessagePopup from "../../../components/MessagePopup";
+
+import styles from "../../styles/dashboard.module.css";
+
+type Props = {
+  viewTarget: AssignmentItem | null;
+  onClose: () => void;
+};
+
+export default function AdminPhanCongGVHDViewPopup(props: Props) {
+  const { viewTarget, onClose } = props;
+
+  if (!viewTarget) return null;
+
+  return (
+    <MessagePopup
+      open
+      title="Xem phân công"
+      size="extraWide"
+      onClose={onClose}
+      actions={
+        <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onClose}>
+          Đóng
+        </button>
+      }
+    >
+      <table className={styles.viewModalDetailTable}>
+        <tbody>
+          <tr>
+            <th scope="row">Khoa</th>
+            <td>{viewTarget.faculty}</td>
+          </tr>
+          <tr>
+            <th scope="row">Đợt thực tập</th>
+            <td>{viewTarget.batch?.name || "—"}</td>
+          </tr>
+          <tr>
+            <th scope="row">GVHD</th>
+            <td>{supervisorDisplay(viewTarget.supervisor as any) || "—"}</td>
+          </tr>
+          <tr>
+            <th scope="row">Trạng thái hướng dẫn</th>
+            <td>{ADMIN_PHAN_CONG_GVHD_STATUS_LABEL[viewTarget.status]}</td>
+          </tr>
+          <tr>
+            <th scope="row">SV hướng dẫn</th>
+            <td>
+              {viewTarget.students.length ? (
+                <div style={{ display: "grid", gap: 4 }}>
+                  {viewTarget.students.map((s) => (
+                    <div key={s.id ?? `${s.msv}-${s.fullName}`}>{studentDisplay(s as any)}</div>
+                  ))}
+                </div>
+              ) : (
+                "—"
+              )}
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Ghi chú</th>
+            <td style={{ color: "#667085" }}>
+              Trạng thái thực tập của sinh viên xem chi tiết trong module Quản lý sinh viên.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </MessagePopup>
+  );
+}
+

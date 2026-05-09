@@ -13,7 +13,7 @@ const KHOL_PATTERN = /^[\p{L}\d]{1,10}$/u;
 
 type Degree = "BACHELOR" | "ENGINEER";
 type Gender = "MALE" | "FEMALE" | "OTHER";
-type InternshipStatus = "NOT_STARTED" | "DOING" | "SELF_FINANCED" | "REPORT_SUBMITTED" | "COMPLETED";
+type InternshipStatus = "NOT_STARTED" | "DOING" | "SELF_FINANCED" | "REPORT_SUBMITTED" | "COMPLETED" | "REJECTED";
 
 function parseDateOnly(input: string) {
   return new Date(`${input}T00:00:00.000Z`);

@@ -3,8 +3,8 @@ import type { DashboardNavItem } from "./dashboard-nav";
 export const DOANHNGHIEP_DASHBOARD_NAV: DashboardNavItem[] = [
   { href: "/doanhnghiep/dashboard", label: "Tổng quan" },
   { href: "/doanhnghiep/tai-khoan", label: "Tài khoản" },
-  { href: "/doanhnghiep/tuyen-dung", label: "Tin tuyển dụng" },
-  { href: "/doanhnghiep/ung-vien", label: "Ứng viên" },
+  { href: "/doanhnghiep/tuyen-dung", label: "Quản lý tin tuyển dụng" },
+  { href: "/doanhnghiep/ung-vien", label: "Quản lý ứng viên" },
   { href: "/auth/doimatkhau", label: "Đổi mật khẩu" }
 ];
 

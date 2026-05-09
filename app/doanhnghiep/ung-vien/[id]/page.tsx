@@ -6,74 +6,21 @@ import adminStyles from "../../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../../components/MessagePopup";
 import FormPopup from "../../../components/FormPopup";
 import Pagination from "../../../components/Pagination";
-
-type WorkType = "PART_TIME" | "FULL_TIME";
-type JobStatus = "PENDING" | "REJECTED" | "ACTIVE" | "STOPPED";
-
-type JobApplicationStatus = "PENDING_REVIEW" | "INTERVIEW_INVITED" | "OFFERED" | "REJECTED" | "STUDENT_DECLINED";
-type JobApplicationResponse = "PENDING" | "ACCEPTED" | "DECLINED";
-
-type Applicant = {
-  id: string;
-  appliedAt: string | null;
-  status: JobApplicationStatus;
-  coverLetter: string | null;
-  cvUrl: string | null;
-  interviewAt: string | null;
-  response: JobApplicationResponse;
-  responseAt: string | null;
-  history: any;
-  student: { id: string; fullName: string; email: string; phone: string | null };
-};
-
-type JobDetail = {
-  id: string;
-  title: string;
-  salary: string;
-  expertise: string;
-  experienceRequirement: string;
-  workType: WorkType;
-  jobDescription: string;
-  candidateRequirements: string;
-  workLocation: string;
-  workTime: string;
-  benefits: string;
-  applicationMethod: string | null;
-  createdAt: string | null;
-  deadlineAt: string | null;
-  recruitmentCount: number;
-  status: JobStatus;
-};
-
-const applicationStatusLabel: Record<JobApplicationStatus, string> = {
-  PENDING_REVIEW: "Chờ xem xét",
-  INTERVIEW_INVITED: "Mời phỏng vấn",
-  OFFERED: "Trúng tuyển",
-  REJECTED: "Từ chối",
-  STUDENT_DECLINED: "Ứng viên từ chối"
-};
-
-const responseLabel: Record<JobApplicationResponse, string> = {
-  PENDING: "Chờ phản hồi",
-  ACCEPTED: "Đồng ý",
-  DECLINED: "Từ chối"
-};
-
-const workTypeLabel: Record<WorkType, string> = { PART_TIME: "Bán thời gian", FULL_TIME: "Toàn thời gian" };
-
-function formatDateTimeVi(iso: string | null) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("vi-VN");
-}
-
-function formatDateVi(iso: string | null) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("vi-VN");
-}
+import type {
+  Applicant,
+  JobApplicationResponse,
+  JobApplicationStatus,
+  JobDetail,
+  JobStatus,
+  WorkType
+} from "@/lib/types/doanhnghiep-ung-vien-detail";
+import {
+  applicationStatusLabel,
+  responseLabel,
+  workTypeLabel,
+  DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE
+} from "@/lib/constants/doanhnghiep-ung-vien-detail";
+import { formatDateTimeVi } from "@/lib/utils/doanhnghiep-ung-vien-detail";
 
 export default function DoanhNghiepUngVienDetailPage({ params }: { params: { id: string } }) {
   const jobId = params.id;
@@ -84,7 +31,7 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: { id:
   const [applicants, setApplicants] = useState<Applicant[]>([]);
 
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE;
   const paged = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     return applicants.slice(start, start + PAGE_SIZE);

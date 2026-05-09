@@ -4,7 +4,10 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Cổng thông tin giáo dục",
-  description: "Hệ thống quản lý thực tập"
+  description: "Hệ thống quản lý thực tập",
+  icons: {
+    icon: "/logo.png"
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

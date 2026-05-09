@@ -3,8 +3,14 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useMemo, useState } from "react";
-import { resolveLoginEmail } from "@/lib/auth/identifier";
 import styles from "../styles/login.module.css";
+import {
+  getLoginRedirectDest,
+  getNetworkErrorMessage,
+  mapLoginApiErrorToForm,
+  shouldShowForgotPassword,
+  validateLoginForm
+} from "@/lib/utils/auth/login";
 
 function LoginForm() {
   const router = useRouter();
@@ -17,8 +23,11 @@ function LoginForm() {
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [identifierFocused, setIdentifierFocused] = useState(false);
 
-  const showForgotPassword = useMemo(() => resolveLoginEmail(identifier) !== "admin@utc.edu.vn", [identifier]);
+  const showForgotPassword = useMemo(() => {
+    return shouldShowForgotPassword({ identifierFocused, identifier });
+  }, [identifier, identifierFocused]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -29,17 +38,10 @@ function LoginForm() {
     setSuccessMessage("");
 
     let hasError = false;
-    const idTrim = identifier.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!idTrim) {
-      setIdentifierError("Vui lòng nhập email.");
-      hasError = true;
-    } else if (idTrim.toLowerCase() !== "admin" && !emailRegex.test(idTrim.toLowerCase())) {
-      setIdentifierError("Vui lòng nhập email hợp lệ (ví dụ ten@domain.com), hoặc \"admin\".");
-      hasError = true;
-    }
-    if (!password.trim()) {
-      setPasswordError("Vui lòng nhập mật khẩu.");
+    const validation = validateLoginForm({ identifier, password });
+    if (!validation.isValid) {
+      if (validation.errors.identifier) setIdentifierError(validation.errors.identifier);
+      if (validation.errors.password) setPasswordError(validation.errors.password);
       hasError = true;
     }
     if (hasError) return;
@@ -54,24 +56,24 @@ function LoginForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.code === "WRONG_PASSWORD") setPasswordError(data.message);
-        else if (data.code === "NOT_FOUND" || data.code === "LOCKED" || data.code === "INVALID_EMAIL")
-          setIdentifierError(data.message);
-        else setSubmitError(data.message || "Đăng nhập thất bại.");
+        const mapped = mapLoginApiErrorToForm({ code: data.code, message: data.message });
+        if (mapped.passwordError !== undefined) setPasswordError(mapped.passwordError);
+        if (mapped.identifierError !== undefined) setIdentifierError(mapped.identifierError);
+        if (mapped.submitError !== undefined) setSubmitError(mapped.submitError);
         setIsSubmitting(false);
         return;
       }
 
       setSuccessMessage(data.message || "Đăng nhập thành công.");
-      const nextRaw = searchParams.get("next");
-      const safeNext =
-        nextRaw && nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : null;
-      const dest = safeNext || data.redirectPath || "/";
+      const dest = getLoginRedirectDest({
+        nextRaw: searchParams.get("next"),
+        redirectPath: data.redirectPath
+      });
       setTimeout(() => {
         router.replace(dest);
       }, 800);
     } catch {
-      setSubmitError("Không thể kết nối hệ thống. Vui lòng thử lại.");
+      setSubmitError(getNetworkErrorMessage());
       setIsSubmitting(false);
     }
   };
@@ -123,6 +125,7 @@ function LoginForm() {
                 placeholder="vd: ten@domain.com"
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
+                onFocus={() => setIdentifierFocused(true)}
                 disabled={isSubmitting}
               />
               {identifierError ? <p className={styles.error}>{identifierError}</p> : null}

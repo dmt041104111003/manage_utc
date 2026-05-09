@@ -136,6 +136,8 @@
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
+  position: relative;
+  z-index: 102; /* đảm bảo nút 3 gạch không bị sidebar phủ khi mở */
 }
 
 .menuButton {
@@ -150,6 +152,8 @@
   border-radius: 6px;
   background: #ffffff;
   cursor: pointer;
+  position: relative;
+  z-index: 103;
 }
 
 .menuButton span {
@@ -185,20 +189,31 @@
 @media (max-width: 980px) {
   .topbar {
     display: flex;
+    justify-content: space-between;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
   }
 
   .menuButton {
     display: flex;
+    order: 2; /* đưa nút 3 gạch sang phải */
+  }
+
+  .topbarTitle {
+    order: 1;
   }
 
   .sidebar {
     position: fixed;
-    left: 0;
+    left: auto;
+    right: 0;
     top: 0;
     bottom: 0;
-    transform: translateX(-100%);
+    transform: translateX(100%);
     transition: transform 0.2s ease;
     box-shadow: none;
+    border-right: none;
+    border-left: 1px solid #e5e7eb;
   }
 
   .sidebarOpen {

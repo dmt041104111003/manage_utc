@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth/admin-session";
 
-const ALLOWED = ["NOT_STARTED", "DOING", "SELF_FINANCED", "REPORT_SUBMITTED", "COMPLETED"] as const;
+const ALLOWED = ["NOT_STARTED", "DOING", "SELF_FINANCED", "REPORT_SUBMITTED", "COMPLETED", "REJECTED"] as const;
 type InternshipStatus = (typeof ALLOWED)[number];
 
 export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {

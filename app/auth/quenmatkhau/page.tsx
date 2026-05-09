@@ -4,6 +4,12 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { AuthShell } from "../components/AuthShell";
 import styles from "../styles/forgot-password.module.css";
+import {
+  getForgotPasswordNetworkErrorMessage,
+  getForgotPasswordSuccessMessage,
+  mapForgotPasswordApiError,
+  validateForgotPasswordForm
+} from "@/lib/utils/auth/forgot-password";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -17,17 +23,12 @@ export default function ForgotPasswordPage() {
     setEmailError("");
     setSubmitError("");
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!normalizedEmail) {
-      setEmailError("Vui lòng nhập email.");
+    const validation = validateForgotPasswordForm({ email });
+    if (!validation.isValid) {
+      if (validation.errors.email) setEmailError(validation.errors.email);
       return;
     }
-    if (!emailRegex.test(normalizedEmail)) {
-      setEmailError("Email không đúng định dạng example@domain.com.");
-      return;
-    }
+    const normalizedEmail = validation.normalizedEmail;
 
     try {
       setIsSubmitting(true);
@@ -39,15 +40,16 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setEmailError(data.message || "Không thể gửi yêu cầu đặt lại mật khẩu.");
+        const mapped = mapForgotPasswordApiError({ code: data.code, message: data.message });
+        if (mapped.emailError !== undefined) setEmailError(mapped.emailError);
         setIsSubmitting(false);
         return;
       }
 
-      setSuccessMessage(data.message || "Đã gửi liên kết đặt lại mật khẩu đến email của bạn. Vui lòng kiểm tra hòm thư.");
+      setSuccessMessage(getForgotPasswordSuccessMessage({ responseMessage: data.message }));
       setIsSubmitting(false);
     } catch {
-      setSubmitError("Không thể kết nối hệ thống. Vui lòng thử lại.");
+      setSubmitError(getForgotPasswordNetworkErrorMessage());
       setIsSubmitting(false);
     }
   };

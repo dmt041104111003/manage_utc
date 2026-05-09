@@ -554,3 +554,154 @@
   font-size: 13px;
   line-height: 1.5;
 }
+
+/* ----- Admin Overview (dashboard) ----- */
+.overviewControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 18px;
+}
+
+.overviewControl {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 14rem;
+  flex: 1;
+}
+
+.overviewControl label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.overviewSelect {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  max-width: 100%;
+  background: #ffffff;
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.chartPadding {
+  padding-top: 6px;
+}
+
+.chartRow {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.chartLegend {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.legendRow {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: #374151;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.legendLabel {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legendValue {
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.muted {
+  color: #6b7280;
+}
+
+.chartPadding svg {
+  display: block;
+}
+
+.barChart {
+  width: 100%;
+}
+
+.barArea {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.barCol {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.bar {
+  width: 100%;
+  max-width: 48px;
+  background: #2563eb;
+  border-radius: 6px;
+}
+
+.barLabel {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #6b7280;
+  text-align: center;
+  word-break: break-word;
+}
+
+.lineWrap {
+  width: 100%;
+}
+
+.topFieldsGrid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .topFieldsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .chartRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

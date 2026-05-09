@@ -6,62 +6,38 @@ import adminStyles from "../../../admin/styles/dashboard.module.css";
 import formStyles from "../../../auth/styles/register.module.css";
 import MessagePopup from "../../../components/MessagePopup";
 import FormPopup from "../../../components/FormPopup";
-import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
 import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
-
-type WorkType = "PART_TIME" | "FULL_TIME";
-type InternshipStatus = "NOT_STARTED" | "DOING" | "SELF_FINANCED" | "REPORT_SUBMITTED" | "COMPLETED";
-
-type JobDetail = {
-  id: string;
-  title: string;
-  salary: string;
-  expertise: string;
-  experienceRequirement: string;
-  recruitmentCount: number;
-  workType: WorkType;
-  deadlineAt: string | null;
-  jobDescription: string;
-  candidateRequirements: string;
-  benefits: string;
-  workLocation: string;
-  workTime: string;
-  applicationMethod: string | null;
-  enterprise: {
-    companyName: string;
-    taxCode: string;
-    businessFields: string;
-    headquartersAddress: string;
-    intro: string | null;
-    website: string | null;
-  };
-  canApply: boolean;
-  hasApplied: boolean;
-  internshipStatus: InternshipStatus;
-};
-
-const PHONE_PATTERN = /^\d{8,12}$/;
-const CV_ALLOWED = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-];
-const workTypeLabel: Record<WorkType, string> = { PART_TIME: "Part-time", FULL_TIME: "Full-time" };
-
-function formatDateVi(iso: string | null) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("vi-VN");
-}
+import type { SinhVienApplyDraft, SinhVienTraCuuUngTuyenJobDetail } from "@/lib/types/sinhvien-tra-cuu-ung-tuyen-detail";
+import {
+  APPLY_BUTTON_LABEL_APPLIED,
+  APPLY_BUTTON_LABEL_DEFAULT,
+  SINHVIEN_TRA_CUU_UNG_TUYEN_APPLY_OPEN_TITLE,
+  SINHVIEN_TRA_CUU_UNG_TUYEN_BACK_LINK_TEXT,
+  SINHVIEN_TRA_CUU_UNG_TUYEN_LOAD_DETAIL_ERROR_DEFAULT,
+  SINHVIEN_TRA_CUU_UNG_TUYEN_TITLE,
+  SINHVIEN_TRA_CUU_UNG_TUYEN_SUBMIT_ERROR_DEFAULT,
+  workTypeLabel
+} from "@/lib/constants/sinhvien-tra-cuu-ung-tuyen-detail";
+import {
+  buildSinhVienTraCuuUngTuyenApplyPayload,
+  buildSinhVienTraCuuUngTuyenApplyUrl,
+  fetchSinhVienHoSoProfileForApply,
+  fetchSinhVienTraCuuUngTuyenDetail,
+  formatDateVi,
+  getCvMimeValidationError,
+  getSinhVienTraCuuUngTuyenOpenApplyErrorMessage,
+  getSinhVienTraCuuUngTuyenSubmitErrorMessage,
+  getSinhVienTraCuuUngTuyenSubmitSuccessMessage,
+  validateSinhVienApplyDraft
+} from "@/lib/utils/sinhvien-tra-cuu-ung-tuyen-detail";
 
 export default function SinhVienJobDetailPage({ params }: { params: { id: string } }) {
   const jobId = params.id;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
-  const [job, setJob] = useState<JobDetail | null>(null);
+  const [job, setJob] = useState<SinhVienTraCuuUngTuyenJobDetail | null>(null);
 
   const [applyOpen, setApplyOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -79,29 +55,24 @@ export default function SinhVienJobDetailPage({ params }: { params: { id: string
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/sinhvien/tra-cuu-ung-tuyen/${jobId}`);
-      const data = await res.json();
-      if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải chi tiết tin tuyển dụng.");
+      const data = await fetchSinhVienTraCuuUngTuyenDetail(jobId);
       setJob(data.item ?? null);
     } catch (e: any) {
-      setError(e?.message || "Không thể tải chi tiết tin tuyển dụng.");
+      setError(e?.message || SINHVIEN_TRA_CUU_UNG_TUYEN_LOAD_DETAIL_ERROR_DEFAULT);
     } finally {
       setLoading(false);
     }
   }
 
   async function loadProfileForApply() {
-    const res = await fetch("/api/sinhvien/ho-so-sinh-vien");
-    const data = await res.json();
-    if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể tải hồ sơ sinh viên.");
-    const item = data.item ?? {};
-    setFullName(item.fullName || "");
-    setPhone(item.phone || "");
-    setEmail(item.email || "");
-    setIntro(item.intro || "");
-    setCvFileName(item.cvFileName || null);
-    setCvMime(item.cvMime || null);
-    setCvBase64(item.cvBase64 || null);
+    const profile = await fetchSinhVienHoSoProfileForApply();
+    setFullName(profile.fullName);
+    setPhone(profile.phone ?? "");
+    setEmail(profile.email ?? "");
+    setIntro(profile.intro ?? "");
+    setCvFileName(profile.cvFileName ?? null);
+    setCvMime(profile.cvMime ?? null);
+    setCvBase64(profile.cvBase64 ?? null);
     setRemoveCv(false);
     setFieldErrors({});
   }
@@ -116,20 +87,22 @@ export default function SinhVienJobDetailPage({ params }: { params: { id: string
       await loadProfileForApply();
       setApplyOpen(true);
     } catch (e: any) {
-      setToast(e?.message || "Không thể mở popup ứng tuyển.");
+      setToast(getSinhVienTraCuuUngTuyenOpenApplyErrorMessage(e));
     }
   }
 
   async function onChooseCv(file: File | null) {
     if (!file) return;
     const guessed = file.type || "";
-    if (!CV_ALLOWED.includes(guessed)) {
-      setFieldErrors((prev) => ({ ...prev, cv: "File CV chỉ chấp nhận định dạng PDF, DOC, DOCX." }));
+    const guessedError = getCvMimeValidationError(guessed);
+    if (guessedError) {
+      setFieldErrors((prev) => ({ ...prev, cv: guessedError }));
       return;
     }
     const payload = await readFileAsBase64Payload(file);
-    if (!CV_ALLOWED.includes(payload.mime)) {
-      setFieldErrors((prev) => ({ ...prev, cv: "File CV chỉ chấp nhận định dạng PDF, DOC, DOCX." }));
+    const payloadError = getCvMimeValidationError(payload.mime);
+    if (payloadError) {
+      setFieldErrors((prev) => ({ ...prev, cv: payloadError }));
       return;
     }
     setFieldErrors((prev) => ({ ...prev, cv: "" }));
@@ -140,39 +113,37 @@ export default function SinhVienJobDetailPage({ params }: { params: { id: string
   }
 
   async function submitApply() {
-    const nextErrors: Record<string, string> = {};
-    if (!PHONE_PATTERN.test(phone.trim())) nextErrors.phone = "Số điện thoại chỉ gồm số (8–12 ký tự).";
-    if (!AUTH_EMAIL_REGISTER_PATTERN.test(email.trim().toLowerCase())) nextErrors.email = "Email không đúng định dạng.";
-    if (!intro.trim()) nextErrors.intro = "Thư giới thiệu bản thân bắt buộc.";
-    if (!cvBase64 || !cvMime || !cvFileName || removeCv) nextErrors.cv = "Vui lòng đính kèm file CV.";
-    setFieldErrors(nextErrors);
-    if (Object.keys(nextErrors).length) return;
+    const draft: SinhVienApplyDraft = {
+      phone,
+      email,
+      intro,
+      cvFileName,
+      cvMime,
+      cvBase64,
+      removeCv
+    };
+
+    const { isValid, errors } = validateSinhVienApplyDraft(draft);
+    setFieldErrors(errors);
+    if (!isValid) return;
 
     setBusy(true);
     try {
-      const res = await fetch(`/api/sinhvien/tra-cuu-ung-tuyen/${jobId}/apply`, {
+      const res = await fetch(buildSinhVienTraCuuUngTuyenApplyUrl(jobId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: phone.trim(),
-          email: email.trim().toLowerCase(),
-          intro: intro.trim(),
-          cvFileName,
-          cvMime,
-          cvBase64,
-          removeCv
-        })
+        body: JSON.stringify(buildSinhVienTraCuuUngTuyenApplyPayload(draft))
       });
       const data = await res.json();
       if (!res.ok || !data?.success) {
         if (data?.errors && typeof data.errors === "object") setFieldErrors(data.errors);
-        throw new Error(data?.message || "Nộp hồ sơ ứng tuyển thất bại.");
+        throw new Error(data?.message || SINHVIEN_TRA_CUU_UNG_TUYEN_SUBMIT_ERROR_DEFAULT);
       }
       setApplyOpen(false);
-      setToast(data?.message || "Nộp hồ sơ ứng tuyển thành công.");
+      setToast(getSinhVienTraCuuUngTuyenSubmitSuccessMessage(data?.message));
       await loadDetail();
     } catch (e: any) {
-      setToast(e?.message || "Nộp hồ sơ ứng tuyển thất bại.");
+      setToast(getSinhVienTraCuuUngTuyenSubmitErrorMessage(e?.message));
     } finally {
       setBusy(false);
     }
@@ -181,10 +152,10 @@ export default function SinhVienJobDetailPage({ params }: { params: { id: string
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Chi tiết tin tuyển dụng</h1>
+        <h1 className={styles.title}>{SINHVIEN_TRA_CUU_UNG_TUYEN_TITLE}</h1>
         <p className={styles.subtitle}>
           <a className={adminStyles.detailLink} href="/sinhvien/tra-cuu-ung-tuyen">
-            ← Quay lại danh sách
+            {SINHVIEN_TRA_CUU_UNG_TUYEN_BACK_LINK_TEXT}
           </a>
         </p>
       </header>
@@ -221,7 +192,7 @@ export default function SinhVienJobDetailPage({ params }: { params: { id: string
           </table>
           <div style={{ marginTop: 14 }}>
             <button type="button" className={`${adminStyles.btn} ${adminStyles.btnPrimary}`} onClick={() => void openApply()} disabled={!job.canApply || job.hasApplied}>
-              {job.hasApplied ? "Đã ứng tuyển" : "Ứng tuyển ngay"}
+              {job.hasApplied ? APPLY_BUTTON_LABEL_APPLIED : APPLY_BUTTON_LABEL_DEFAULT}
             </button>
           </div>
         </section>
@@ -230,7 +201,7 @@ export default function SinhVienJobDetailPage({ params }: { params: { id: string
       {applyOpen ? (
         <FormPopup
           open
-          title="Cập nhật hồ sơ sinh viên"
+          title={SINHVIEN_TRA_CUU_UNG_TUYEN_APPLY_OPEN_TITLE}
           size="wide"
           busy={busy}
           onClose={() => setApplyOpen(false)}

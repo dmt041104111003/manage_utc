@@ -144,6 +144,16 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
         data: { supervisorProfileId, status: "GUIDING" }
       });
 
+      await tx.supervisorAssignmentStatusHistory.create({
+        data: {
+          supervisorAssignmentId: id,
+          fromStatus: "GUIDING",
+          toStatus: "GUIDING",
+          byRole: "admin",
+          message: "Cập nhật phân công GVHD"
+        }
+      });
+
       await tx.supervisorAssignmentStudent.deleteMany({ where: { supervisorAssignmentId: id } });
       for (const sid of studentProfileIds) {
         await tx.supervisorAssignmentStudent.create({

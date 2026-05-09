@@ -6,105 +6,24 @@ import adminStyles from "../../admin/styles/dashboard.module.css";
 import formStyles from "../../auth/styles/register.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import Pagination from "../../components/Pagination";
-import { DOANHNGHIEP_REGISTER_WEBSITE_PATTERN } from "@/lib/constants/doanhnghiep";
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
+import type { ApiResponse, JobDetailResponse, JobFormState, JobListItem, JobStatus, WorkType } from "@/lib/types/doanhnghiep-tuyen-dung";
+import { DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE, DOANHNGHIEP_TUYEN_DUNG_STATUS_LABEL, DOANHNGHIEP_TUYEN_DUNG_WORK_TYPE_LABEL } from "@/lib/constants/doanhnghiep-tuyen-dung";
 import { metaRecord } from "@/lib/utils/enterprise-meta";
+import {
+  buildEmptyJobFormState,
+  buildJobCreatePayload,
+  buildJobEditPayload,
+  buildJobFormForAdd,
+  buildJobFormForEdit,
+  canEditStatus,
+  canStopStatus,
+  formatDateVi,
+  validateJobForm
+} from "@/lib/utils/doanhnghiep-tuyen-dung";
 
-type JobStatus = "PENDING" | "REJECTED" | "ACTIVE" | "STOPPED";
-type WorkType = "PART_TIME" | "FULL_TIME";
-
-type JobListItem = {
-  id: string;
-  title: string;
-  createdAt: string | null;
-  recruitmentCount: number;
-  expertise: string;
-  workType: WorkType;
-  status: JobStatus;
-  deadlineAt: string | null;
-};
-
-type JobDetailResponse = {
-  job: any;
-  enterprise: {
-    companyName: string | null;
-    taxCode: string | null;
-    businessFields: string;
-    headquartersAddress: string;
-    intro: string | null;
-    website: string | null;
-  };
-};
-
-type ApiResponse<T> = { success: boolean; message?: string; item?: T; items?: any; hasOpenBatch?: boolean; batchId?: string | null; errors?: Record<string, string> };
-
-const statusLabel: Record<JobStatus, string> = {
-  PENDING: "Chờ duyệt",
-  REJECTED: "Từ chối duyệt",
-  ACTIVE: "Đang hoạt động",
-  STOPPED: "Dừng hoạt động"
-};
-
-const workTypeLabel: Record<WorkType, string> = {
-  PART_TIME: "part-time",
-  FULL_TIME: "full-time"
-};
-
-const TITLE_PATTERN = /^[\p{L}\d\s]{1,255}$/u;
-const EXPERTISE_PATTERN = /^[\p{L}\d\s]{1,255}$/u;
-const SALARY_PATTERN = /^[\p{L}\d\s\-]{1,150}$/u;
-const COUNT_PATTERN = /^\d{1,10}$/;
-
-function todayDateInputValue() {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-function formatDateVi(iso: string | null | undefined) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("vi-VN");
-}
-
-type JobFormState = {
-  title: string;
-  companyIntro: string;
-  companyWebsite: string;
-  salary: string;
-  expertise: string;
-  experienceRequirement: string;
-  recruitmentCount: string;
-  workType: WorkType | "";
-  deadlineAt: string; // yyyy-mm-dd
-  jobDescription: string;
-  candidateRequirements: string;
-  benefits: string;
-  workLocation: string;
-  workTime: string;
-  applicationMethod: string;
-};
-
-const EMPTY_FORM: JobFormState = {
-  title: "",
-  companyIntro: "",
-  companyWebsite: "",
-  salary: "",
-  expertise: "",
-  experienceRequirement: "",
-  recruitmentCount: "",
-  workType: "",
-  deadlineAt: todayDateInputValue(),
-  jobDescription: "",
-  candidateRequirements: "",
-  benefits: "",
-  workLocation: "",
-  workTime: "",
-  applicationMethod: ""
-};
+const statusLabel: Record<JobStatus, string> = DOANHNGHIEP_TUYEN_DUNG_STATUS_LABEL;
+const workTypeLabel: Record<WorkType, string> = DOANHNGHIEP_TUYEN_DUNG_WORK_TYPE_LABEL;
 
 export default function DoanhNghiepTuyenDungPage() {
   const [loading, setLoading] = useState(true);
@@ -118,7 +37,7 @@ export default function DoanhNghiepTuyenDungPage() {
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE;
 
   const [viewJob, setViewJob] = useState<JobDetailResponse | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
@@ -133,7 +52,7 @@ export default function DoanhNghiepTuyenDungPage() {
 
   const [enterpriseDefaults, setEnterpriseDefaults] = useState<{ intro: string; website: string }>({ intro: "", website: "" });
 
-  const [form, setForm] = useState<JobFormState>(EMPTY_FORM);
+  const [form, setForm] = useState<JobFormState>(() => buildEmptyJobFormState());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const loadEnterpriseDefaults = async () => {
@@ -185,64 +104,18 @@ export default function DoanhNghiepTuyenDungPage() {
 
   const resetFormForAdd = () => {
     setFieldErrors({});
-    setForm({
-      ...EMPTY_FORM,
-      companyIntro: enterpriseDefaults.intro || "",
-      companyWebsite: enterpriseDefaults.website || "",
-      deadlineAt: todayDateInputValue()
-    });
+    setForm(buildJobFormForAdd({ enterpriseDefaults }));
   };
 
   const resetFormForEdit = (detail: JobDetailResponse) => {
     setFieldErrors({});
-    const job = detail.job;
-    setForm({
-      title: job.title || "",
-      companyIntro: detail.job.companyIntro || enterpriseDefaults.intro || "",
-      companyWebsite: detail.job.companyWebsite || enterpriseDefaults.website || "",
-      salary: job.salary || "",
-      expertise: job.expertise || "",
-      experienceRequirement: job.experienceRequirement || "",
-      recruitmentCount: job.recruitmentCount != null ? String(job.recruitmentCount) : "",
-      workType: (job.workType as WorkType) || "",
-      deadlineAt: job.deadlineAt ? new Date(job.deadlineAt).toISOString().slice(0, 10) : todayDateInputValue(),
-      jobDescription: job.jobDescription || "",
-      candidateRequirements: job.candidateRequirements || "",
-      benefits: job.benefits || "",
-      workLocation: job.workLocation || "",
-      workTime: job.workTime || "",
-      applicationMethod: job.applicationMethod || ""
-    });
+    setForm(buildJobFormForEdit({ detail, enterpriseDefaults }));
   };
 
   const validateForm = (): boolean => {
-    const next: Record<string, string> = {};
-    if (!form.title || !TITLE_PATTERN.test(form.title.trim())) next.title = "Tiêu đề chỉ gồm ký tự chữ và số (1–255).";
-    if (!form.salary || !SALARY_PATTERN.test(form.salary.trim())) next.salary = "Mức lương chỉ gồm chữ, số, '-' (1–150).";
-    if (!form.expertise || !EXPERTISE_PATTERN.test(form.expertise.trim())) next.expertise = "Chuyên môn chỉ gồm chữ, số (1–255).";
-    if (!form.experienceRequirement || !EXPERTISE_PATTERN.test(form.experienceRequirement.trim())) next.experienceRequirement = "Yêu cầu kinh nghiệm chỉ gồm chữ, số (1–255).";
-    if (!form.recruitmentCount || !COUNT_PATTERN.test(form.recruitmentCount.trim())) next.recruitmentCount = "Số lượng tuyển dụng chỉ gồm số (1–10).";
-    if (!form.workType || (form.workType !== "PART_TIME" && form.workType !== "FULL_TIME")) next.workType = "Hình thức làm việc không hợp lệ.";
-
-    if (!form.deadlineAt || !/^\d{4}-\d{2}-\d{2}$/.test(form.deadlineAt)) next.deadlineAt = "Hạn tuyển dụng không hợp lệ.";
-    else {
-      const deadline = new Date(`${form.deadlineAt}T00:00:00.000Z`);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (!(deadline.getTime() > today.getTime())) next.deadlineAt = "Hạn tuyển dụng phải lớn hơn ngày hiện tại.";
-    }
-
-    if (!form.jobDescription.trim()) next.jobDescription = "Mô tả công việc bắt buộc.";
-    if (!form.candidateRequirements.trim()) next.candidateRequirements = "Yêu cầu ứng viên bắt buộc.";
-    if (!form.benefits.trim()) next.benefits = "Quyền lợi bắt buộc.";
-    if (!form.workLocation.trim() || form.workLocation.trim().length > 255) next.workLocation = "Địa điểm làm việc bắt buộc và tối đa 255 ký tự.";
-    if (!form.workTime.trim()) next.workTime = "Thời gian làm việc bắt buộc.";
-
-    // optional website
-    if (form.companyWebsite.trim() && !DOANHNGHIEP_REGISTER_WEBSITE_PATTERN.test(form.companyWebsite.trim())) next.companyWebsite = "Website không đúng định dạng.";
-
-    setFieldErrors(next);
-    return Object.keys(next).length === 0;
+    const { isValid, errors } = validateJobForm(form);
+    setFieldErrors(errors);
+    return isValid;
   };
 
   const openView = async (row: JobListItem) => {
@@ -284,23 +157,7 @@ export default function DoanhNghiepTuyenDungPage() {
     setBusyId("add");
     setToast("");
     try {
-      const payload = {
-        title: form.title.trim(),
-        companyIntro: form.companyIntro.trim() || null,
-        companyWebsite: form.companyWebsite.trim() || null,
-        salary: form.salary.trim(),
-        expertise: form.expertise.trim(),
-        experienceRequirement: form.experienceRequirement.trim(),
-        recruitmentCount: Number(form.recruitmentCount.trim()),
-        workType: form.workType,
-        deadlineAt: form.deadlineAt,
-        jobDescription: form.jobDescription.trim(),
-        candidateRequirements: form.candidateRequirements.trim(),
-        benefits: form.benefits.trim(),
-        workLocation: form.workLocation.trim(),
-        workTime: form.workTime.trim(),
-        applicationMethod: form.applicationMethod.trim() || null
-      };
+      const payload = buildJobCreatePayload(form);
 
       const res = await fetch("/api/doanhnghiep/tuyen-dung", {
         method: "POST",
@@ -334,23 +191,7 @@ export default function DoanhNghiepTuyenDungPage() {
     setBusyId(editTarget.id);
     setToast("");
     try {
-      const payload = {
-        title: form.title.trim(),
-        companyIntro: form.companyIntro.trim() || null,
-        companyWebsite: form.companyWebsite.trim() || null,
-        salary: form.salary.trim(),
-        expertise: form.expertise.trim(),
-        experienceRequirement: form.experienceRequirement.trim(),
-        recruitmentCount: Number(form.recruitmentCount.trim()),
-        workType: form.workType,
-        deadlineAt: form.deadlineAt,
-        jobDescription: form.jobDescription.trim(),
-        candidateRequirements: form.candidateRequirements.trim(),
-        benefits: form.benefits.trim(),
-        workLocation: form.workLocation.trim(),
-        workTime: form.workTime.trim(),
-        applicationMethod: form.applicationMethod.trim() || null
-      };
+      const payload = buildJobEditPayload(form);
       const res = await fetch(`/api/doanhnghiep/tuyen-dung/${editTarget.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -420,8 +261,8 @@ export default function DoanhNghiepTuyenDungPage() {
     }
   };
 
-  const canEdit = (s: JobStatus) => s === "PENDING" || s === "REJECTED";
-  const canStop = (s: JobStatus) => s !== "STOPPED";
+  const canEdit = (s: JobStatus) => canEditStatus(s);
+  const canStop = (s: JobStatus) => canStopStatus(s);
 
   const openAdd = async () => {
     setToast("");

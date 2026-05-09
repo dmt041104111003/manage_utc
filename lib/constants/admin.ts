@@ -8,7 +8,8 @@ export const ADMIN_DASHBOARD_NAV: DashboardNavItem[] = [
   { href: "/admin/phan-cong-gvhd", label: "Phân công GVHD" },
   { href: "/admin/quan-ly-sinh-vien", label: "Quản lý sinh viên" },
   { href: "/admin/quan-ly-gvhd", label: "Quản lý GVHD" },
-  { href: "/admin/quan-ly-tin-tuyen-dung", label: "Quản lý tin tuyển dụng" }
+  { href: "/admin/quan-ly-tin-tuyen-dung", label: "Quản lý tin tuyển dụng" },
+  { href: "/admin/quan-ly-tien-do-thuc-tap", label: "Quản lý tiến độ thực tập" }
 ];
 
 export const ADMIN_DASHBOARD_TOPBAR_TITLE = "Quản trị hệ thống";
