@@ -37,8 +37,8 @@ export async function GET(request: Request) {
     const where: any = {};
     if (q) {
       where.OR = [
-        { title: { contains: q, mode: "insensitive" } },
-        { enterpriseUser: { companyName: { contains: q, mode: "insensitive" } } }
+        ...(q.length >= 2 ? [{ title: { contains: q, mode: "insensitive" } }] : []),
+        ...(q.length >= 2 ? [{ enterpriseUser: { companyName: { contains: q, mode: "insensitive" } } }] : [])
       ];
     }
     if (batchId && batchId !== "all") where.internshipBatchId = batchId;

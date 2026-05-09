@@ -24,13 +24,14 @@ export async function GET(request: Request) {
     const andParts: Prisma.UserWhereInput[] = [];
 
     if (q) {
+      const isNumeric = /^\d+$/.test(q);
+      const isEmailLike = q.includes("@") || q.includes(".");
       andParts.push({
         OR: [
-          { fullName: { contains: q, mode: "insensitive" } },
-          { phone: { contains: q, mode: "insensitive" } },
-          { email: { contains: q, mode: "insensitive" } },
-          { taxCode: { contains: q, mode: "insensitive" } },
-          { companyName: { contains: q, mode: "insensitive" } }
+          ...(q.length >= 2 ? [{ fullName: { contains: q, mode: "insensitive" } }] : []),
+          ...(isNumeric ? [{ phone: { startsWith: q } }, { taxCode: { startsWith: q } }] : []),
+          ...(isEmailLike ? [{ email: { startsWith: q, mode: "insensitive" } }] : []),
+          ...(q.length >= 2 ? [{ companyName: { contains: q, mode: "insensitive" } }] : [])
         ]
       });
     }

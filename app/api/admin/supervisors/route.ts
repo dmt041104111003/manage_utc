@@ -52,11 +52,13 @@ export async function GET(request: Request) {
     if (faculty && faculty !== "all") andParts.push({ faculty });
     if (degree && degree !== "all") andParts.push({ degree });
     if (q) {
+      const isNumeric = /^\d+$/.test(q);
+      const isEmailLike = q.includes("@") || q.includes(".");
       andParts.push({
         OR: [
-          { user: { fullName: { contains: q, mode: "insensitive" } } },
-          { user: { phone: { contains: q, mode: "insensitive" } } },
-          { user: { email: { contains: q, mode: "insensitive" } } }
+          ...(q.length >= 2 ? [{ user: { fullName: { contains: q, mode: "insensitive" } } }] : []),
+          ...(isNumeric ? [{ user: { phone: { startsWith: q } } }] : []),
+          ...(isEmailLike ? [{ user: { email: { startsWith: q, mode: "insensitive" } } }] : [])
         ]
       });
     }

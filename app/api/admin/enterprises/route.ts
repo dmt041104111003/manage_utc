@@ -18,10 +18,11 @@ export async function GET(request: Request) {
     const andParts: Prisma.UserWhereInput[] = [];
 
     if (q) {
+      const isNumeric = /^\d+$/.test(q);
       andParts.push({
         OR: [
-          { companyName: { contains: q, mode: "insensitive" } },
-          { taxCode: { contains: q, mode: "insensitive" } }
+          ...(q.length >= 2 ? [{ companyName: { contains: q, mode: "insensitive" } }] : []),
+          ...(isNumeric ? [{ taxCode: { startsWith: q } }] : [])
         ]
       });
     }
