@@ -28,10 +28,10 @@ export async function GET(request: Request) {
       const isEmailLike = q.includes("@") || q.includes(".");
       andParts.push({
         OR: [
-          ...(q.length >= 2 ? [{ fullName: { contains: q, mode: "insensitive" } }] : []),
+          ...(q.length >= 2 ? [{ fullName: { contains: q, mode: Prisma.QueryMode.insensitive } }] : []),
           ...(isNumeric ? [{ phone: { startsWith: q } }, { taxCode: { startsWith: q } }] : []),
-          ...(isEmailLike ? [{ email: { startsWith: q, mode: "insensitive" } }] : []),
-          ...(q.length >= 2 ? [{ companyName: { contains: q, mode: "insensitive" } }] : [])
+          ...(isEmailLike ? [{ email: { startsWith: q, mode: Prisma.QueryMode.insensitive } }] : []),
+          ...(q.length >= 2 ? [{ companyName: { contains: q, mode: Prisma.QueryMode.insensitive } }] : [])
         ]
       });
     }
