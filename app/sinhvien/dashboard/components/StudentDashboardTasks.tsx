@@ -4,6 +4,7 @@ import {
   SINHVIEN_DASHBOARD_TASKS_LOADING
 } from "@/lib/constants/sinhvien-dashboard";
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   loading: boolean;
@@ -11,11 +12,16 @@ type Props = {
 };
 
 export default function StudentDashboardTasks({ loading, data }: Props) {
-  const tasks = loading
-    ? [SINHVIEN_DASHBOARD_TASKS_LOADING]
-    : data?.tasks?.length
-      ? data.tasks
-      : [SINHVIEN_DASHBOARD_TASKS_EMPTY];
+  if (loading) {
+    return (
+      <section className={styles.card}>
+        <h2 className={styles.panelTitle}>Nhắc việc</h2>
+        <ChartStyleLoading variant="block" message={SINHVIEN_DASHBOARD_TASKS_LOADING} />
+      </section>
+    );
+  }
+
+  const tasks = data?.tasks?.length ? data.tasks : [SINHVIEN_DASHBOARD_TASKS_EMPTY];
 
   return (
     <section className={styles.card}>

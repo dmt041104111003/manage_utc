@@ -4,6 +4,7 @@ import type { JobDetailResponse, JobListItem } from "@/lib/types/admin-quan-ly-t
 import { statusLabel, workTypeLabel } from "@/lib/constants/admin-quan-ly-tin-tuyen-dung";
 import { formatDateVi } from "@/lib/utils/admin-quan-ly-tin-tuyen-dung";
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   viewTarget: JobListItem | null;
@@ -20,7 +21,7 @@ export default function AdminTinTuyenDungViewPopup(props: Props) {
     <div className={styles.modalBackdrop} role="dialog" aria-modal="true" aria-labelledby="job-view-title">
       <div className={`${styles.modal} ${styles.modalExtraWide}`}>
         <h2 id="job-view-title">Xem chi tiết tin tuyển dụng</h2>
-        {viewLoading ? <p>Đang tải…</p> : null}
+        {viewLoading ? <ChartStyleLoading variant="compact" /> : null}
         {viewDetail ? (
           <div>
             <table className={styles.viewModalDetailTable}>

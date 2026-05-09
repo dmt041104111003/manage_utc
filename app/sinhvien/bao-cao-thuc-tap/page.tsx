@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
 import type {
   InternshipStatus,
@@ -224,7 +225,7 @@ export default function SinhvienBaoCaoThucTapPage() {
       {error ? <p className={adminStyles.error}>{error}</p> : null}
 
       {loading && !bootstrapped ? (
-        <p className={styles.modulePlaceholder}>Đang tải…</p>
+        <ChartStyleLoading variant="block" />
       ) : (
         <>
           <BaoCaoThucTapStatusSection

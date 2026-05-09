@@ -7,7 +7,6 @@ import cardStyles from "./styles.module.css";
 import type { SinhVienTraCuuUngTuyenItem, WorkTypeFilter } from "@/lib/types/sinhvien-tra-cuu-ung-tuyen";
 import {
   SINHVIEN_TRA_CUU_UNG_TUYEN_EMPTY_TEXT,
-  SINHVIEN_TRA_CUU_UNG_TUYEN_LOADING_TEXT,
   SINHVIEN_TRA_CUU_UNG_TUYEN_LOAD_ERROR_DEFAULT,
   SINHVIEN_TRA_CUU_UNG_TUYEN_SUBTITLE,
   SINHVIEN_TRA_CUU_UNG_TUYEN_TITLE,
@@ -18,6 +17,7 @@ import { fetchSinhVienTraCuuUngTuyenDetail } from "@/lib/utils/sinhvien-tra-cuu-
 import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import TraCuuUngTuyenToolbar from "./components/TraCuuUngTuyenToolbar";
 import TraCuuUngTuyenJobGrid from "./components/TraCuuUngTuyenJobGrid";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 export default function SinhVienTraCuuUngTuyenPage() {
   const [loading, setLoading] = useState(true);
@@ -103,7 +103,7 @@ export default function SinhVienTraCuuUngTuyenPage() {
       <p className={cardStyles.statusNote}>{statusNote}</p>
 
       {loading && items.length === 0 ? (
-        <p className={styles.modulePlaceholder}>{SINHVIEN_TRA_CUU_UNG_TUYEN_LOADING_TEXT}</p>
+        <ChartStyleLoading variant="block" />
       ) : items.length === 0 ? (
         <p className={styles.modulePlaceholder}>{SINHVIEN_TRA_CUU_UNG_TUYEN_EMPTY_TEXT}</p>
       ) : (

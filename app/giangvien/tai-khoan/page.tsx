@@ -18,6 +18,7 @@ import {
 } from "@/lib/utils/giangvien-tai-khoan";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import GiangVienProfileInfo from "./components/GiangVienProfileInfo";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import GiangVienAccountEditSection from "./components/GiangVienAccountEditSection";
 
 const GV_TAI_KHOAN_CACHE_KEY = "gv:tai-khoan:me";
@@ -165,7 +166,13 @@ export default function GiangVienTaiKhoanPage() {
     setIsEditing(false);
   };
 
-  if (loading && !me) return <main className={styles.page}><p className={styles.modulePlaceholder}>Đang tải…</p></main>;
+  if (loading && !me) {
+    return (
+      <main className={styles.page}>
+        <ChartStyleLoading variant="block" />
+      </main>
+    );
+  }
   if (!me) return <main className={styles.page} />;
 
   return (

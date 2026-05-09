@@ -10,6 +10,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "email:dev": "email dev --dir ./emails",
     "postinstall": "prisma generate",
     "db:push": "dotenv -e .env.local -- prisma db push",
     "db:seed": "dotenv -e .env.local -- prisma db seed",
@@ -17,6 +18,8 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.6",
     "@vercel/blob": "^1.1.1",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.7.0",
@@ -36,6 +39,7 @@
     "@types/react-dom": "19.1.2",
     "dotenv-cli": "^11.0.0",
     "prisma": "^6.19.0",
+    "react-email": "^5.2.10",
     "tsx": "^4.19.2",
     "typescript": "5.8.3"
   },

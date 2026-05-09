@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import styles from "../../styles/dashboard.module.css";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../../components/MessagePopup";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import type { SinhVienApplyDraft, SinhVienTraCuuUngTuyenJobDetail } from "@/lib/types/sinhvien-tra-cuu-ung-tuyen-detail";
 import {
   SINHVIEN_TRA_CUU_UNG_TUYEN_BACK_LINK_TEXT,
@@ -164,7 +165,7 @@ export default function SinhVienJobDetailPage({ params }: { params: Promise<{ id
       {error ? <p className={adminStyles.error}>{error}</p> : null}
 
       {loading && !job ? (
-        <p className={styles.modulePlaceholder}>Đang tải…</p>
+        <ChartStyleLoading variant="block" />
       ) : job ? (
         <JobDetailInfo job={job} onOpenApply={() => void openApply()} />
       ) : null}

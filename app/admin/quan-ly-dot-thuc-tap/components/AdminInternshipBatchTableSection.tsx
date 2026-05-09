@@ -12,6 +12,7 @@ import Pagination from "../../../components/Pagination";
 import TableIconButton from "../../../components/TableIconButton";
 import { FiEdit2, FiEye, FiRefreshCw, FiTrash2 } from "react-icons/fi";
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   loading: boolean;
@@ -30,7 +31,7 @@ export default function AdminInternshipBatchTableSection(props: Props) {
   const { loading, items, page, busyId, canClose, onPageChange, onView, onEdit, onDelete, onOpenStatus } = props;
 
   if (loading && items.length === 0) {
-    return <p className={styles.modulePlaceholder}>Đang tải…</p>;
+    return <ChartStyleLoading variant="compact" />;
   }
 
   const pagedItems = items.slice((page - 1) * ADMIN_QUAN_LY_DOT_THUC_TAP_PAGE_SIZE, (page - 1) * ADMIN_QUAN_LY_DOT_THUC_TAP_PAGE_SIZE + ADMIN_QUAN_LY_DOT_THUC_TAP_PAGE_SIZE);

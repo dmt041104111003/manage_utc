@@ -5,6 +5,7 @@ import { EnterpriseViewDetailTable } from "../../components/EnterpriseViewDetail
 import MessagePopup from "../../../components/MessagePopup";
 
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   viewLoading: boolean;
@@ -19,7 +20,7 @@ export default function AdminEnterpriseViewPopup(props: Props) {
 
   return (
     <MessagePopup open title="Xem thông tin doanh nghiệp" size="extraWide">
-      {viewLoading ? <p>Đang tải…</p> : null}
+      {viewLoading ? <ChartStyleLoading variant="compact" /> : null}
       {!viewLoading && viewDetail ? <EnterpriseViewDetailTable item={viewDetail} /> : null}
       <div className={styles.modalActions}>
         <button type="button" className={styles.btn} onClick={onClose}>

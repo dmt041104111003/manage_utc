@@ -4,6 +4,7 @@ import {
   GIANGVIEN_DASHBOARD_TASKS_LOADING
 } from "@/lib/constants/giangvien-dashboard";
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   loading: boolean;
@@ -11,11 +12,16 @@ type Props = {
 };
 
 export default function LecturerDashboardTasks({ loading, data }: Props) {
-  const tasks = loading
-    ? [GIANGVIEN_DASHBOARD_TASKS_LOADING]
-    : data?.tasks?.length
-      ? data.tasks
-      : [GIANGVIEN_DASHBOARD_TASKS_EMPTY];
+  if (loading) {
+    return (
+      <section className={styles.card}>
+        <h2 className={styles.panelTitle}>Việc cần làm</h2>
+        <ChartStyleLoading variant="block" message={GIANGVIEN_DASHBOARD_TASKS_LOADING} />
+      </section>
+    );
+  }
+
+  const tasks = data?.tasks?.length ? data.tasks : [GIANGVIEN_DASHBOARD_TASKS_EMPTY];
 
   return (
     <section className={styles.card}>

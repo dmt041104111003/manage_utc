@@ -8,6 +8,7 @@ import { EnterpriseStatusCell } from "../../components/EnterpriseStatusCell";
 import MessagePopup from "../../../components/MessagePopup";
 
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   statusTarget: AdminEnterpriseListItem | null;
@@ -65,7 +66,11 @@ export default function AdminEnterpriseStatusPopup(props: Props) {
             <strong>Email:</strong> {statusTarget.email}
             <br />
             <strong>Địa chỉ:</strong>{" "}
-            {statusDetail ? buildEnterpriseHeadquartersAddress(statusDetail.enterpriseMeta) : "Đang tải…"}
+            {statusDetail ? (
+              buildEnterpriseHeadquartersAddress(statusDetail.enterpriseMeta)
+            ) : (
+              <ChartStyleLoading variant="inline" />
+            )}
           </p>
 
           <div className={styles.modalActions}>

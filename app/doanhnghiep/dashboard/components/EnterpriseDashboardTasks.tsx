@@ -4,6 +4,7 @@ import {
   ENTERPRISE_DASHBOARD_TASKS_LOADING
 } from "@/lib/constants/doanhnghiep-dashboard";
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   loading: boolean;
@@ -11,11 +12,16 @@ type Props = {
 };
 
 export default function EnterpriseDashboardTasks({ loading, data }: Props) {
-  const tasks = loading
-    ? [ENTERPRISE_DASHBOARD_TASKS_LOADING]
-    : data?.tasks?.length
-      ? data.tasks
-      : [ENTERPRISE_DASHBOARD_TASKS_EMPTY];
+  if (loading) {
+    return (
+      <section className={styles.card}>
+        <h2 className={styles.panelTitle}>Nhiệm vụ hôm nay</h2>
+        <ChartStyleLoading variant="block" message={ENTERPRISE_DASHBOARD_TASKS_LOADING} />
+      </section>
+    );
+  }
+
+  const tasks = data?.tasks?.length ? data.tasks : [ENTERPRISE_DASHBOARD_TASKS_EMPTY];
 
   return (
     <section className={styles.card}>

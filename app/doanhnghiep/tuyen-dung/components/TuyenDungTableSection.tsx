@@ -6,6 +6,7 @@ import { DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE, DOANHNGHIEP_TUYEN_DUNG_STATUS_LABEL, 
 import { canEditStatus, canStopStatus, formatDateVi } from "@/lib/utils/doanhnghiep-tuyen-dung";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 const PAGE_SIZE = DOANHNGHIEP_TUYEN_DUNG_PAGE_SIZE;
 
@@ -35,7 +36,7 @@ export default function TuyenDungTableSection({
   onPageChange
 }: Props) {
   if (loading && items.length === 0) {
-    return <p className={styles.modulePlaceholder}>Đang tải…</p>;
+    return <ChartStyleLoading variant="compact" />;
   }
 
   return (

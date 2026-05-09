@@ -19,6 +19,7 @@ import {
   validateSinhVienHoSoDraft
 } from "@/lib/utils/sinhvien-ho-so";
 import SinhVienProfileEditSection from "./components/SinhVienProfileEditSection";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 export default function SinhVienHoSoPage() {
   const [toast, setToast] = useState("");
@@ -191,7 +192,7 @@ export default function SinhVienHoSoPage() {
         <h1 className={styles.title}>Hồ sơ cá nhân</h1>
       </header>
 
-      {profileLoading ? <p className={styles.modulePlaceholder}>Đang tải…</p> : null}
+      {profileLoading ? <ChartStyleLoading variant="block" /> : null}
       {profileError ? <p className={adminStyles.error}>{profileError}</p> : null}
 
       {!profileLoading && profile ? (

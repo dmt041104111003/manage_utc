@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { AuthShell } from "../../components/AuthShell";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import styles from "../../styles/forgot-password.module.css";
 
 function EyeIcon({ hidden }: { hidden: boolean }) {
@@ -45,7 +46,9 @@ export function ResetPasswordFallback() {
   return (
     <AuthShell>
       <h2 className={styles.title}>Đặt lại mật khẩu</h2>
-      <p className={styles.desc}>Đang tải…</p>
+      <div className={styles.desc}>
+        <ChartStyleLoading variant="compact" />
+      </div>
     </AuthShell>
   );
 }

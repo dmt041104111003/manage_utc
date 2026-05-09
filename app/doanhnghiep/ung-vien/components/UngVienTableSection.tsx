@@ -9,6 +9,7 @@ import {
 import { formatDateVi } from "@/lib/utils/doanhnghiep-ung-vien";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 const PAGE_SIZE = DOANHNGHIEP_UNG_VIEN_PAGE_SIZE;
 
@@ -23,7 +24,7 @@ type Props = {
 export default function UngVienTableSection({ loading, items, totalItems, page, onPageChange }: Props) {
 
   if (loading && items.length === 0) {
-    return <p className={styles.modulePlaceholder}>Đang tải…</p>;
+    return <ChartStyleLoading variant="compact" />;
   }
 
   return (

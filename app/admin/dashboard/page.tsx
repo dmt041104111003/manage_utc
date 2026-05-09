@@ -12,6 +12,7 @@ import {
   ProgressColumnChart,
   TopFacultiesCard
 } from "../components/AdminDashboardCharts";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 function adminDashboardCacheKey(faculty: string, batchId: string) {
   const qs = new URLSearchParams();
@@ -119,53 +120,65 @@ export default function AdminDashboardPage() {
       </section>
 
       {error ? <div className={styles.statusNote}>Lỗi: {error}</div> : null}
-      {loading && !payload ? <div className={styles.modulePlaceholder}>Đang tải dữ liệu...</div> : null}
+      {loading && !payload ? (
+        <ChartStyleLoading variant="block" message="Đang tải dữ liệu…" />
+      ) : null}
 
       {payload ? (
         <section className={styles.overviewGrid}>
           {/* Row 1: Two donuts */}
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Trạng thái hồ sơ ứng tuyển</h2>
-            <div className={styles.chartPadding}>
-              <DonutChart segments={applicationStatusDonut.segments} />
-              <div className={styles.muted} style={{ marginTop: 8, fontSize: 13 }}>
-                Tổng: {applicationStatusDonut.total} hồ sơ
+          <div className={styles.chartCardShell}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Trạng thái hồ sơ ứng tuyển</h2>
+              <div className={styles.chartPadding}>
+                <DonutChart segments={applicationStatusDonut.segments} />
+                <div className={styles.muted} style={{ marginTop: 8, fontSize: 13 }}>
+                  Tổng: {applicationStatusDonut.total} hồ sơ
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
+          </div>
 
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Trạng thái tin tuyển dụng</h2>
-            <div className={styles.chartPadding}>
-              <DonutChart segments={jobStatusDonut.segments} />
-              <div className={styles.muted} style={{ marginTop: 8, fontSize: 13 }}>
-                Tổng: {jobStatusDonut.total} tin
+          <div className={styles.chartCardShell}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Trạng thái tin tuyển dụng</h2>
+              <div className={styles.chartPadding}>
+                <DonutChart segments={jobStatusDonut.segments} />
+                <div className={styles.muted} style={{ marginTop: 8, fontSize: 13 }}>
+                  Tổng: {jobStatusDonut.total} tin
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
+          </div>
 
           {/* Row 2: Two bars */}
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Số lượng doanh nghiệp liên kết theo ngành/khoa</h2>
-            <div className={styles.chartPadding}>
-              <BarChart labels={enterprisesByField.labels} values={enterprisesByField.values} />
-            </div>
-          </article>
+          <div className={styles.chartCardShell}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Số lượng doanh nghiệp liên kết theo ngành/khoa</h2>
+              <div className={styles.chartPadding}>
+                <BarChart labels={enterprisesByField.labels} values={enterprisesByField.values} />
+              </div>
+            </article>
+          </div>
 
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Tiến độ thực tập: số lượng sinh viên theo trạng thái</h2>
-            <div className={styles.chartPadding}>
-              <ProgressColumnChart labels={progress.labels} values={progress.values} />
-            </div>
-          </article>
+          <div className={styles.chartCardShell}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Tiến độ thực tập: số lượng sinh viên theo trạng thái</h2>
+              <div className={styles.chartPadding}>
+                <ProgressColumnChart labels={progress.labels} values={progress.values} />
+              </div>
+            </article>
+          </div>
 
           {/* Row 3: Line chart full width */}
-          <article className={styles.card} style={{ gridColumn: "1 / -1" }}>
-            <h2 className={styles.panelTitle}>Thống kê tổng số bài đăng tuyển dụng theo doanh nghiệp</h2>
-            <div className={styles.chartPadding}>
-              <LineChart labels={lineJobPosts.labels} series={lineJobPosts.series} />
-            </div>
-          </article>
+          <div className={`${styles.chartCardShell} ${styles.chartCardShellWide}`} style={{ gridColumn: "1 / -1" }}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Thống kê tổng số bài đăng tuyển dụng theo doanh nghiệp</h2>
+              <div className={styles.chartPadding}>
+                <LineChart labels={lineJobPosts.labels} series={lineJobPosts.series} />
+              </div>
+            </article>
+          </div>
 
           {/* Row 4: Top/Bottom tables */}
           <div className={styles.topFieldsGrid}>

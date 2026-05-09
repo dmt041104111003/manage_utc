@@ -22,6 +22,7 @@ import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache
 import MessagePopup from "../../components/MessagePopup";
 import Pagination from "../../components/Pagination";
 import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import styles from "../styles/dashboard.module.css";
 import { FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi";
 import AdminEnterpriseToolbar from "./components/AdminEnterpriseToolbar";
@@ -318,7 +319,7 @@ export default function AdminQuanLyDoanhNghiepPage() {
         onSearch={applySearch}
       />
 
-      {loading && items.length === 0 ? <p className={styles.modulePlaceholder}>Đang tải…</p> : null}
+      {loading && items.length === 0 ? <ChartStyleLoading variant="block" /> : null}
       {error ? <p className={styles.error}>{error}</p> : null}
 
       {!loading && !error ? (

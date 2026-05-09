@@ -10,6 +10,7 @@ import Pagination from "../../../components/Pagination";
 import TableIconButton from "../../../components/TableIconButton";
 import { FiEdit2, FiEye, FiTrash2 } from "react-icons/fi";
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   loading: boolean;
@@ -26,7 +27,7 @@ type Props = {
 export default function AdminSinhVienTableSection(props: Props) {
   const { loading, items, totalItems, page, busyId, onPageChange, onView, onEdit, onDelete } = props;
 
-  if (loading && items.length === 0) return <p className={styles.modulePlaceholder}>Đang tải…</p>;
+  if (loading && items.length === 0) return <ChartStyleLoading variant="compact" />;
 
   return (
     <>

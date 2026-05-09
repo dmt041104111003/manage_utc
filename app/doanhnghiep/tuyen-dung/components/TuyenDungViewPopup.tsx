@@ -2,6 +2,7 @@ import type { JobDetailResponse, JobStatus, WorkType } from "@/lib/types/doanhng
 import { DOANHNGHIEP_TUYEN_DUNG_STATUS_LABEL, DOANHNGHIEP_TUYEN_DUNG_WORK_TYPE_LABEL } from "@/lib/constants/doanhnghiep-tuyen-dung";
 import { formatDateVi } from "@/lib/utils/doanhnghiep-tuyen-dung";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   viewJob: JobDetailResponse | null;
@@ -16,7 +17,7 @@ export default function TuyenDungViewPopup({ viewJob, viewLoading, onClose }: Pr
     <div className={adminStyles.modalBackdrop} role="dialog" aria-modal="true" aria-labelledby="job-view-title">
       <div className={`${adminStyles.modal} ${adminStyles.modalExtraWide}`}>
         <h2 id="job-view-title">Xem chi tiết tin tuyển dụng</h2>
-        {viewLoading ? <p>Đang tải…</p> : null}
+        {viewLoading ? <ChartStyleLoading variant="compact" /> : null}
         {viewJob ? (
           <div>
             <div className={adminStyles.detailCard}>

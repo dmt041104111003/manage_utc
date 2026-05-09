@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import Pagination from "../../components/Pagination";
 
 import type {
@@ -285,7 +286,7 @@ export default function AdminPhanCongGVHDPage() {
       />
 
       {loading && items.length === 0 ? (
-        <p className={styles.modulePlaceholder}>Đang tải…</p>
+        <ChartStyleLoading variant="block" />
       ) : (
         <AdminPhanCongGVHDTable
           paged={paged}

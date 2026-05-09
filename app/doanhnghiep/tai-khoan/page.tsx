@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
 import type { ApiResponse, EnterpriseAccountFormState } from "@/lib/types/doanhnghiep-tai-khoan";
 import {
@@ -136,7 +137,7 @@ export default function EnterpriseAccountPage() {
   if (loading && !me) {
     return (
       <main className={styles.page}>
-        <p className={styles.modulePlaceholder}>Đang tải…</p>
+        <ChartStyleLoading variant="block" />
       </main>
     );
   }

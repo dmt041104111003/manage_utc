@@ -7,6 +7,7 @@ import adminStyles from "../../admin/styles/dashboard.module.css";
 import type { StudentAccount } from "@/lib/types/sinhvien-ho-so";
 import { SINHVIEN_HO_SO_LOAD_ACCOUNT_ERROR_DEFAULT, SINHVIEN_HO_SO_TAI_KHOAN_ENDPOINT } from "@/lib/constants/sinhvien-ho-so";
 import SinhVienAccountInfo from "../ho-so/components/SinhVienAccountInfo";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 const SV_TAI_KHOAN_CACHE_KEY = "sinhvien:tai-khoan:me";
 
@@ -49,7 +50,7 @@ export default function SinhVienTaiKhoanCaNhanPage() {
       </header>
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
-      {loading && !student ? <p className={styles.modulePlaceholder}>Đang tải…</p> : null}
+      {loading && !student ? <ChartStyleLoading variant="block" /> : null}
 
       {student ? (
         <section className={styles.card} style={{ padding: "18px 22px" }}>

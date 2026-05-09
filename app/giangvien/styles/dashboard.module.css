@@ -265,26 +265,90 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 36px -10px rgba(15, 23, 42, 0.1);
 }
 
-.overviewGrid .card:has([data-echart-host]) {
+.chartCardShell {
   position: relative;
-  z-index: 0;
-  transform-origin: 50% 50%;
-  transition:
-    transform 0.4s cubic-bezier(0.22, 1, 0.32, 1),
-    box-shadow 0.4s ease;
-  will-change: transform;
+  min-height: 380px;
+  align-self: stretch;
 }
 
-.overviewGrid .card:has([data-echart-host]):hover {
-  z-index: 6;
-  transform: scale(1.055);
-  box-shadow: 0 22px 56px rgba(15, 23, 42, 0.16);
+.chartCardShellWide {
+  min-height: 460px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .overviewGrid .card:has([data-echart-host]),
-  .overviewGrid .card:has([data-echart-host]):hover {
-    transform: none;
+@media (hover: hover) and (pointer: fine) {
+  .chartCardShell {
+    z-index: 0;
+    isolation: isolate;
+  }
+
+  .chartCardShell::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 4500;
+    background: rgba(15, 23, 42, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .chartCardShell:hover {
+    z-index: 4600;
+  }
+
+  .chartCardShell:hover::before {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .chartCardShell:hover > .card {
+    position: fixed;
+    z-index: 4601;
+    left: max(12px, env(safe-area-inset-left, 0px));
+    top: max(12px, env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-width: none;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+  }
+
+  .chartCardShell:hover > .card > .panelTitle {
+    flex-shrink: 0;
+  }
+
+  .chartCardShell:hover > .card > .chartPadding {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .chartCardShell:hover > .card > .chartPadding > [data-echart-host] {
+    flex: 1 !important;
+    min-height: 200px !important;
+    height: 100% !important;
+  }
+
+  .chartCardShell:hover > .card > [data-echart-host] {
+    flex: 1 !important;
+    min-height: 200px !important;
+    height: 100% !important;
+  }
+
+  .chartCardShell:hover > .card > .muted {
+    flex-shrink: 0;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: reduce) {
+  .chartCardShell::before {
     transition: none;
   }
 }

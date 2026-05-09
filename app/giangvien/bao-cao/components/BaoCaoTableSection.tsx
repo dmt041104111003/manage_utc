@@ -4,6 +4,7 @@ import TableIconButton from "../../../components/TableIconButton";
 import { FiBriefcase, FiEye, FiFileText } from "react-icons/fi";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   loading: boolean;
@@ -16,7 +17,7 @@ type Props = {
 
 export default function BaoCaoTableSection({ loading, rows, busy, onView, onUpdate, onReview }: Props) {
   if (loading && rows.length === 0) {
-    return <p className={styles.modulePlaceholder}>Đang tải…</p>;
+    return <ChartStyleLoading variant="compact" />;
   }
 
   return (

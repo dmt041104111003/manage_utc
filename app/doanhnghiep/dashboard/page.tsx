@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import { ReactEchart } from "@/app/components/charts/ReactEchart";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import {
   buildGroupedBarChartOption,
   buildLineMultiSeriesOption,
@@ -155,53 +156,69 @@ export default function EnterpriseDashboardPage() {
       </section>
 
       {error ? <div className={styles.modulePlaceholder}>Lỗi: {error}</div> : null}
-      {loading && !payload ? <div className={styles.modulePlaceholder}>Đang tải dữ liệu...</div> : null}
+      {loading && !payload ? (
+        <ChartStyleLoading variant="block" message="Đang tải dữ liệu…" />
+      ) : null}
 
       {payload ? (
         <section className={styles.overviewGrid}>
           {/* Double bar: SV accepted vs declined by expertise */}
-          <article className={styles.card} style={{ gridColumn: "1 / -1" }}>
-            <h2 className={styles.panelTitle}>
-              Số SV chấp nhận &amp; từ chối thực tập theo ngành/khoa
-            </h2>
-            {doubleBar.labels.length === 0 ? (
-              <div className={styles.muted}>Chưa có dữ liệu.</div>
-            ) : (
-              <ReactEchart option={doubleBarOption} height={256} clickReloadPulse />
-            )}
-          </article>
+          <div
+            className={`${styles.chartCardShell} ${styles.chartCardShellWide}`}
+            style={{ gridColumn: "1 / -1" }}
+          >
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>
+                Số SV chấp nhận &amp; từ chối thực tập theo ngành/khoa
+              </h2>
+              {doubleBar.labels.length === 0 ? (
+                <div className={styles.muted}>Chưa có dữ liệu.</div>
+              ) : (
+                <ReactEchart option={doubleBarOption} height={256} clickReloadPulse />
+              )}
+            </article>
+          </div>
 
           {/* Line chart: applications per expertise per month */}
-          <article className={styles.card} style={{ gridColumn: "1 / -1" }}>
-            <h2 className={styles.panelTitle}>
-              Số lượng SV ứng tuyển theo ngành/khoa (theo tháng)
-            </h2>
-            {lineChart.series.length === 0 ? (
-              <div className={styles.muted}>Chưa có dữ liệu.</div>
-            ) : (
-              <ReactEchart option={lineOption} height={292} clickReloadPulse />
-            )}
-          </article>
+          <div
+            className={`${styles.chartCardShell} ${styles.chartCardShellWide}`}
+            style={{ gridColumn: "1 / -1" }}
+          >
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>
+                Số lượng SV ứng tuyển theo ngành/khoa (theo tháng)
+              </h2>
+              {lineChart.series.length === 0 ? (
+                <div className={styles.muted}>Chưa có dữ liệu.</div>
+              ) : (
+                <ReactEchart option={lineOption} height={292} clickReloadPulse />
+              )}
+            </article>
+          </div>
 
           {/* Application status bar */}
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Số lượng hồ sơ theo trạng thái</h2>
-            {applicationStatus.values.every((v) => v === 0) ? (
-              <div className={styles.muted}>Chưa có dữ liệu.</div>
-            ) : (
-              <ReactEchart option={appStatusOption} height={248} clickReloadPulse />
-            )}
-          </article>
+          <div className={styles.chartCardShell}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Số lượng hồ sơ theo trạng thái</h2>
+              {applicationStatus.values.every((v) => v === 0) ? (
+                <div className={styles.muted}>Chưa có dữ liệu.</div>
+              ) : (
+                <ReactEchart option={appStatusOption} height={248} clickReloadPulse />
+              )}
+            </article>
+          </div>
 
           {/* Job post status bar */}
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Số lượng tin tuyển dụng theo trạng thái</h2>
-            {jobStatus.values.every((v) => v === 0) ? (
-              <div className={styles.muted}>Chưa có dữ liệu.</div>
-            ) : (
-              <ReactEchart option={jobStatusOption} height={248} clickReloadPulse />
-            )}
-          </article>
+          <div className={styles.chartCardShell}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Số lượng tin tuyển dụng theo trạng thái</h2>
+              {jobStatus.values.every((v) => v === 0) ? (
+                <div className={styles.muted}>Chưa có dữ liệu.</div>
+              ) : (
+                <ReactEchart option={jobStatusOption} height={248} clickReloadPulse />
+              )}
+            </article>
+          </div>
         </section>
       ) : null}
     </main>

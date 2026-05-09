@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import styles from "../../styles/dashboard.module.css";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../../components/MessagePopup";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import type { Applicant, JobApplicationStatus, JobDetail } from "@/lib/types/doanhnghiep-ung-vien-detail";
 import { getAvailableNextStatuses } from "@/lib/types/doanhnghiep-ung-vien-detail";
 import JobDetailInfo from "./components/JobDetailInfo";
@@ -147,7 +148,7 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
       {error ? <p className={adminStyles.error}>{error}</p> : null}
 
       {loading && !job ? (
-        <p className={styles.modulePlaceholder}>Đang tải…</p>
+        <ChartStyleLoading variant="block" />
       ) : job ? (
         <>
           <JobDetailInfo job={job} />

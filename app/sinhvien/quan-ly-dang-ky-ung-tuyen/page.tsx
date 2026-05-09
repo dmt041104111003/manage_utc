@@ -24,6 +24,7 @@ import {
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import QuanLyUngTuyenToolbar from "./components/QuanLyUngTuyenToolbar";
 import QuanLyUngTuyenTableSection from "./components/QuanLyUngTuyenTableSection";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type StatCard = {
   label: string;
@@ -182,7 +183,7 @@ export default function SinhVienQuanLyUngTuyenPage() {
       />
 
       {loading && allRows.length === 0 ? (
-        <p className={styles.modulePlaceholder}>Đang tải…</p>
+        <ChartStyleLoading variant="block" />
       ) : (
         <QuanLyUngTuyenTableSection
           rows={displayRows}

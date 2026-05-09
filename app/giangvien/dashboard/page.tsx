@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import { ReactEchart } from "@/app/components/charts/ReactEchart";
 import { buildPerBarColorChartOption } from "@/lib/utils/echarts-dashboard-options";
@@ -127,23 +128,29 @@ export default function LecturerDashboardPage() {
       </section>
 
       {error ? <div className={styles.modulePlaceholder}>Lỗi: {error}</div> : null}
-      {loading && !payload ? <div className={styles.modulePlaceholder}>Đang tải dữ liệu...</div> : null}
+      {loading && !payload ? (
+        <ChartStyleLoading variant="block" message="Đang tải dữ liệu…" />
+      ) : null}
 
       {payload ? (
         <section className={styles.overviewGrid}>
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái hướng dẫn</h2>
-            <StatusBarChart labels={guidanceStatus.labels} values={guidanceStatus.values} colors={GUIDANCE_COLORS} />
-          </article>
+          <div className={styles.chartCardShell}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái hướng dẫn</h2>
+              <StatusBarChart labels={guidanceStatus.labels} values={guidanceStatus.values} colors={GUIDANCE_COLORS} />
+            </article>
+          </div>
 
-          <article className={styles.card}>
-            <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái thực tập</h2>
-            <StatusBarChart
-              labels={internshipStatus.labels}
-              values={internshipStatus.values}
-              colors={INTERNSHIP_COLORS}
-            />
-          </article>
+          <div className={styles.chartCardShell}>
+            <article className={styles.card}>
+              <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái thực tập</h2>
+              <StatusBarChart
+                labels={internshipStatus.labels}
+                values={internshipStatus.values}
+                colors={INTERNSHIP_COLORS}
+              />
+            </article>
+          </div>
         </section>
       ) : null}
     </main>

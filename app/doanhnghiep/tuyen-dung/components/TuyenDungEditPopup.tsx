@@ -1,6 +1,7 @@
 import type { JobDetailResponse, JobFormState, JobListItem } from "@/lib/types/doanhnghiep-tuyen-dung";
 import TuyenDungJobFormFields from "./TuyenDungJobFormFields";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   editTarget: JobListItem | null;
@@ -33,7 +34,7 @@ export default function TuyenDungEditPopup({
     <div className={adminStyles.modalBackdrop} role="dialog" aria-modal="true" aria-labelledby="job-edit-title">
       <div className={`${adminStyles.modalWide} ${adminStyles.modal}`}>
         <h2 id="job-edit-title">Sửa tin tuyển dụng</h2>
-        {editLoading || !editDetail ? <p>Đang tải…</p> : null}
+        {editLoading || !editDetail ? <ChartStyleLoading variant="compact" /> : null}
         {editDetail ? (
           <div>
             {editDetail.job.status === "REJECTED" ? (

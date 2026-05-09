@@ -9,6 +9,7 @@ import Pagination from "../../../components/Pagination";
 import TableIconButton from "../../../components/TableIconButton";
 import { FiEdit3, FiEye } from "react-icons/fi";
 import styles from "../../styles/dashboard.module.css";
+import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
 type Props = {
   loading: boolean;
@@ -23,7 +24,7 @@ type Props = {
 export default function AdminTienDoTableSection(props: Props) {
   const { loading, items, page, busyId, onPageChange, onView, onEdit } = props;
 
-  if (loading && items.length === 0) return <p className={styles.modulePlaceholder}>Đang tải…</p>;
+  if (loading && items.length === 0) return <ChartStyleLoading variant="compact" />;
 
   const pagedItems = items.slice(
     (page - 1) * ADMIN_QUAN_LY_TIEN_DO_THUC_TAP_PAGE_SIZE,
