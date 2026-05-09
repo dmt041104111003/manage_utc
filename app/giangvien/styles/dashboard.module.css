@@ -99,9 +99,22 @@
 }
 
 .statsGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: 12px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.statsGrid > .statCard {
+  flex: 1 0 0;
+  min-width: 112px;
+  box-sizing: border-box;
 }
 
 .statCard {
@@ -166,25 +179,22 @@
 }
 
 .statsGrid4 {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: 12px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
-@media (max-width: 980px) {
-  .statsGrid4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 520px) {
-  .statsGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .statsGrid4 {
-    grid-template-columns: 1fr;
-  }
+.statsGrid4 > .statCard {
+  flex: 1 0 0;
+  min-width: 112px;
+  box-sizing: border-box;
 }
 
 /* ----- Dashboard charts ----- */
