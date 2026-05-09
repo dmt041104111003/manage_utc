@@ -197,6 +197,29 @@ function cloudinarySigningEnv(): { cloud_name: string; api_key: string; api_secr
  * Tải file raw/image từ Cloudinary (proxy API).
  * Thứ tự: URL ký (SDK) → raw delivery công khai → image delivery (fallback public_id nhầm loại).
  */
+function pushUnsignedRawDeliveryVariants(pid: string, push: (u: string | null | undefined) => void) {
+  const base = buildCloudinaryRawDeliveryUrl(pid);
+  if (!base) return;
+  // Public_id có thư mục: CDN thường cần segment `v1` (trùng hành vi SDK khi force_version).
+  if (pid.includes("/")) {
+    const parts = base.split("/raw/upload/");
+    if (parts.length === 2) {
+      push(`${parts[0]}/raw/upload/v1/${parts[1]}`);
+    }
+  }
+  push(base);
+}
+
+function isLikelyCloudinaryErrorBody(contentType: string, bytes: Buffer): boolean {
+  const ct = contentType.split(";")[0].trim();
+  if (ct === "application/json" || ct === "text/html" || ct === "text/plain") return true;
+  if (bytes.length > 0 && bytes.length < 512) {
+    const head = bytes.subarray(0, 1).toString("ascii");
+    if (head === "{" || head === "<") return true;
+  }
+  return false;
+}
+
 export async function fetchCloudinaryBytesByPublicId(publicId: string): Promise<{ bytes: Buffer; contentType: string } | null> {
   const pid = String(publicId || "").trim().replace(/^\/+/, "");
   if (!pid) return null;
@@ -219,14 +242,25 @@ export async function fetchCloudinaryBytesByPublicId(publicId: string): Promise<
       api_secret: cred.api_secret,
       secure: true
     });
+    const signedBase = {
+      secure: true,
+      sign_url: true,
+      cloud_name: cred.cloud_name,
+      api_secret: cred.api_secret
+    } as const;
     try {
-      push(cloudinary.url(pid, { resource_type: "raw", secure: true, sign_url: true }));
+      push(cloudinary.url(pid, { ...signedBase, resource_type: "raw" }));
+    } catch (e) {
+      console.warn("cloudinary.url raw signed failed", e);
+    }
+    try {
+      push(cloudinary.url(pid, { ...signedBase, resource_type: "image" }));
     } catch {
       /* ignore */
     }
   }
 
-  push(buildCloudinaryRawDeliveryUrl(pid));
+  pushUnsignedRawDeliveryVariants(pid, push);
   push(buildCloudinaryImageDeliveryUrl(pid));
 
   const headers: Record<string, string> = {
@@ -241,6 +275,7 @@ export async function fetchCloudinaryBytesByPublicId(publicId: string): Promise<
       const bytes = Buffer.from(await res.arrayBuffer());
       if (bytes.length === 0) continue;
       const contentType = String(res.headers.get("content-type") || "").trim().toLowerCase();
+      if (isLikelyCloudinaryErrorBody(contentType, bytes)) continue;
       return { bytes, contentType };
     } catch {
       continue;
