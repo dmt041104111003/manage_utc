@@ -116,7 +116,6 @@ export default function AdminQuanLyDotThucTapPage() {
     const name = form.name.trim();
     const semester = form.semester;
     const schoolYear = form.schoolYear.trim();
-    const notes = form.notes.trim();
 
     if (!name || name.length < 1 || name.length > 255) next.name = "Tên đợt thực tập từ 1–255 ký tự.";
     if (!semester) next.semester = "Học kỳ bắt buộc.";
@@ -132,8 +131,6 @@ export default function AdminQuanLyDotThucTapPage() {
       if (end.getTime() <= start.getTime()) next.endDate = "Thời gian kết thúc phải > thời gian bắt đầu.";
       if (end.getTime() <= today.getTime()) next.endDate = "Thời gian kết thúc phải > ngày hiện tại.";
     }
-
-    if (!notes) next.notes = "Ghi chú bắt buộc.";
 
     setFieldErrors(next);
     return Object.keys(next).length === 0;
@@ -152,7 +149,6 @@ export default function AdminQuanLyDotThucTapPage() {
       const end = parseDateOnly(form.endDate);
       if (end.getTime() <= start.getTime()) next.endDate = "Thời gian kết thúc phải > thời gian bắt đầu.";
     }
-    if (!form.notes.trim()) next.notes = "Ghi chú bắt buộc.";
     setFieldErrors(next);
     return Object.keys(next).length === 0;
   };

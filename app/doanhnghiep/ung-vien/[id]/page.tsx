@@ -27,6 +27,9 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
   const [totalItems, setTotalItems] = useState(() => Number(getCachedValue<{ totalItems?: number }>(page1CacheKey)?.totalItems || 0));
   const [toast, setToast] = useState("");
 
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<JobApplicationStatus | "">("");
+
   const [viewTarget, setViewTarget] = useState<Applicant | null>(null);
   const [busy, setBusy] = useState(false);
   const [nextStatus, setNextStatus] = useState<JobApplicationStatus>("PENDING_REVIEW");
@@ -38,8 +41,13 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
     const force = Boolean(opts?.force);
     const silent = Boolean(opts?.silent);
     try {
-      const url = `/api/doanhnghiep/ung-vien/${jobId}?page=${nextPage}&pageSize=${DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE}`;
-      const cacheKey = `enterprise:ung-vien:detail:${jobId}:${nextPage}`;
+      const qs = new URLSearchParams();
+      qs.set("page", String(nextPage));
+      qs.set("pageSize", String(DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE));
+      if (query.trim()) qs.set("q", query.trim());
+      if (statusFilter) qs.set("status", statusFilter);
+      const url = `/api/doanhnghiep/ung-vien/${jobId}?${qs.toString()}`;
+      const cacheKey = `enterprise:ung-vien:detail:${jobId}:${nextPage}:q=${query.trim()}:status=${statusFilter || "all"}`;
       if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       const data = await getOrFetchCached<any>(
@@ -67,6 +75,14 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
     void load(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      void load(1, { force: true });
+    }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, statusFilter, jobId]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -158,6 +174,10 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
             totalItems={totalItems}
             page={page}
             busy={busy}
+            query={query}
+            status={statusFilter}
+            onQueryChange={setQuery}
+            onStatusChange={setStatusFilter}
             onView={openApplicant}
             onPageChange={(p) => void load(p, { force: true })}
           />

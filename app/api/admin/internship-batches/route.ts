@@ -124,7 +124,6 @@ export async function POST(request: Request) {
     if (endParsed.asStart.getTime() <= startParsed.asStart.getTime()) errors.endDate = "Thời gian kết thúc phải > thời gian bắt đầu.";
     if (endParsed.asStart.getTime() <= today.getTime()) errors.endDate = "Thời gian kết thúc phải > ngày hiện tại.";
   }
-  if (!notes) errors.notes = "Ghi chú bắt buộc.";
 
   if (Object.keys(errors).length) {
     return NextResponse.json({ success: false, errors }, { status: 400 });

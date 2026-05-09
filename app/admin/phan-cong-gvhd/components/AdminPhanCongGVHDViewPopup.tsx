@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { AssignmentItem } from "@/lib/types/admin-phan-cong-gvhd";
 import { ADMIN_PHAN_CONG_GVHD_STATUS_LABEL } from "@/lib/constants/admin-phan-cong-gvhd";
 import { studentDisplay, supervisorDisplay } from "@/lib/utils/admin-phan-cong-gvhd-display";
@@ -16,15 +15,8 @@ type Props = {
 
 export default function AdminPhanCongGVHDViewPopup(props: Props) {
   const { viewTarget, onClose } = props;
-  const [showAllStudents, setShowAllStudents] = useState(false);
 
   if (!viewTarget) return null;
-  const students = Array.isArray(viewTarget.students) && viewTarget.students.length
-    ? viewTarget.students
-    : viewTarget.student?.msv
-      ? [viewTarget.student]
-      : [];
-  const visibleStudents = showAllStudents ? students : students.slice(0, 1);
 
   return (
     <MessagePopup
@@ -59,24 +51,7 @@ export default function AdminPhanCongGVHDViewPopup(props: Props) {
           <tr>
             <th scope="row">SV hướng dẫn</th>
             <td>
-              {students.length ? (
-                <div style={{ display: "grid", gap: 4 }}>
-                  {visibleStudents.map((s) => (
-                    <span key={String(s.id || `${s.msv}-${s.fullName}`)}>{studentDisplay(s as any)}</span>
-                  ))}
-                  {students.length > 1 ? (
-                    <button
-                      type="button"
-                      className={styles.textLinkBtn}
-                      onClick={() => setShowAllStudents((v) => !v)}
-                    >
-                      {showAllStudents ? "Thu gọn" : `Xem thêm (${students.length - 1})`}
-                    </button>
-                  ) : null}
-                </div>
-              ) : (
-                "—"
-              )}
+              {viewTarget.student?.msv ? studentDisplay(viewTarget.student as any) : "—"}
             </td>
           </tr>
           <tr>

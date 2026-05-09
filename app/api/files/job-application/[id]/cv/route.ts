@@ -38,7 +38,8 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
       cvPublicId: true,
       cvFileName: true,
       cvMime: true,
-      jobPost: { select: { enterpriseUserId: true } }
+      jobPost: { select: { enterpriseUserId: true } },
+      studentUser: { select: { studentProfile: { select: { cvPublicId: true, cvFileName: true, cvMime: true } } } }
     }
   });
   if (!row) return NextResponse.json({ success: false, message: "Không tìm thấy hồ sơ." }, { status: 404 });
@@ -47,7 +48,11 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
     role === "admin" || (role === "sinhvien" && row.studentUserId === sub) || (role === "doanhnghiep" && row.jobPost.enterpriseUserId === sub);
   if (!allowed) return NextResponse.json({ success: false, message: "Không có quyền truy cập." }, { status: 403 });
 
-  const publicId = String(row.cvPublicId || "").trim();
+  const fallbackCvPublicId = row.studentUser?.studentProfile?.cvPublicId ?? null;
+  const fallbackCvFileName = row.studentUser?.studentProfile?.cvFileName ?? null;
+  const fallbackCvMime = row.studentUser?.studentProfile?.cvMime ?? null;
+
+  const publicId = String(row.cvPublicId || fallbackCvPublicId || "").trim();
   if (!publicId) return NextResponse.json({ success: false, message: "Không có file CV." }, { status: 404 });
 
   const fetched = await fetchCloudinaryBytesByPublicId(publicId);
@@ -56,13 +61,13 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
   }
   const bytes = fetched.bytes;
   const upstreamType = fetched.contentType;
-  const fallbackType = String(row.cvMime || "").trim().toLowerCase();
+  const fallbackType = String(row.cvMime || fallbackCvMime || "").trim().toLowerCase();
   const mime =
     !upstreamType || upstreamType === "application/octet-stream"
       ? fallbackType || "application/pdf"
       : upstreamType;
 
-  const filename = safeFilename(row.cvFileName || "cv.pdf");
+  const filename = safeFilename(row.cvFileName || fallbackCvFileName || "cv.pdf");
   const disposition = `${download ? "attachment" : "inline"}; filename="${filename}"`;
 
   return new NextResponse(new Uint8Array(bytes), {

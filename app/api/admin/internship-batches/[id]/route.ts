@@ -88,7 +88,6 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   if (startParsed && endParsed) {
     if (endParsed.asStart.getTime() <= startParsed.asStart.getTime()) errors.endDate = "Thời gian kết thúc phải > thời gian bắt đầu.";
   }
-  if (!notes) errors.notes = "Ghi chú bắt buộc.";
 
   if (Object.keys(errors).length) {
     return NextResponse.json({ success: false, errors }, { status: 400 });

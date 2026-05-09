@@ -51,17 +51,7 @@ export default function AdminPhanCongGVHDDeletePopup(props: Props) {
             <tr>
               <th scope="row">SV hướng dẫn</th>
               <td>
-                {Array.isArray(deleteTarget.students) && deleteTarget.students.length ? (
-                  <div style={{ display: "grid", gap: 4 }}>
-                    {deleteTarget.students.map((s) => (
-                      <span key={String(s.id || `${s.msv}-${s.fullName}`)}>{studentDisplay(s as any)}</span>
-                    ))}
-                  </div>
-                ) : deleteTarget.student?.msv ? (
-                  studentDisplay(deleteTarget.student as any)
-                ) : (
-                  "—"
-                )}
+                {deleteTarget.student?.msv ? studentDisplay(deleteTarget.student as any) : "—"}
               </td>
             </tr>
             <tr>

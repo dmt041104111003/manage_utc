@@ -18,16 +18,69 @@ type Props = {
   totalItems: number;
   page: number;
   busy: boolean;
+  query: string;
+  status: JobApplicationStatus | "";
+  onQueryChange: (v: string) => void;
+  onStatusChange: (v: JobApplicationStatus | "") => void;
   onView: (a: Applicant) => void;
   onPageChange: (p: number) => void;
 };
 
-export default function ApplicantTableSection({ applicants, totalItems, page, busy, onView, onPageChange }: Props) {
+export default function ApplicantTableSection({
+  applicants,
+  totalItems,
+  page,
+  busy,
+  query,
+  status,
+  onQueryChange,
+  onStatusChange,
+  onView,
+  onPageChange
+}: Props) {
 
   return (
     <section style={{ marginTop: 16 }}>
       <div className={adminStyles.detailSectionTitle} style={{ marginBottom: 8 }}>
         Danh sách ứng viên ứng tuyển
+      </div>
+
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
+        <input
+          className={adminStyles.textInputSearch}
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Tìm theo tên / SĐT / email"
+          disabled={busy}
+          style={{ minWidth: 260, flex: "1 1 260px" }}
+        />
+        <select
+          className={adminStyles.selectInput}
+          value={status}
+          onChange={(e) => onStatusChange(e.target.value as any)}
+          disabled={busy}
+          style={{ minWidth: 200 }}
+        >
+          <option value="">Tất cả trạng thái</option>
+          <option value="PENDING_REVIEW">{applicationStatusLabel.PENDING_REVIEW}</option>
+          <option value="INTERVIEW_INVITED">{applicationStatusLabel.INTERVIEW_INVITED}</option>
+          <option value="OFFERED">{applicationStatusLabel.OFFERED}</option>
+          <option value="REJECTED">{applicationStatusLabel.REJECTED}</option>
+          <option value="STUDENT_DECLINED">{applicationStatusLabel.STUDENT_DECLINED}</option>
+        </select>
+        {(query.trim() || status) ? (
+          <button
+            type="button"
+            className={adminStyles.btn}
+            onClick={() => {
+              onQueryChange("");
+              onStatusChange("");
+            }}
+            disabled={busy}
+          >
+            Xóa lọc
+          </button>
+        ) : null}
       </div>
 
       <div className={adminStyles.tableWrap}>

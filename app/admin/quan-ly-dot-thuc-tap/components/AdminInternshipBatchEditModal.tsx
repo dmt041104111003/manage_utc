@@ -114,7 +114,7 @@ export default function AdminInternshipBatchEditModal(props: Props) {
 
             <div className={formStyles.field}>
               <label className={formStyles.label}>
-                Ghi chú <span className={formStyles.required}>*</span>
+                Ghi chú
               </label>
               <textarea
                 className={formStyles.input as any}

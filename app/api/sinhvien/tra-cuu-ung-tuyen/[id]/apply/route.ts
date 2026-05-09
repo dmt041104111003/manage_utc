@@ -4,6 +4,7 @@ import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME, AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 import { uploadCvBytesToCloudinary } from "@/lib/storage/cloudinary";
+import { sniffBinaryKind } from "@/lib/utils/binary-file-sniff";
 
 const PHONE_PATTERN = /^\d{8,12}$/;
 const CV_ALLOWED_MIMES = [
@@ -48,12 +49,18 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
 
   let cvPatch: { cvFileName: string; cvMime: string; bytes: Buffer } | null = null;
   if (cvFile && cvFile instanceof File) {
-    const mime = String(cvFile.type || "");
-    if (!CV_ALLOWED_MIMES.includes(mime as any)) {
+    const ab = await cvFile.arrayBuffer();
+    const bytes = Buffer.from(ab);
+    const browserMime = String(cvFile.type || "").trim().toLowerCase();
+    const sniff = sniffBinaryKind(bytes);
+    const sniffMime = String(sniff?.mime || "").trim().toLowerCase();
+
+    const allowed = (m: string) => CV_ALLOWED_MIMES.includes(m as any);
+    const effectiveMime = allowed(browserMime) ? browserMime : allowed(sniffMime) ? sniffMime : "";
+    if (!effectiveMime) {
       errors.cv = "File CV không hợp lệ. Chỉ hỗ trợ .pdf, .doc, .docx.";
     } else {
-      const ab = await cvFile.arrayBuffer();
-      cvPatch = { cvFileName: cvFile.name || "cv", cvMime: mime, bytes: Buffer.from(ab) };
+      cvPatch = { cvFileName: cvFile.name || "cv", cvMime: effectiveMime, bytes };
     }
   }
   if (Object.keys(errors).length) return NextResponse.json({ success: false, errors }, { status: 400 });

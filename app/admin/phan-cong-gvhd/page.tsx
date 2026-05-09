@@ -91,24 +91,7 @@ export default function AdminPhanCongGVHDPage() {
         },
         { force }
       );
-      const rawItems: AssignmentItem[] = Array.isArray(data.items) ? data.items : [];
-      const groupedMap = new Map<string, AssignmentItem>();
-      for (const it of rawItems) {
-        const key = String(it.supervisorAssignmentId || it.id);
-        const current = groupedMap.get(key);
-        const stu = it.student;
-        if (!current) {
-          groupedMap.set(key, {
-            ...it,
-            students: stu?.msv ? [stu] : []
-          });
-          continue;
-        }
-        if (stu?.id && !current.students?.some((s) => s.id === stu.id)) {
-          current.students = [...(current.students || []), stu];
-        }
-      }
-      setItems(Array.from(groupedMap.values()));
+      setItems(Array.isArray(data.items) ? data.items : []);
       setFaculties(Array.isArray(data.faculties) ? data.faculties : []);
       setPage(nextPage);
     } catch (e: any) {
