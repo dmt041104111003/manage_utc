@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import styles from "../styles/dashboard.module.css";
+import adminStyles from "../../admin/styles/dashboard.module.css";
 import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
 import MessagePopup from "../../components/MessagePopup";
 import { FiClock, FiPauseCircle, FiXCircle, FiZap } from "react-icons/fi";
@@ -326,24 +326,24 @@ export default function DoanhNghiepTuyenDungPage() {
   ].map((c) => ({ ...c, count: statusStats[c.status] || 0 }));
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Tin tuyển dụng</h1>
-        <p className={styles.subtitle}>Quản lý tin tuyển dụng thực tập sinh của doanh nghiệp.</p>
+    <main className={adminStyles.page}>
+      <header className={adminStyles.header}>
+        <h1 className={adminStyles.title}>Tin tuyển dụng</h1>
+        <p className={adminStyles.subtitle}>Quản lý tin tuyển dụng thực tập sinh của doanh nghiệp.</p>
       </header>
 
       {toast ? <MessagePopup open message={toast} onClose={() => setToast("")} /> : null}
-      {error ? <p className={styles.modulePlaceholder}>{error}</p> : null}
+      {error ? <p className={adminStyles.error}>{error}</p> : null}
 
-      {/* Stat cards */}
+      {/* Stat cards — đồng bộ admin */}
       {!loading && (
-        <div className={styles.statsGrid}>
+        <div className={adminStyles.statsGrid4}>
           {statCards.map((s) => (
             <DashboardStatSummaryCard
               key={s.status}
-              cardClassName={styles.statCard}
-              labelClassName={styles.statLabel}
-              valueClassName={styles.statValue}
+              cardClassName={adminStyles.statCard}
+              labelClassName={adminStyles.statLabel}
+              valueClassName={adminStyles.statValue}
               label={s.label}
               value={s.count}
               Icon={s.Icon}

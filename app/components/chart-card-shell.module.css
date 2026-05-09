@@ -27,30 +27,31 @@
   cursor: default;
 }
 
+/* X đỏ gắn góc card fullscreen — không nút nổi tròn/shadow */
 .closeBtn {
   position: fixed;
   z-index: 4700;
-  top: max(14px, env(safe-area-inset-top, 0px));
-  right: max(14px, env(safe-area-inset-right, 0px));
+  top: max(20px, calc(env(safe-area-inset-top, 0px) + 20px));
+  right: max(20px, calc(env(safe-area-inset-right, 0px) + 20px));
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: auto;
+  height: auto;
   margin: 0;
-  padding: 0;
+  padding: 4px;
   border: none;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #334155;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.18);
+  border-radius: 0;
+  background: transparent;
+  color: #b91c1c;
+  box-shadow: none;
   cursor: pointer;
   line-height: 0;
 }
 
 .closeBtn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+  background: transparent;
+  color: #991b1b;
 }
 
 .closeBtn:focus {
@@ -58,7 +59,7 @@
 }
 
 .closeBtn:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid #b91c1c;
   outline-offset: 2px;
 }
 

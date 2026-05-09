@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
 import { FiClock, FiGift, FiMic, FiXCircle } from "react-icons/fi";
@@ -141,17 +140,17 @@ export default function DoanhNghiepUngVienPage() {
   }, [items]);
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Quản lý ứng viên</h1>
-        <p className={styles.subtitle}>Theo dõi số lượng ứng viên ứng tuyển theo từng tin và xem chi tiết hồ sơ.</p>
+    <main className={adminStyles.page}>
+      <header className={adminStyles.header}>
+        <h1 className={adminStyles.title}>Quản lý ứng viên</h1>
+        <p className={adminStyles.subtitle}>Theo dõi số lượng ứng viên ứng tuyển theo từng tin và xem chi tiết hồ sơ.</p>
       </header>
 
       {error ? <p className={adminStyles.error}>{error}</p> : null}
 
-      {/* Stat cards: application status counts */}
+      {/* Stat cards: application status counts — đồng bộ admin (statsGrid4 + pastel) */}
       {!loading && (
-        <div className={styles.statsGrid}>
+        <div className={adminStyles.statsGrid4}>
           {[
             { label: "Chờ xem xét", count: appStats.PENDING_REVIEW, Icon: FiClock },
             { label: "Mời phỏng vấn", count: appStats.INTERVIEW_INVITED, Icon: FiMic },
@@ -160,9 +159,9 @@ export default function DoanhNghiepUngVienPage() {
           ].map((s) => (
             <DashboardStatSummaryCard
               key={s.label}
-              cardClassName={styles.statCard}
-              labelClassName={styles.statLabel}
-              valueClassName={styles.statValue}
+              cardClassName={adminStyles.statCard}
+              labelClassName={adminStyles.statLabel}
+              valueClassName={adminStyles.statValue}
               label={s.label}
               value={s.count}
               Icon={s.Icon}

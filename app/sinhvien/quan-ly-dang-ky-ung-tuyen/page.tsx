@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import type { IconType } from "react-icons";
 import { DashboardStatSummaryCard } from "@/app/components/DashboardStatSummaryCard";
@@ -153,28 +152,29 @@ export default function SinhVienQuanLyUngTuyenPage() {
       : allRows.filter((r) => r.status === statusFilter);
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Quản lý đăng ký ứng tuyển</h1>
-        <p className={styles.subtitle}>Theo dõi toàn bộ hồ sơ đã nộp và trạng thái phản hồi.</p>
+    <main className={adminStyles.page}>
+      <header className={adminStyles.header}>
+        <h1 className={adminStyles.title}>Quản lý đăng ký ứng tuyển</h1>
+        <p className={adminStyles.subtitle}>Theo dõi toàn bộ hồ sơ đã nộp và trạng thái phản hồi.</p>
       </header>
 
-      {/* Stat cards */}
-      <div className={styles.statsGrid}>
-        {stats.map((stat) => (
-          <DashboardStatSummaryCard
-            key={stat.label}
-            cardClassName={styles.statCard}
-            labelClassName={styles.statLabel}
-            valueClassName={styles.statValue}
-            label={stat.label}
-            value={stat.count}
-            Icon={stat.Icon}
-          />
-        ))}
-      </div>
-
       {error ? <p className={adminStyles.error}>{error}</p> : null}
+
+      {!loading && (
+        <div className={adminStyles.statsGrid4}>
+          {stats.map((stat) => (
+            <DashboardStatSummaryCard
+              key={stat.label}
+              cardClassName={adminStyles.statCard}
+              labelClassName={adminStyles.statLabel}
+              valueClassName={adminStyles.statValue}
+              label={stat.label}
+              value={stat.count}
+              Icon={stat.Icon}
+            />
+          ))}
+        </div>
+      )}
 
       <QuanLyUngTuyenToolbar
         statusFilter={statusFilter}

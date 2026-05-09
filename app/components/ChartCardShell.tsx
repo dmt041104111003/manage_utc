@@ -99,7 +99,7 @@ export function ChartCardShell({ children, wide, style }: ChartCardShellProps) {
               setExpanded(false);
             }}
           >
-            <FiX size={22} strokeWidth={2.25} aria-hidden />
+            <FiX size={28} strokeWidth={2.5} aria-hidden />
           </button>
         </>
       ) : null}
