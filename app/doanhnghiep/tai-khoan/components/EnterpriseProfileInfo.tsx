@@ -30,7 +30,7 @@ export default function EnterpriseProfileInfo({ me, address, licName, licHref, l
           <th scope="row">File giấy phép kinh doanh</th>
           <td>
             {licHref ? (
-              <a className={adminStyles.detailLink} href={licHref} target="_blank" rel="noopener noreferrer">
+              <a className={adminStyles.detailLink} href={licHref} target="_blank" rel="noopener noreferrer" download={licName}>
                 {licName}
               </a>
             ) : (
