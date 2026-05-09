@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState, type MouseEvent } from "react";
-import { clearAllQueryCache } from "@/lib/utils/client-query-cache";
+import { clearAllClientCaches } from "@/lib/utils/client-query-cache";
 
 const LOGIN_PATH = "/auth/dangnhap";
 
@@ -21,7 +21,7 @@ export function useDashboardSidebar() {
         await fetch("/api/auth/logout", { method: "POST" });
       } catch {
       }
-      clearAllQueryCache();
+      clearAllClientCaches();
       window.location.replace(LOGIN_PATH);
     },
     [logoutBusy]

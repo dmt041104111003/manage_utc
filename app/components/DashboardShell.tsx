@@ -8,7 +8,12 @@ import type { DashboardRole } from "@/lib/types/dashboard";
 import { isDashboardNavActive } from "@/lib/utils/navigation";
 import { useAdminPendingEnterpriseCount } from "@/hooks/useAdminPendingEnterpriseCount";
 import { useDashboardSidebar } from "@/hooks/useDashboardSidebar";
-import { clearAllQueryCache } from "@/lib/utils/client-query-cache";
+import {
+  clearAllClientCaches,
+  restoreFetchResponseCache,
+  schedulePersistFetchResponseCache,
+  type FetchResponseCacheEntry
+} from "@/lib/utils/client-query-cache";
 import styles from "./dashboard-shell.module.css";
 
 const ADMIN_QUAN_LY_DOANH_NGHIEP_HREF = "/admin/quan-ly-doanh-nghiep";
@@ -35,10 +40,11 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
   useEffect(() => {
     const originalFetch = window.fetch.bind(window);
     const globalAny = window as typeof window & {
-      __manageUtcFetchCache?: Map<string, { bodyText: string; status: number; statusText: string; headers: Record<string, string> }>;
+      __manageUtcFetchCache?: Map<string, FetchResponseCacheEntry>;
     };
     const fetchCache =
-      globalAny.__manageUtcFetchCache ?? (globalAny.__manageUtcFetchCache = new Map());
+      globalAny.__manageUtcFetchCache ?? (globalAny.__manageUtcFetchCache = new Map<string, FetchResponseCacheEntry>());
+    restoreFetchResponseCache(fetchCache);
     const patchedFetch: typeof window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const method = String(init?.method || (input instanceof Request ? input.method : "GET")).toUpperCase();
       const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
@@ -70,6 +76,7 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
               statusText: res.statusText,
               headers
             });
+            schedulePersistFetchResponseCache(fetchCache);
           } catch {
             // ignore cache failure
           }
@@ -77,8 +84,7 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
       }
       if (!isMutation || !res.ok || reloadingRef.current) return res;
       reloadingRef.current = true;
-      clearAllQueryCache();
-      fetchCache.clear();
+      clearAllClientCaches();
       setTimeout(() => {
         window.location.reload();
       }, 0);

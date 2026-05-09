@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { clearAllClientCaches } from "@/lib/utils/client-query-cache";
 import {
   getChangePasswordNetworkErrorMessage,
   getChangePasswordSuccessMessage,
@@ -87,6 +88,7 @@ export default function ChangePasswordPage() {
           } catch {
             // ignore
           }
+          clearAllClientCaches();
           window.location.replace("/auth/dangnhap");
         })();
       }, 1200);
