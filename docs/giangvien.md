@@ -14,6 +14,8 @@
 
 ### Ghi chú hiệu năng
 - Popup ở trang `giangvien/bao-cao` đã lazy-load; file BCTT hiển thị qua `/api/files/internship-report/[id]` (inline mặc định), không còn nhúng base64 vào payload list.
+- DashboardShell bỏ reload toàn trang sau mutation để thao tác cập nhật trạng thái phản hồi nhanh hơn.
+- API search giảng viên dùng chuẩn mới: `msv` ưu tiên `startsWith`; `contains` cho tên chỉ khi `q.length >= 2`.
 
 ---
 

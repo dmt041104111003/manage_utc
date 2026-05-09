@@ -12,6 +12,10 @@
 | Đổi mật khẩu | `/auth/doimatkhau` | `/api/auth/change-password` | Không |
 | Dashboard | `/doanhnghiep/dashboard` | `/api/doanhnghiep/dashboard/overview` | Không |
 
+### Ghi chú hiệu năng
+- DashboardShell bỏ cơ chế reload toàn trang sau mutation để giảm thời gian chờ khi tạo/sửa/xóa.
+- API search doanh nghiệp đã giới hạn query ngắn: `contains` chỉ chạy khi `q.length >= 2` (ví dụ `tuyen-dung`, `ung-vien`).
+
 ---
 
 ## Tech Stack & cấu trúc thư mục

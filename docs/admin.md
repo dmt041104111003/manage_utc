@@ -18,6 +18,8 @@
 
 ### Ghi chú hiệu năng
 - Các popup nặng ở trang admin (view/add/edit/delete/status) đã chuyển sang lazy-load (dynamic import) để giảm lag khi chuyển tab/page và khi click mở popup.
+- DashboardShell không còn ép `window.location.reload()` sau mọi mutation; luồng create/update/delete giữ ở mức refresh theo từng page.
+- Chuẩn search mới cho API admin: ưu tiên `startsWith` với field định danh (`msv`, `phone`, `email`, `taxCode`), `contains` chỉ áp cho text tự do và chỉ khi `q.length >= 2`.
 
 ---
 

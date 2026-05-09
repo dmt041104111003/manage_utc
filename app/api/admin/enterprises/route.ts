@@ -21,7 +21,7 @@ export async function GET(request: Request) {
       const isNumeric = /^\d+$/.test(q);
       andParts.push({
         OR: [
-          ...(q.length >= 2 ? [{ companyName: { contains: q, mode: "insensitive" } }] : []),
+          ...(q.length >= 2 ? [{ companyName: { contains: q, mode: Prisma.QueryMode.insensitive } }] : []),
           ...(isNumeric ? [{ taxCode: { startsWith: q } }] : [])
         ]
       });

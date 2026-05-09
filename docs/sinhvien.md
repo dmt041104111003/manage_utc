@@ -13,6 +13,10 @@
 | Đổi mật khẩu | `/auth/doimatkhau` | `/api/auth/change-password` | Không |
 | Dashboard | `/sinhvien/dashboard` | `/api/sinhvien/dashboard/overview` | Không |
 
+### Ghi chú hiệu năng
+- DashboardShell đã bỏ reload toàn trang sau mutation; trải nghiệm nộp/cập nhật dữ liệu phản hồi nhanh hơn.
+- API tìm việc (`/api/sinhvien/tra-cuu-ung-tuyen`) giới hạn query ngắn: `contains` chỉ chạy khi `q.length >= 2`.
+
 ---
 
 ## Tech Stack & cấu trúc thư mục
