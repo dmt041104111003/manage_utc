@@ -6,7 +6,7 @@ import { MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX, MAIL_TRANSACTIONAL_SIGN_OFF } from "
 import { MAIL_BRAND } from "@/lib/mail-brand";
 import { buildMailShell, escapeHtml, mailLetterClosingHtml } from "@/lib/mail-layout";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
-import { toCloudinaryRef, uploadEnterpriseLicenseBytesToCloudinary, uploadEnterpriseLogoBytesToCloudinary } from "@/lib/storage/cloudinary";
+import { toCloudinaryRef, uploadEnterpriseLogoBytesToCloudinary } from "@/lib/storage/cloudinary";
 import type { Prisma } from "@prisma/client";
 
 export async function POST(request: Request) {
@@ -27,24 +27,11 @@ export async function POST(request: Request) {
       ? ({ ...(userCreate.enterpriseMeta as Record<string, unknown>) } as Record<string, unknown>)
       : {};
 
-  const businessLicenseName = String(enterpriseMeta.businessLicenseName || "").trim();
-  const businessLicenseMime = String(enterpriseMeta.businessLicenseMime || "").trim();
-  const businessLicenseBase64 = String(enterpriseMeta.businessLicenseBase64 || "").trim();
+  delete enterpriseMeta.businessLicensePublicId;
+
   const companyLogoName = String(enterpriseMeta.companyLogoName || "").trim();
   const companyLogoMime = String(enterpriseMeta.companyLogoMime || "").trim();
   const companyLogoBase64 = String(enterpriseMeta.companyLogoBase64 || "").trim();
-
-  if (businessLicenseBase64 && businessLicenseName && businessLicenseMime) {
-    const uploadedLicense = await uploadEnterpriseLicenseBytesToCloudinary({
-      bytes: Buffer.from(businessLicenseBase64, "base64"),
-      mimeType: businessLicenseMime,
-      ownerKey: String(userCreate.taxCode || email || "enterprise"),
-      originalName: businessLicenseName
-    });
-    enterpriseMeta.businessLicensePublicId = toCloudinaryRef(uploadedLicense.publicId);
-    delete enterpriseMeta.businessLicenseBase64;
-    delete enterpriseMeta.businessLicenseByteLength;
-  }
 
   if (companyLogoBase64 && companyLogoName && companyLogoMime) {
     const uploadedLogo = await uploadEnterpriseLogoBytesToCloudinary({

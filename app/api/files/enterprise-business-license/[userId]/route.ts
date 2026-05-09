@@ -44,7 +44,8 @@ function readLicenseMeta(meta: unknown): {
 
 export async function GET(request: Request, ctx: { params: Promise<{ userId: string }> }) {
   const { userId } = await ctx.params;
-  const download = new URL(request.url).searchParams.get("download") === "1";
+  const sp = new URL(request.url).searchParams;
+  const download = sp.get("inline") !== "1";
 
   const admin = await getAdminSession();
   let allowed = Boolean(admin);
@@ -80,30 +81,21 @@ export async function GET(request: Request, ctx: { params: Promise<{ userId: str
   let bytes: Buffer;
   let upstreamContentType: string | null | undefined;
 
-  if (cloudPublicId) {
-    const fetched = await fetchCloudinaryBytesByPublicId(cloudPublicId);
-    if (fetched) {
-      bytes = fetched.bytes;
-      upstreamContentType = fetched.contentType;
-    } else if (base64) {
-      try {
-        bytes = Buffer.from(base64, "base64");
-        upstreamContentType = null;
-        console.warn("enterprise-business-license: Cloudinary lỗi, dùng base64 trong meta userId=", userId);
-      } catch {
-        return NextResponse.json({ success: false, message: "File giấy phép không hợp lệ." }, { status: 500 });
-      }
-    } else {
-      console.error("enterprise-business-license cloudinary fetch failed publicId=", cloudPublicId);
-      return NextResponse.json({ success: false, message: "Không thể tải file giấy phép." }, { status: 502 });
-    }
-  } else if (base64) {
+  if (base64) {
     try {
       bytes = Buffer.from(base64, "base64");
       upstreamContentType = null;
     } catch {
       return NextResponse.json({ success: false, message: "File giấy phép không hợp lệ." }, { status: 500 });
     }
+  } else if (cloudPublicId) {
+    const fetched = await fetchCloudinaryBytesByPublicId(cloudPublicId);
+    if (!fetched) {
+      console.error("enterprise-business-license cloudinary fetch failed publicId=", cloudPublicId);
+      return NextResponse.json({ success: false, message: "Không thể tải file giấy phép." }, { status: 502 });
+    }
+    bytes = fetched.bytes;
+    upstreamContentType = fetched.contentType;
   } else {
     return NextResponse.json({ success: false, message: "Không có file giấy phép." }, { status: 404 });
   }

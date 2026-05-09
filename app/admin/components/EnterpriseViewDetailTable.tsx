@@ -36,7 +36,9 @@ export function EnterpriseViewDetailTable({ item }: Props) {
   );
   const logoPublicId = fromCloudinaryRef(typeof m.companyLogoPublicId === "string" ? m.companyLogoPublicId : null);
   const licHref =
-    licPublicId || licB64 ? `/api/files/enterprise-business-license/${item.id}?download=1` : null;
+    licB64 || licPublicId || (licName && licName !== "—")
+      ? `/api/files/enterprise-business-license/${item.id}`
+      : null;
   const logoFromCloud = logoPublicId ? buildCloudinaryImageDeliveryUrl(logoPublicId) : null;
   const logoSrc =
     logoFromCloud ??
