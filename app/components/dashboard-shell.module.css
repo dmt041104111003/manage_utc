@@ -3,44 +3,56 @@
 .layout {
   min-height: 100vh;
   display: flex;
-  background: #f6f7f9;
+  background: #f3f5f9;
 }
 
 .sidebar {
   width: 260px;
   flex-shrink: 0;
   background: #ffffff;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid #dbe4f0;
   display: flex;
   flex-direction: column;
   z-index: 101;
+  box-shadow: 6px 0 24px rgba(15, 23, 42, 0.05);
 }
 
 .brand {
   padding: 20px 18px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #dbe4f0;
+  position: relative;
+}
+
+.brand::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #0b63ce;
 }
 
 .brandTitle {
-  margin: 0;
+  margin: 0 0 0 2px;
   font-size: 14px;
-  font-weight: 600;
-  color: #111827;
+  font-weight: 700;
+  color: #0f172a;
   line-height: 1.35;
 }
 
 .brandSub {
-  margin: 6px 0 0;
+  margin: 6px 0 0 2px;
   font-size: 12px;
   color: #6b7280;
   line-height: 1.4;
 }
 
 .brandRole {
-  margin: 6px 0 0;
+  margin: 8px 0 0 2px;
   font-size: 12px;
   font-weight: 600;
-  color: #1f2937;
+  color: #0b63ce;
   line-height: 1.4;
 }
 
@@ -56,7 +68,7 @@
 .navLink {
   display: block;
   padding: 10px 12px;
-  border-radius: 6px;
+  border-radius: 10px;
   font-size: 14px;
   color: #374151;
   border: none;
@@ -100,19 +112,20 @@
 }
 
 .navLink:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: #edf4ff;
+  color: #0b3b79;
 }
 
 .navLinkActive {
-  background: #f3f4f6;
-  color: #111827;
+  background: #eaf2ff;
+  color: #0b3b79;
   font-weight: 600;
+  box-shadow: inset 3px 0 0 #0b63ce;
 }
 
 .footer {
   padding: 12px 10px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #dbe4f0;
 }
 
 .logout {
@@ -141,8 +154,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid #dbe4f0;
+  backdrop-filter: blur(6px);
   flex-shrink: 0;
   position: relative;
   z-index: 102; /* đảm bảo nút 3 gạch không bị sidebar phủ khi mở */
@@ -156,9 +170,9 @@
   width: 40px;
   height: 40px;
   padding: 0;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #ffffff;
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+  background: #f8fbff;
   cursor: pointer;
   position: relative;
   z-index: 103;
@@ -176,8 +190,8 @@
 .topbarTitle {
   margin: 0;
   font-size: 15px;
-  font-weight: 600;
-  color: #111827;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .content {
