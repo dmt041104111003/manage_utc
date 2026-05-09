@@ -1,3 +1,5 @@
+ "use client";
+
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
 import { metaRecord } from "@/lib/utils/enterprise-meta";
 import {

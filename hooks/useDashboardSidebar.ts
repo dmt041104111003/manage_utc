@@ -19,7 +19,6 @@ export function useDashboardSidebar() {
       try {
         await fetch("/api/auth/logout", { method: "POST" });
       } catch {
-        /* vẫn chuyển trang để user thoát UI; cookie có thể còn nếu lỗi mạng */
       }
       window.location.replace(LOGIN_PATH);
     },

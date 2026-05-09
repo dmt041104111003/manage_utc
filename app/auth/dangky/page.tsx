@@ -266,7 +266,7 @@ export default function EnterpriseRegisterPage() {
         return;
       }
       setIsSubmitting(false);
-      router.replace(typeof data.redirectPath === "string" ? data.redirectPath : "/auth/dangky/cho-phe-duyet");
+      router.replace(typeof data.redirectPath === "string" ? data.redirectPath : "/auth/dangky");
     } catch (err) {
       if (err instanceof Error && err.message === "invalid data URL") {
         setSubmitError("Không đọc được file đính kèm. Vui lòng chọn file khác.");

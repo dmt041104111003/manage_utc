@@ -1,3 +1,5 @@
+ "use client";
+
 import type { EnterpriseStatus } from "@prisma/client";
 import { formatAdminEnterpriseStatusLine } from "@/lib/utils/admin-enterprise-display";
 import styles from "../styles/dashboard.module.css";

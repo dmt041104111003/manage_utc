@@ -51,6 +51,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     success: true,
     message: "Đăng ký thành công. Tài khoản đang chờ phê duyệt.",
-    redirectPath: "/auth/dangky/cho-phe-duyet"
+    redirectPath: "/auth/dangky"
   });
 }

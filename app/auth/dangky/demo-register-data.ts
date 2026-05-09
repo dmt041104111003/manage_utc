@@ -1,7 +1,4 @@
-/**
- * Dữ liệu mẫu — bật NEXT_PUBLIC_PREFILL_REGISTER=1 trong .env.local.
- * Địa chỉ: mã tỉnh/ phường khớp API provinces.open-api.vn (Hà Nội + Phường Nghĩa Đô).
- */
+
 export type EnterpriseRegisterPrefill = {
   companyName: string;
   taxCode: string;
