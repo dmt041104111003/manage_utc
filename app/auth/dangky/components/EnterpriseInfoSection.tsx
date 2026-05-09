@@ -3,15 +3,16 @@
 import type { ChangeEvent } from "react";
 import type { FormDataState, VnProvince, VnWard } from "@/lib/types/enterprise-register";
 import {
-  DOANHNGHIEP_BUSINESS_FIELD_OPTIONS,
   DOANHNGHIEP_MAX_UPLOAD_FILE_LABEL,
   MAX_ENTERPRISE_UPLOAD_BYTES
 } from "@/lib/constants/doanhnghiep";
 import styles from "../../styles/register.module.css";
+import BusinessFieldsCombobox from "./BusinessFieldsCombobox";
 
 type Props = {
   form: FormDataState;
   errors: Record<string, string>;
+  businessFieldOptions: string[];
   provinces: VnProvince[];
   wards: VnWard[];
   addressLoading: { provinces: boolean; wards: boolean };
@@ -19,7 +20,7 @@ type Props = {
   addrBusy: boolean;
   isSubmitting: boolean;
   onChangeText: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  onChangeBusinessFields: (e: ChangeEvent<HTMLSelectElement>) => void;
+  onBusinessFieldsChange: (next: string[]) => void;
   onProvinceChange: (e: ChangeEvent<HTMLSelectElement>) => void;
   onWardChange: (e: ChangeEvent<HTMLSelectElement>) => void;
   onBusinessLicenseChange: (file: File | null, error: string) => void;
@@ -30,6 +31,7 @@ export default function EnterpriseInfoSection(props: Props) {
   const {
     form,
     errors,
+    businessFieldOptions,
     provinces,
     wards,
     addressLoading,
@@ -37,7 +39,7 @@ export default function EnterpriseInfoSection(props: Props) {
     addrBusy,
     isSubmitting,
     onChangeText,
-    onChangeBusinessFields,
+    onBusinessFieldsChange,
     onProvinceChange,
     onWardChange,
     onBusinessLicenseChange,
@@ -79,23 +81,17 @@ export default function EnterpriseInfoSection(props: Props) {
       </div>
 
       <div className={styles.field}>
-        <label className={styles.label}>
+        <label id="business-fields-label" className={styles.label}>
           Lĩnh vực hoạt động <span className={styles.required}>*</span>
         </label>
-        <select
-          multiple
-          disabled={isSubmitting}
-          className={styles.multiSelect}
+        <BusinessFieldsCombobox
+          labelId="business-fields-label"
           value={form.businessFields}
-          onChange={onChangeBusinessFields}
-        >
-          {DOANHNGHIEP_BUSINESS_FIELD_OPTIONS.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-        <p className={styles.hint}>Giữ Ctrl (hoặc Cmd trên Mac) để chọn nhiều lĩnh vực.</p>
+          options={businessFieldOptions}
+          onChange={onBusinessFieldsChange}
+          disabled={isSubmitting}
+          placeholder="Chọn ngành/khoa phù hợp"
+        />
         {errors.businessFields ? <p className={styles.error}>{errors.businessFields}</p> : null}
       </div>
 
@@ -160,10 +156,7 @@ export default function EnterpriseInfoSection(props: Props) {
           value={form.addressDetail}
           onChange={onChangeText}
         />
-        <p className={styles.hint}>
-          Có thể là địa chỉ sau khi sáp nhập địa giới hoặc trước sáp nhập. Chỉ nhập chữ, số và khoảng trắng (không ký
-          tự đặc biệt).
-        </p>
+    
         {errors.addressDetail ? <p className={styles.error}>{errors.addressDetail}</p> : null}
       </div>
 

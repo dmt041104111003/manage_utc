@@ -16,34 +16,36 @@ export default function RepresentativeSection({ form, errors, isSubmitting, onCh
     <section className={styles.section}>
       <h3 className={styles.sectionTitle}>Thông tin Người đại diện/Liên hệ</h3>
 
-      <div className={styles.field}>
-        <label className={styles.label}>
-          Họ và tên <span className={styles.required}>*</span>
-        </label>
-        <input
-          disabled={isSubmitting}
-          name="representativeName"
-          className={styles.input}
-          placeholder="Nhập họ và tên"
-          value={form.representativeName}
-          onChange={onChangeText}
-        />
-        {errors.representativeName ? <p className={styles.error}>{errors.representativeName}</p> : null}
-      </div>
+      <div className={styles.grid2}>
+        <div className={styles.field} style={{ marginBottom: 0 }}>
+          <label className={styles.label}>
+            Họ và tên <span className={styles.required}>*</span>
+          </label>
+          <input
+            disabled={isSubmitting}
+            name="representativeName"
+            className={styles.input}
+            placeholder="Nhập họ và tên"
+            value={form.representativeName}
+            onChange={onChangeText}
+          />
+          {errors.representativeName ? <p className={styles.error}>{errors.representativeName}</p> : null}
+        </div>
 
-      <div className={styles.field}>
-        <label className={styles.label}>
-          Chức vụ <span className={styles.required}>*</span>
-        </label>
-        <input
-          disabled={isSubmitting}
-          name="representativeTitle"
-          className={styles.input}
-          placeholder="Nhập chức vụ"
-          value={form.representativeTitle}
-          onChange={onChangeText}
-        />
-        {errors.representativeTitle ? <p className={styles.error}>{errors.representativeTitle}</p> : null}
+        <div className={styles.field} style={{ marginBottom: 0 }}>
+          <label className={styles.label}>
+            Chức vụ <span className={styles.required}>*</span>
+          </label>
+          <input
+            disabled={isSubmitting}
+            name="representativeTitle"
+            className={styles.input}
+            placeholder="Nhập chức vụ"
+            value={form.representativeTitle}
+            onChange={onChangeText}
+          />
+          {errors.representativeTitle ? <p className={styles.error}>{errors.representativeTitle}</p> : null}
+        </div>
       </div>
 
       <div className={styles.grid2}>

@@ -10,6 +10,7 @@ import { DEMO_ENTERPRISE_REGISTER_FORM } from "./demo-register-data";
 import type { FormDataState, VnProvince, VnWard } from "@/lib/types/enterprise-register";
 import { EMPTY_ENTERPRISE_REGISTER_FORM } from "@/lib/constants/auth/enterprise-register";
 import { getInitialRegisterForm, validateEnterpriseRegisterForm } from "@/lib/utils/auth/enterprise-register";
+import { DOANHNGHIEP_BUSINESS_FIELD_OPTIONS } from "@/lib/constants/doanhnghiep";
 import EnterpriseInfoSection from "./components/EnterpriseInfoSection";
 import RepresentativeSection from "./components/RepresentativeSection";
 
@@ -18,6 +19,7 @@ export default function EnterpriseRegisterPage() {
   const [form, setForm] = useState<FormDataState>(() =>
     getInitialRegisterForm(EMPTY_ENTERPRISE_REGISTER_FORM, DEMO_ENTERPRISE_REGISTER_FORM, process.env.NEXT_PUBLIC_PREFILL_REGISTER)
   );
+  const [facultyOptions, setFacultyOptions] = useState<string[]>([]);
   const [provinces, setProvinces] = useState<VnProvince[]>([]);
   const [wards, setWards] = useState<VnWard[]>([]);
   const [addressLoading, setAddressLoading] = useState({ provinces: true, wards: false });
@@ -30,6 +32,24 @@ export default function EnterpriseRegisterPage() {
 
   const setField = useCallback((field: keyof FormDataState, value: string | string[]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/public/faculties");
+        const data = (await res.json()) as { success?: boolean; faculties?: string[] };
+        if (!res.ok) return;
+        const items = Array.isArray(data.faculties) ? data.faculties.filter(Boolean) : [];
+        if (!cancelled) setFacultyOptions(items);
+      } catch {
+        if (!cancelled) setFacultyOptions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -87,9 +107,8 @@ export default function EnterpriseRegisterPage() {
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const onChangeBusinessFields = (event: ChangeEvent<HTMLSelectElement>) => {
-    const selected = Array.from(event.target.selectedOptions).map((item) => item.value);
-    setField("businessFields", selected);
+  const onBusinessFieldsChange = (next: string[]) => {
+    setField("businessFields", next);
     setErrors((prev) => ({ ...prev, businessFields: "" }));
   };
 
@@ -220,6 +239,7 @@ export default function EnterpriseRegisterPage() {
         <EnterpriseInfoSection
           form={form}
           errors={errors}
+          businessFieldOptions={(facultyOptions.length ? facultyOptions : Array.from(DOANHNGHIEP_BUSINESS_FIELD_OPTIONS)) as string[]}
           provinces={provinces}
           wards={wards}
           addressLoading={addressLoading}
@@ -227,7 +247,7 @@ export default function EnterpriseRegisterPage() {
           addrBusy={addrBusy}
           isSubmitting={isSubmitting}
           onChangeText={onChangeText}
-          onChangeBusinessFields={onChangeBusinessFields}
+          onBusinessFieldsChange={onBusinessFieldsChange}
           onProvinceChange={onProvinceChange}
           onWardChange={onWardChange}
           onBusinessLicenseChange={onBusinessLicenseChange}
