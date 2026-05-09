@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     const dateEnd = parseDateOnly(endDateStr);
 
     const where: any = {};
-    if (q) where.name = { contains: q, mode: "insensitive" };
+    if (q && q.length >= 2) where.name = { contains: q, mode: "insensitive" };
     if (status !== "all") where.status = status;
     if (dateStart) where.startDate = { gte: dateStart.start, lte: dateStart.end };
     if (dateEnd) where.endDate = { gte: dateEnd.start, lte: dateEnd.end };

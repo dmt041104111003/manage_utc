@@ -61,12 +61,14 @@ export async function GET(request: Request) {
     }
 
     if (q) {
+      const isNumeric = /^\d+$/.test(q);
+      const isEmailLike = q.includes("@") || q.includes(".");
       and.push({
         OR: [
-          { msv: { contains: q, mode: "insensitive" } },
-          { user: { fullName: { contains: q, mode: "insensitive" } } },
-          { user: { phone: { contains: q, mode: "insensitive" } } },
-          { user: { email: { contains: q, mode: "insensitive" } } }
+          { msv: { startsWith: q } },
+          ...(q.length >= 2 ? [{ user: { fullName: { contains: q, mode: "insensitive" } } }] : []),
+          ...(isNumeric ? [{ user: { phone: { startsWith: q } } }] : []),
+          ...(isEmailLike ? [{ user: { email: { startsWith: q, mode: "insensitive" } } }] : [])
         ]
       });
     }
@@ -79,12 +81,14 @@ export async function GET(request: Request) {
     if (faculty !== "all") andStats.push({ faculty });
     if (degree !== "all") andStats.push({ degree });
     if (q) {
+      const isNumeric = /^\d+$/.test(q);
+      const isEmailLike = q.includes("@") || q.includes(".");
       andStats.push({
         OR: [
-          { msv: { contains: q, mode: "insensitive" } },
-          { user: { fullName: { contains: q, mode: "insensitive" } } },
-          { user: { phone: { contains: q, mode: "insensitive" } } },
-          { user: { email: { contains: q, mode: "insensitive" } } }
+          { msv: { startsWith: q } },
+          ...(q.length >= 2 ? [{ user: { fullName: { contains: q, mode: "insensitive" } } }] : []),
+          ...(isNumeric ? [{ user: { phone: { startsWith: q } } }] : []),
+          ...(isEmailLike ? [{ user: { email: { startsWith: q, mode: "insensitive" } } }] : [])
         ]
       });
     }

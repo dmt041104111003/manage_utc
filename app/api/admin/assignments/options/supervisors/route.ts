@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     id: { notIn: Array.from(assignedSet) },
     user: { isLocked: false }
   };
-  if (q) {
+  if (q && q.length >= 2) {
     where.AND = [{ user: { fullName: { contains: q, mode: "insensitive" } } }];
   }
 

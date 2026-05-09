@@ -38,8 +38,8 @@ export async function GET(request: Request) {
   };
   if (q) {
     where.OR = [
-      { expertise: { contains: q, mode: "insensitive" } },
-      { enterpriseUser: { companyName: { contains: q, mode: "insensitive" } } }
+      ...(q.length >= 2 ? [{ expertise: { contains: q, mode: "insensitive" } }] : []),
+      ...(q.length >= 2 ? [{ enterpriseUser: { companyName: { contains: q, mode: "insensitive" } } }] : [])
     ];
   }
   if (workType !== "all") where.workType = workType;

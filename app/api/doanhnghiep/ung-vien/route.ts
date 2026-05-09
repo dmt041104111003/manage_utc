@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   const where: any = { enterpriseUserId: sub };
   const and: any[] = [];
 
-  if (q) and.push({ title: { contains: q, mode: "insensitive" } });
+  if (q && q.length >= 2) and.push({ title: { contains: q, mode: "insensitive" } });
   if (status !== "all") and.push({ status });
 
   const created = createdDate ? parseDateOnly(createdDate) : null;

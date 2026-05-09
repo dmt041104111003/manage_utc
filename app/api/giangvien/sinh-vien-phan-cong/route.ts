@@ -101,8 +101,8 @@ export async function GET(request: Request) {
   if (q) {
     where.studentProfile = {
       OR: [
-        { msv: { contains: q, mode: "insensitive" } },
-        { user: { fullName: { contains: q, mode: "insensitive" } } }
+        { msv: { startsWith: q } },
+        ...(q.length >= 2 ? [{ user: { fullName: { contains: q, mode: "insensitive" } } }] : [])
       ]
     };
   }

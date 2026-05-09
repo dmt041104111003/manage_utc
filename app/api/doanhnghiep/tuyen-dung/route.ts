@@ -72,7 +72,10 @@ export async function GET(request: Request) {
   const where: Record<string, unknown> = { enterpriseUserId: sub };
 
   if (q) {
-    where.OR = [{ title: { contains: q, mode: "insensitive" } }, { expertise: { contains: q, mode: "insensitive" } }];
+    where.OR = [
+      ...(q.length >= 2 ? [{ title: { contains: q, mode: "insensitive" } }] : []),
+      ...(q.length >= 2 ? [{ expertise: { contains: q, mode: "insensitive" } }] : [])
+    ];
   }
 
   const whereForStats: Record<string, unknown> = { ...where };

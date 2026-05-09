@@ -29,9 +29,9 @@ export async function GET(request: Request) {
   if (q) {
     andParts.push({
       OR: [
-        { supervisorProfile: { user: { fullName: { contains: q, mode: "insensitive" } } } },
-        { students: { some: { studentProfile: { msv: { contains: q, mode: "insensitive" } } } } },
-        { students: { some: { studentProfile: { user: { fullName: { contains: q, mode: "insensitive" } } } } } }
+        ...(q.length >= 2 ? [{ supervisorProfile: { user: { fullName: { contains: q, mode: "insensitive" } } } }] : []),
+        { students: { some: { studentProfile: { msv: { startsWith: q } } } } },
+        ...(q.length >= 2 ? [{ students: { some: { studentProfile: { user: { fullName: { contains: q, mode: "insensitive" } } } } } }] : [])
       ]
     });
   }
