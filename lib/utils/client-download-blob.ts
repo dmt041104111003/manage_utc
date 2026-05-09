@@ -1,10 +1,28 @@
+function parseFilenameFromContentDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const star = header.match(/filename\*=UTF-8''([^;\s]+)/i);
+  if (star?.[1]) {
+    try {
+      const n = decodeURIComponent(star[1].trim());
+      return n || null;
+    } catch {
+      /* ignore */
+    }
+  }
+  const q = header.match(/filename="((?:\\.|[^"\\])*)"/i);
+  if (q?.[1]) return q[1].replace(/\\"/g, '"').trim() || null;
+  const plain = header.match(/filename=([^;\s]+)/i);
+  if (plain?.[1]) return plain[1].replace(/^["']|["']$/g, "").trim() || null;
+  return null;
+}
+
 /**
  * Tải file qua fetch (credentials) rồi blob — ổn định hơn `<a href>` với API có cookie / lỗi mạng.
  * Chỉ gọi từ client.
  */
 export async function downloadWithCredentials(
   url: string,
-  filename: string
+  filenameFallback: string
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   let res: Response;
   try {
@@ -31,11 +49,13 @@ export async function downloadWithCredentials(
   if (blob.size === 0) {
     return { ok: false, message: "File rỗng." };
   }
+  const fromServer = parseFilenameFromContentDisposition(res.headers.get("Content-Disposition"));
+  const downloadName = fromServer || filenameFallback || "download";
   const objectUrl = URL.createObjectURL(blob);
   try {
     const a = document.createElement("a");
     a.href = objectUrl;
-    a.download = filename || "download";
+    a.download = downloadName;
     a.rel = "noreferrer";
     document.body.appendChild(a);
     a.click();

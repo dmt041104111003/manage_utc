@@ -6,6 +6,11 @@ import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 import { enterpriseLicensePublicIdFromStored, fetchCloudinaryBytesByPublicId } from "@/lib/storage/cloudinary";
+import {
+  filenameWithSniffedExtension,
+  resolveContentTypeForBytes,
+  sniffBinaryKind
+} from "@/lib/utils/binary-file-sniff";
 
 export const maxDuration = 60;
 
@@ -73,22 +78,17 @@ export async function GET(request: Request, ctx: { params: Promise<{ userId: str
   const cloudPublicId = enterpriseLicensePublicIdFromStored(publicIdRef);
 
   let bytes: Buffer;
-  let mime = metaMime || "application/pdf";
+  let upstreamContentType: string | null | undefined;
 
   if (cloudPublicId) {
     const fetched = await fetchCloudinaryBytesByPublicId(cloudPublicId);
     if (fetched) {
       bytes = fetched.bytes;
-      const upstreamType = fetched.contentType;
-      if (!upstreamType || upstreamType === "application/octet-stream") {
-        mime = metaMime || "application/pdf";
-      } else {
-        mime = upstreamType;
-      }
+      upstreamContentType = fetched.contentType;
     } else if (base64) {
       try {
         bytes = Buffer.from(base64, "base64");
-        mime = metaMime || "application/pdf";
+        upstreamContentType = null;
         console.warn("enterprise-business-license: Cloudinary lỗi, dùng base64 trong meta userId=", userId);
       } catch {
         return NextResponse.json({ success: false, message: "File giấy phép không hợp lệ." }, { status: 500 });
@@ -100,6 +100,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ userId: str
   } else if (base64) {
     try {
       bytes = Buffer.from(base64, "base64");
+      upstreamContentType = null;
     } catch {
       return NextResponse.json({ success: false, message: "File giấy phép không hợp lệ." }, { status: 500 });
     }
@@ -107,13 +108,17 @@ export async function GET(request: Request, ctx: { params: Promise<{ userId: str
     return NextResponse.json({ success: false, message: "Không có file giấy phép." }, { status: 404 });
   }
 
+  const sniff = sniffBinaryKind(bytes);
+  const mime = resolveContentTypeForBytes(bytes, upstreamContentType, metaMime || "application/pdf");
+  const outFilename = filenameWithSniffedExtension(fileName, sniff);
+
   const body = new Uint8Array(bytes);
 
   return new NextResponse(body, {
     status: 200,
     headers: {
       "Content-Type": mime,
-      "Content-Disposition": contentDispositionHeader(download, fileName),
+      "Content-Disposition": contentDispositionHeader(download, outFilename),
       "Content-Length": String(body.byteLength),
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff"

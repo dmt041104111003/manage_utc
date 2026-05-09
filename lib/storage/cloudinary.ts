@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import path from "path";
 import { v2 as cloudinary } from "cloudinary";
+import { resolveContentTypeForBytes } from "@/lib/utils/binary-file-sniff";
 import {
   buildCloudinaryImageDeliveryUrl,
   buildCloudinaryRawDeliveryUrl
@@ -238,6 +239,40 @@ function pushResCloudinaryDeliveryMatrix(pid: string, push: (u: string | null | 
   }
 }
 
+async function collectUrlsFromSdkApiResource(
+  cred: { cloud_name: string; api_key: string; api_secret: string },
+  pid: string
+): Promise<string[]> {
+  cloudinary.config({
+    cloud_name: cred.cloud_name,
+    api_key: cred.api_key,
+    api_secret: cred.api_secret,
+    secure: true
+  });
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const add = (u: string | undefined) => {
+    const s = String(u || "").trim();
+    if (s && !seen.has(s)) {
+      seen.add(s);
+      out.push(s);
+    }
+  };
+  for (const rt of ["raw", "image"] as const) {
+    const meta = await new Promise<{ secure_url?: string; url?: string } | null>((resolve) => {
+      cloudinary.api.resource(pid, { resource_type: rt }, (err: unknown, res: unknown) => {
+        if (err || !res || typeof res !== "object") resolve(null);
+        else resolve(res as { secure_url?: string; url?: string });
+      });
+    });
+    if (meta) {
+      add(meta.secure_url);
+      add(meta.url);
+    }
+  }
+  return out;
+}
+
 async function collectDeliveryUrlsFromAdminApi(
   cred: { cloud_name: string; api_key: string; api_secret: string },
   pid: string
@@ -247,8 +282,10 @@ async function collectDeliveryUrlsFromAdminApi(
   const cloud = encodeURIComponent(cred.cloud_name);
   const encOne = encodeURIComponent(pid.replace(/^\/+/, ""));
   const encPath = encodedPublicIdPath(pid);
+  const q = encodeURIComponent(pid.replace(/^\/+/, ""));
   const tryMeta: string[] = [];
   for (const rt of ["raw", "image"] as const) {
+    tryMeta.push(`https://api.cloudinary.com/v1_1/${cloud}/resources/${rt}/upload?public_id=${q}`);
     tryMeta.push(`https://api.cloudinary.com/v1_1/${cloud}/resources/${rt}/upload/${encOne}`);
     if (encPath !== encOne) {
       tryMeta.push(`https://api.cloudinary.com/v1_1/${cloud}/resources/${rt}/upload/${encPath}`);
@@ -275,10 +312,18 @@ async function collectDeliveryUrlsFromAdminApi(
   return out;
 }
 
+function looksLikePdfOrZip(bytes: Buffer): boolean {
+  if (bytes.length >= 4 && bytes.subarray(0, 4).toString("ascii") === "%PDF") return true;
+  if (bytes.length >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4b) return true;
+  return false;
+}
+
 function isLikelyCloudinaryErrorBody(contentType: string, bytes: Buffer): boolean {
+  if (looksLikePdfOrZip(bytes)) return false;
   const ct = contentType.split(";")[0].trim().toLowerCase();
   if (ct === "application/pdf" || ct === "application/octet-stream") return false;
-  if (ct === "application/json" || ct === "text/html" || ct === "text/plain") return true;
+  if (ct === "application/json" || ct === "text/html") return true;
+  if (ct === "text/plain" && bytes.length < 2000) return true;
   if (bytes.length > 0 && bytes.length < 512) {
     const head = bytes.subarray(0, 1).toString("ascii");
     if (head === "{" || head === "<") return true;
@@ -335,6 +380,11 @@ export async function fetchCloudinaryBytesByPublicId(publicId: string): Promise<
     } catch {
       /* ignore */
     }
+    try {
+      push(cloudinary.url(pid, { ...signedBase, resource_type: "raw", long_url_signature: true }));
+    } catch {
+      /* ignore */
+    }
   }
 
   pushUnsignedRawDeliveryVariants(pid, push);
@@ -354,7 +404,8 @@ export async function fetchCloudinaryBytesByPublicId(publicId: string): Promise<
         if (bytes.length === 0) continue;
         const contentType = String(res.headers.get("content-type") || "").trim().toLowerCase();
         if (isLikelyCloudinaryErrorBody(contentType, bytes)) continue;
-        return { bytes, contentType };
+        const fixed = resolveContentTypeForBytes(bytes, contentType, null);
+        return { bytes, contentType: fixed };
       } catch {
         continue;
       }
@@ -369,6 +420,10 @@ export async function fetchCloudinaryBytesByPublicId(publicId: string): Promise<
     const fromAdmin = await collectDeliveryUrlsFromAdminApi(cred, pid);
     const second = await tryFetch(fromAdmin);
     if (second) return second;
+
+    const fromSdk = await collectUrlsFromSdkApiResource(cred, pid);
+    const third = await tryFetch(fromSdk);
+    if (third) return third;
   }
 
   return null;
