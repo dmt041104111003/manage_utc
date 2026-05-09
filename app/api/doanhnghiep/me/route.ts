@@ -48,6 +48,7 @@ export async function GET() {
       representativeTitle: true,
       enterpriseMeta: true,
       enterpriseStatus: true,
+      isLocked: true,
       createdAt: true,
       updatedAt: true
     }
@@ -65,6 +66,7 @@ export async function GET() {
     representativeTitle: user.representativeTitle ?? null,
     enterpriseMeta: user.enterpriseMeta ?? {},
     enterpriseStatus: user.enterpriseStatus ?? EnterpriseStatus.PENDING,
+    isLocked: Boolean((user as any).isLocked),
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString()
   };
