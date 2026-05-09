@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 
   if (roleParam !== "all" && Object.values(Role).includes(roleParam as Role)) {
     const r = roleParam as Role;
-    if ([Role.sinhvien, Role.giangvien, Role.doanhnghiep].includes(r)) andParts.push({ role: r });
+    if (([Role.sinhvien, Role.giangvien, Role.doanhnghiep] as Role[]).includes(r)) andParts.push({ role: r });
   }
 
   if (statusParam !== "all") {
