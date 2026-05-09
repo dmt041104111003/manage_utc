@@ -4,42 +4,83 @@ import { useMemo } from "react";
 import styles from "../styles/dashboard.module.css";
 import type { DonutSegment, SimpleChartSeries } from "@/lib/types/admin-dashboard";
 import { PROGRESS_STATUS_COLORS } from "@/lib/constants/admin-dashboard-charts";
-import { ReactEchart } from "@/app/components/charts/ReactEchart";
+import { DashboardInteractiveChart } from "@/app/components/charts/DashboardInteractiveChart";
 import {
   buildDonutChartOption,
   buildLineMultiSeriesOption,
   buildPerBarColorChartOption,
   buildSingleBarChartOption
 } from "@/lib/utils/echarts-dashboard-options";
+import {
+  buildCategoryBarInsightGetter,
+  buildDonutInsightGetter,
+  buildLineAxisInsightGetter
+} from "@/lib/utils/chart-insights";
 
-export function DonutChart({ segments }: { segments: DonutSegment[] }) {
+export function DonutChart({
+  segments,
+  total,
+  chartTitle = "Biểu đồ vòng"
+}: {
+  segments: DonutSegment[];
+  total: number;
+  chartTitle?: string;
+}) {
   const option = useMemo(() => buildDonutChartOption(segments), [segments]);
+  const getInsights = useMemo(() => buildDonutInsightGetter(segments, total), [segments, total]);
   if (segments.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-  return <ReactEchart option={option} height={280} />;
+  return <DashboardInteractiveChart option={option} height={280} chartTitle={chartTitle} getInsights={getInsights} />;
 }
 
-export function BarChart({ labels, values }: { labels: string[]; values: number[] }) {
+export function BarChart({
+  labels,
+  values,
+  chartTitle = "Cột giá trị"
+}: {
+  labels: string[];
+  values: number[];
+  chartTitle?: string;
+}) {
   const option = useMemo(
     () => buildSingleBarChartOption(labels, values, { valueLabel: "Số lượng" }),
     [labels, values]
   );
+  const getInsights = useMemo(() => buildCategoryBarInsightGetter(labels, values, "Số lượng"), [labels, values]);
   if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-  return <ReactEchart option={option} height={248} />;
+  return <DashboardInteractiveChart option={option} height={248} chartTitle={chartTitle} getInsights={getInsights} />;
 }
 
-export function ProgressColumnChart({ labels, values }: { labels: string[]; values: number[] }) {
+export function ProgressColumnChart({
+  labels,
+  values,
+  chartTitle = "Tiến độ"
+}: {
+  labels: string[];
+  values: number[];
+  chartTitle?: string;
+}) {
   const option = useMemo(
     () => buildPerBarColorChartOption(labels, values, PROGRESS_STATUS_COLORS, "Sinh viên"),
     [labels, values]
   );
+  const getInsights = useMemo(() => buildCategoryBarInsightGetter(labels, values, "Sinh viên"), [labels, values]);
   if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-  return <ReactEchart option={option} height={248} />;
+  return <DashboardInteractiveChart option={option} height={248} chartTitle={chartTitle} getInsights={getInsights} />;
 }
 
-export function LineChart({ labels, series }: { labels: string[]; series: SimpleChartSeries[] }) {
+export function LineChart({
+  labels,
+  series,
+  chartTitle = "Xu hướng"
+}: {
+  labels: string[];
+  series: SimpleChartSeries[];
+  chartTitle?: string;
+}) {
   const option = useMemo(() => buildLineMultiSeriesOption(labels, series), [labels, series]);
+  const getInsights = useMemo(() => buildLineAxisInsightGetter(labels, series), [labels, series]);
   if (series.length === 0 || labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-  return <ReactEchart option={option} height={292} />;
+  return <DashboardInteractiveChart option={option} height={292} chartTitle={chartTitle} getInsights={getInsights} />;
 }
 
 export function TopFacultiesCard({

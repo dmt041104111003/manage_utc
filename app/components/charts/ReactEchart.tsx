@@ -9,12 +9,15 @@ type Props = {
   /** Chiều cao cố định (px); chiều ngang 100% */
   height?: number;
   className?: string;
+  onChartClick?: (params: unknown) => void;
 };
 
-export function ReactEchart({ option, height = 280, className }: Props) {
+export function ReactEchart({ option, height = 280, className, onChartClick }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const chart = useRef<ReturnType<typeof echarts.init> | null>(null);
   const lastJson = useRef<string>("");
+  const clickRef = useRef(onChartClick);
+  clickRef.current = onChartClick;
 
   useEffect(() => {
     const el = host.current;
@@ -29,6 +32,16 @@ export function ReactEchart({ option, height = 280, className }: Props) {
       ro.disconnect();
       c.dispose();
       chart.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const c = chart.current;
+    if (!c || c.isDisposed?.()) return;
+    const handler = (params: unknown) => clickRef.current?.(params);
+    c.on("click", handler);
+    return () => {
+      c.off("click", handler);
     };
   }, []);
 

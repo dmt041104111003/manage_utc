@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
-import { ReactEchart } from "@/app/components/charts/ReactEchart";
+import { DashboardInteractiveChart } from "@/app/components/charts/DashboardInteractiveChart";
 import { buildPerBarColorChartOption } from "@/lib/utils/echarts-dashboard-options";
+import { buildCategoryBarInsightGetter } from "@/lib/utils/chart-insights";
 
 type Batch = { id: string; name: string; status: string };
 
@@ -38,18 +39,21 @@ const GV_DASHBOARD_INITIAL_KEY = gvDashboardOverviewCacheKey("all");
 function StatusBarChart({
   labels,
   values,
-  colors
+  colors,
+  chartTitle
 }: {
   labels: string[];
   values: number[];
   colors: string[];
+  chartTitle: string;
 }) {
   const option = useMemo(
     () => buildPerBarColorChartOption(labels, values, colors, "Sinh viên"),
     [labels, values, colors]
   );
+  const getInsights = useMemo(() => buildCategoryBarInsightGetter(labels, values, "Sinh viên"), [labels, values]);
   if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-  return <ReactEchart option={option} height={252} />;
+  return <DashboardInteractiveChart option={option} height={252} chartTitle={chartTitle} getInsights={getInsights} />;
 }
 
 export default function LecturerDashboardPage() {
@@ -133,12 +137,22 @@ export default function LecturerDashboardPage() {
         <section className={styles.overviewGrid}>
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái hướng dẫn</h2>
-            <StatusBarChart labels={guidanceStatus.labels} values={guidanceStatus.values} colors={GUIDANCE_COLORS} />
+            <StatusBarChart
+              labels={guidanceStatus.labels}
+              values={guidanceStatus.values}
+              colors={GUIDANCE_COLORS}
+              chartTitle="Trạng thái hướng dẫn"
+            />
           </article>
 
           <article className={styles.card}>
             <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái thực tập</h2>
-            <StatusBarChart labels={internshipStatus.labels} values={internshipStatus.values} colors={INTERNSHIP_COLORS} />
+            <StatusBarChart
+              labels={internshipStatus.labels}
+              values={internshipStatus.values}
+              colors={INTERNSHIP_COLORS}
+              chartTitle="Trạng thái thực tập"
+            />
           </article>
         </section>
       ) : null}

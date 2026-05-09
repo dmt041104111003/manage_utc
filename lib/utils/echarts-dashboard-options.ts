@@ -1,7 +1,15 @@
 import type { EChartsOption } from "echarts";
 import type { DonutSegment, SimpleChartSeries } from "@/lib/types/admin-dashboard";
 import { formatChartInt } from "@/lib/constants/recharts-dashboard-ui";
-import { darkenHex } from "@/lib/utils/chart-colors";
+import { darkenHex, withAlpha } from "@/lib/utils/chart-colors";
+
+const CHART_MOTION = {
+  animation: true,
+  animationDuration: 900,
+  animationDurationUpdate: 650,
+  animationEasing: "cubicOut" as const,
+  animationEasingUpdate: "cubicInOut" as const
+};
 
 const AXIS = {
   axisLabel: { color: "#64748b", fontSize: 11, fontWeight: 500 },
@@ -9,23 +17,31 @@ const AXIS = {
   splitLine: { lineStyle: { color: "#e2e8f0", type: [4, 6] as [number, number] } }
 };
 
+const TOOLTIP_CARD = {
+  backgroundColor: "rgba(255,255,255,0.96)",
+  borderWidth: 0,
+  borderRadius: 14,
+  padding: [14, 18] as [number, number],
+  textStyle: { color: "#1e293b", fontSize: 13, fontWeight: 500 },
+  extraCssText:
+    "box-shadow:0 20px 50px rgba(15,23,42,0.14);border:1px solid rgba(226,232,240,0.95);backdrop-filter:blur(8px);"
+};
+
 const TOOLTIP_AXIS = {
   trigger: "axis" as const,
-  backgroundColor: "rgba(255,255,255,0.98)",
-  borderColor: "#e2e8f0",
-  borderWidth: 1,
-  padding: [10, 14],
-  textStyle: { color: "#334155", fontSize: 13 },
-  axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(15,23,42,0.06)" } }
+  ...TOOLTIP_CARD,
+  axisPointer: { type: "line" as const, lineStyle: { color: "#94a3b8", width: 1, type: [4, 4] as [number, number] } }
+};
+
+const TOOLTIP_AXIS_BAR = {
+  trigger: "axis" as const,
+  ...TOOLTIP_CARD,
+  axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(15,23,42,0.07)" } }
 };
 
 const TOOLTIP_ITEM = {
   trigger: "item" as const,
-  backgroundColor: "rgba(255,255,255,0.98)",
-  borderColor: "#e2e8f0",
-  borderWidth: 1,
-  padding: [10, 14],
-  textStyle: { color: "#334155", fontSize: 13 }
+  ...TOOLTIP_CARD
 };
 
 const LEGEND_BOTTOM = {
@@ -64,11 +80,16 @@ export function buildDonutChartOption(segments: DonutSegment[]): EChartsOption {
   const total = data.reduce((a, d) => a + (Number(d.value) || 0), 0);
 
   return {
+    ...CHART_MOTION,
     tooltip: {
       ...TOOLTIP_ITEM,
       formatter: (p: unknown) => {
-        const x = p as { name?: string; value?: number };
-        return `${x.name ?? ""}<br/><b>${formatChartInt(x.value)}</b>`;
+        const x = p as { name?: string; value?: number; percent?: number };
+        const pct =
+          typeof x.percent === "number" ? `${x.percent.toFixed(1)}%` : "";
+        return `<div style="font-weight:700;margin-bottom:6px;color:#0f172a">${x.name ?? ""}</div>` +
+          `<div style="font-size:22px;font-weight:800;color:#1d4ed8;line-height:1.1">${formatChartInt(x.value)}</div>` +
+          (pct ? `<div style="margin-top:6px;font-size:12px;color:#64748b">${pct} tổng vòng</div>` : "");
       }
     },
     legend: { ...LEGEND_BOTTOM, bottom: 6, left: "center" },
@@ -112,8 +133,8 @@ export function buildDonutChartOption(segments: DonutSegment[]): EChartsOption {
         label: { show: false },
         emphasis: {
           scale: true,
-          scaleSize: 4,
-          itemStyle: { shadowBlur: 24, shadowColor: "rgba(15,23,42,0.18)" }
+          scaleSize: 6,
+          itemStyle: { shadowBlur: 28, shadowColor: "rgba(15,23,42,0.22)" }
         },
         data
       }
@@ -132,13 +153,17 @@ export function buildSingleBarChartOption(
     value: values[i] ?? 0,
     itemStyle: {
       color: linearGradient(g[0], g[1]),
-      borderRadius: [10, 10, 0, 0]
+      borderRadius: [10, 10, 0, 0],
+      shadowBlur: 8,
+      shadowColor: "rgba(37,99,235,0.12)",
+      shadowOffsetY: 4
     }
   }));
 
   return {
+    ...CHART_MOTION,
     tooltip: {
-      ...TOOLTIP_AXIS,
+      ...TOOLTIP_AXIS_BAR,
       formatter: (params: unknown) => {
         const arr = params as { name?: string; value?: number }[];
         const p = Array.isArray(arr) ? arr[0] : (params as { name?: string; value?: number });
@@ -147,7 +172,7 @@ export function buildSingleBarChartOption(
         return `${name}<br/><b>${formatChartInt(v)}</b> ${opts?.valueLabel ?? ""}`.trim();
       }
     },
-    grid: { left: 8, right: 16, top: 16, bottom: 56, containLabel: true },
+    grid: { left: 8, right: 16, top: 20, bottom: 56, containLabel: true },
     xAxis: {
       type: "category",
       data: categories,
@@ -168,7 +193,7 @@ export function buildSingleBarChartOption(
         name: opts?.valueLabel ?? "Số lượng",
         barMaxWidth: 52,
         data: seriesData,
-        emphasis: { focus: "series", itemStyle: { shadowBlur: 14, shadowColor: "rgba(37,99,235,0.35)" } }
+        emphasis: { focus: "series" as const, itemStyle: { shadowBlur: 16, shadowColor: "rgba(37,99,235,0.38)" } }
       }
     ]
   };
@@ -187,21 +212,25 @@ export function buildPerBarColorChartOption(
       value: values[i] ?? 0,
       itemStyle: {
         color: linearGradient(c, darkenHex(c, 0.25)),
-        borderRadius: [10, 10, 0, 0]
+        borderRadius: [10, 10, 0, 0],
+        shadowBlur: 6,
+        shadowColor: "rgba(15,23,42,0.08)",
+        shadowOffsetY: 3
       }
     };
   });
 
   return {
+    ...CHART_MOTION,
     tooltip: {
-      ...TOOLTIP_AXIS,
+      ...TOOLTIP_AXIS_BAR,
       formatter: (params: unknown) => {
         const arr = params as { name?: string; value?: number }[];
         const p = Array.isArray(arr) ? arr[0] : (params as { name?: string; value?: number });
         return `${p?.name ?? ""}<br/><b>${formatChartInt(p?.value)}</b> ${valueAxisName}`;
       }
     },
-    grid: { left: 8, right: 16, top: 16, bottom: 56, containLabel: true },
+    grid: { left: 8, right: 16, top: 20, bottom: 56, containLabel: true },
     xAxis: {
       type: "category",
       data: categories,
@@ -222,7 +251,7 @@ export function buildPerBarColorChartOption(
         name: valueAxisName,
         barMaxWidth: 52,
         data: seriesData,
-        emphasis: { focus: "series" }
+        emphasis: { focus: "series" as const, itemStyle: { shadowBlur: 12, shadowColor: "rgba(15,23,42,0.12)" } }
       }
     ]
   };
@@ -233,17 +262,31 @@ export function buildLineMultiSeriesOption(labels: string[], series: SimpleChart
   const ser = series.map((s) => ({
     name: s.name,
     type: "line" as const,
-    smooth: true,
+    smooth: 0.35,
     symbol: "circle",
-    symbolSize: 8,
+    symbolSize: 9,
     showSymbol: true,
-    lineStyle: { width: 3, color: s.color },
+    lineStyle: { width: 3.2, color: s.color, cap: "round" as const, join: "round" as const },
     itemStyle: { color: s.color, borderColor: "#fff", borderWidth: 2 },
-    emphasis: { focus: "series" as const, lineStyle: { width: 4 } },
+    areaStyle: {
+      color: {
+        type: "linear" as const,
+        x: 0,
+        y: 0,
+        x2: 0,
+        y2: 1,
+        colorStops: [
+          { offset: 0, color: withAlpha(s.color, 0.28) },
+          { offset: 1, color: withAlpha(s.color, 0.02) }
+        ]
+      }
+    },
+    emphasis: { focus: "series" as const, lineStyle: { width: 4.5 } },
     data: labels.map((_, i) => s.data[i] ?? 0)
   }));
 
   return {
+    ...CHART_MOTION,
     tooltip: {
       ...TOOLTIP_AXIS,
       formatter: (params: unknown) => {
@@ -258,7 +301,7 @@ export function buildLineMultiSeriesOption(labels: string[], series: SimpleChart
       }
     },
     legend: { ...LEGEND_BOTTOM, top: 4, data: series.map((s) => s.name) },
-    grid: { left: 8, right: 20, top: 44, bottom: 20, containLabel: true },
+    grid: { left: 8, right: 20, top: 48, bottom: 24, containLabel: true },
     xAxis: {
       type: "category",
       boundaryGap: false,
@@ -296,8 +339,9 @@ export function buildGroupedBarChartOption(
   }));
 
   return {
+    ...CHART_MOTION,
     tooltip: {
-      ...TOOLTIP_AXIS,
+      ...TOOLTIP_AXIS_BAR,
       formatter: (params: unknown) => {
         const list = Array.isArray(params) ? params : [params];
         let html = "";
@@ -310,7 +354,7 @@ export function buildGroupedBarChartOption(
       }
     },
     legend: { ...LEGEND_BOTTOM, top: 4, data: groups.map((g) => g.name) },
-    grid: { left: 8, right: 16, top: 44, bottom: 52, containLabel: true },
+    grid: { left: 8, right: 16, top: 48, bottom: 52, containLabel: true },
     xAxis: {
       type: "category",
       data: categories,
