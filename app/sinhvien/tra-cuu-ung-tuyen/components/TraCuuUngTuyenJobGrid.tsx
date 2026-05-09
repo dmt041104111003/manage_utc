@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { SinhVienTraCuuUngTuyenItem } from "@/lib/types/sinhvien-tra-cuu-ung-tuyen";
 import { appliedStatusText, canApplyStatusText, workTypeLabel } from "@/lib/constants/sinhvien-tra-cuu-ung-tuyen";
 import { formatDateVi } from "@/lib/utils/sinhvien-tra-cuu-ung-tuyen";
+import adminStyles from "../../../admin/styles/dashboard.module.css";
 import cardStyles from "../styles.module.css";
 
 type Props = {
@@ -23,7 +24,7 @@ export default function TraCuuUngTuyenJobGrid({ items, canApply }: Props) {
             <span>{workTypeLabel[item.workType]}</span>
           </div>
           <div className={cardStyles.metaRow}>
-            <span>Chuyên môn: {item.expertise}</span>
+            <span>Vị trí tuyển dụng: {item.expertise}</span>
             <span>Lương: {item.salary}</span>
           </div>
           <div className={cardStyles.metaRow}>
@@ -32,9 +33,12 @@ export default function TraCuuUngTuyenJobGrid({ items, canApply }: Props) {
           </div>
           <div className={cardStyles.footer}>
             <span className={cardStyles.field}>{item.businessField}</span>
-            <span className={item.hasApplied ? cardStyles.applied : cardStyles.open}>
-              {item.hasApplied ? appliedStatusText : canApplyStatusText}
-            </span>
+            <Link
+              href={`/sinhvien/tra-cuu-ung-tuyen/${item.id}`}
+              className={`${adminStyles.btn} ${adminStyles.btnPrimary}`.trim()}
+            >
+              Xem chi tiết
+            </Link>
           </div>
         </article>
       ))}

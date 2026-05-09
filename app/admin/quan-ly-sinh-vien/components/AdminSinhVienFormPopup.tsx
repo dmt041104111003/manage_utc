@@ -106,15 +106,17 @@ export default function AdminSinhVienFormPopup(props: Props) {
           {fieldErrors.phone ? <p className={formStyles.error}>{fieldErrors.phone}</p> : null}
         </div>
         <div className={formStyles.field}>
-          <label className={formStyles.label}>{isCreate ? "Email *" : "Email"}</label>
+          <label className={formStyles.label}>
+            Email <span className={formStyles.required}>*</span>
+          </label>
           <input
             className={formStyles.input}
-            value={isCreate ? form.email : editEmail || ""}
-            onChange={(e) => isCreate && setForm((p) => ({ ...p, email: e.target.value }))}
-            placeholder={isCreate ? "example@domain.com" : ""}
-            disabled={!isCreate}
+            value={isCreate ? form.email : form.email}
+            onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+            placeholder="example@domain.com"
+            disabled={busy}
           />
-          {isCreate && fieldErrors.email ? <p className={formStyles.error}>{fieldErrors.email}</p> : null}
+          {fieldErrors.email ? <p className={formStyles.error}>{fieldErrors.email}</p> : null}
         </div>
       </div>
 

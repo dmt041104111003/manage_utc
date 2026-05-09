@@ -192,7 +192,8 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     where: { id: current.userId },
     data: {
       fullName: body.fullName.trim(),
-      phone: body.phone.trim()
+      phone: body.phone.trim(),
+      email: body.email.trim().toLowerCase()
     }
   });
 

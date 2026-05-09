@@ -21,7 +21,7 @@ export default function JobDetailInfo({ job }: Props) {
             <td>{job.salary}</td>
           </tr>
           <tr>
-            <th scope="row">Chuyên môn</th>
+            <th scope="row">Vị trí tuyển dụng</th>
             <td>{job.expertise}</td>
           </tr>
           <tr>

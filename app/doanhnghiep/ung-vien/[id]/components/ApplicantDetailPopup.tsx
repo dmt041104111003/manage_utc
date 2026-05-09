@@ -35,6 +35,22 @@ const nextStatusLabel: Record<JobApplicationStatus, string> = {
   STUDENT_DECLINED: "Ứng viên từ chối"
 };
 
+function tomorrowDateTimeLocalMin(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(0, 0, 0, 0);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  // datetime-local expects: YYYY-MM-DDTHH:mm
+  return `${yyyy}-${mm}-${dd}T00:00`;
+}
+
+function maxDateTimeLocal(a: string, b: string): string {
+  // Works for YYYY-MM-DDTHH:mm
+  return a >= b ? a : b;
+}
+
 export default function ApplicantDetailPopup({
   viewTarget,
   busy,
@@ -51,6 +67,8 @@ export default function ApplicantDetailPopup({
 }: Props) {
   if (!viewTarget) return null;
 
+  const minDateTime = tomorrowDateTimeLocalMin();
+  const minResponseDeadline = interviewAt ? maxDateTimeLocal(minDateTime, interviewAt) : minDateTime;
   const availableStatuses = getAvailableNextStatuses(viewTarget.status, viewTarget.response);
   const canUpdate = availableStatuses.length > 0;
   const canSave = canUpdate && viewTarget.internshipStatus === "NOT_STARTED";
@@ -165,10 +183,38 @@ export default function ApplicantDetailPopup({
                         </div>
                       ) : null}
                     </>
+                  ) : h?.action === "APPLIED" ? (
+                    <span style={{ color: "#374151" }}>
+                      Ứng viên nộp hồ sơ:{" "}
+                      <b>{applicationStatusLabel[h.status as JobApplicationStatus] ?? (h.status as string) ?? "—"}</b>
+                    </span>
                   ) : h?.action === "STUDENT_RESPONSE" ? (
                     <span style={{ color: "#374151" }}>
                       Ứng viên phản hồi:{" "}
-                      <b>{h.response === "ACCEPTED" ? "Chấp nhận" : "Từ chối"}</b>
+                      <b>
+                        {(() => {
+                          const purpose = String((h as any)?.purpose || "");
+                          const accepted = h.response === "ACCEPTED";
+                          if (purpose === "respond_interview") return accepted ? "Chấp nhận phỏng vấn" : "Từ chối phỏng vấn";
+                          if (purpose === "respond_offer") return accepted ? "Chấp nhận thực tập" : "Từ chối thực tập";
+                          return accepted ? "Chấp nhận" : "Từ chối";
+                        })()}
+                      </b>
+                    </span>
+                  ) : ["CONFIRM_INTERVIEW", "DECLINE_INTERVIEW", "CONFIRM_INTERNSHIP", "DECLINE_INTERNSHIP"].includes(
+                      String(h?.action || "")
+                    ) ? (
+                    <span style={{ color: "#374151" }}>
+                      Ứng viên phản hồi:{" "}
+                      <b>
+                        {h?.action === "CONFIRM_INTERVIEW"
+                          ? "Xác nhận phỏng vấn"
+                          : h?.action === "DECLINE_INTERVIEW"
+                            ? "Từ chối phỏng vấn"
+                            : h?.action === "CONFIRM_INTERNSHIP"
+                              ? "Xác nhận thực tập"
+                              : "Từ chối thực tập"}
+                      </b>
                     </span>
                   ) : h?.action === "AUTO_DECLINED" ? (
                     <span style={{ color: "#dc2626" }}>Hệ thống tự động từ chối (quá hạn phản hồi)</span>
@@ -223,7 +269,7 @@ export default function ApplicantDetailPopup({
             fontWeight: 500
           }}
         >
-          Sinh viên đã có nơi thực tập. Không thể cập nhật trạng thái hồ sơ.
+          Sinh viên đã thực tập. Không thể cập nhật trạng thái hồ sơ.
         </div>
       ) : !canUpdate ? (
         <div
@@ -274,6 +320,7 @@ export default function ApplicantDetailPopup({
                   className={adminStyles.textInputSearch}
                   type="datetime-local"
                   value={interviewAt}
+                  min={minDateTime}
                   onChange={(e) => onInterviewAtChange(e.target.value)}
                   disabled={busy}
                 />
@@ -299,6 +346,7 @@ export default function ApplicantDetailPopup({
                   className={adminStyles.textInputSearch}
                   type="datetime-local"
                   value={responseDeadline}
+                  min={minResponseDeadline}
                   onChange={(e) => onResponseDeadlineChange(e.target.value)}
                   disabled={busy}
                 />
@@ -316,6 +364,7 @@ export default function ApplicantDetailPopup({
                 className={adminStyles.textInputSearch}
                 type="datetime-local"
                 value={responseDeadline}
+                min={minDateTime}
                 onChange={(e) => onResponseDeadlineChange(e.target.value)}
                 disabled={busy}
               />

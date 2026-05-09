@@ -193,6 +193,14 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       msv: true,
       internshipStatus: true,
       user: { select: { fullName: true, email: true } },
+      internshipReport: {
+        select: {
+          reviewStatus: true,
+          supervisorPoint: true,
+          enterprisePoint: true,
+          supervisorEvaluation: true
+        }
+      },
       assignmentLinks: {
         orderBy: { createdAt: "desc" },
         take: 1,
@@ -218,6 +226,23 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
   if (internshipStatus === "COMPLETED" || internshipStatus === "REJECTED") {
     return NextResponse.json({ success: false, message: "Trạng thái thực tập đã ở trạng thái cuối cùng, không thể cập nhật lại." }, { status: 400 });
+  }
+
+  if (finalStatus === "COMPLETED") {
+    const report = profile.internshipReport;
+    const reviewStatus = (report?.reviewStatus ?? null) as ReportReviewStatus | null;
+    const dqt = report?.supervisorPoint ?? null;
+    const kthp = report?.enterprisePoint ?? null;
+    const evaluation = (report?.supervisorEvaluation ?? "").trim();
+    if (reviewStatus !== "APPROVED" || dqt == null || kthp == null || !evaluation) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Chưa thể cập nhật 'Hoàn thành thực tập': GVHD chưa duyệt BCTT hoặc chưa có đủ điểm ĐQT/KTHP và đánh giá."
+        },
+        { status: 400 }
+      );
+    }
   }
 
   const prevStatus = internshipStatus;

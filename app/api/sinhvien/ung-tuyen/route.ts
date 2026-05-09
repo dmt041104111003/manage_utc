@@ -35,6 +35,21 @@ export async function GET(request: Request) {
     }
   }
 
+  function extractHistoryMeta(history: any[]): { responseDeadline: string | null; interviewLocation: string | null } {
+    if (!Array.isArray(history) || !history.length) return { responseDeadline: null, interviewLocation: null };
+    let responseDeadline: string | null = null;
+    let interviewLocation: string | null = null;
+    for (let i = history.length - 1; i >= 0; i--) {
+      const h = history[i] as Record<string, unknown>;
+      if (h?.action === "STATUS_UPDATE") {
+        if (!responseDeadline && typeof h?.responseDeadline === "string") responseDeadline = h.responseDeadline as string;
+        if (!interviewLocation && typeof h?.interviewLocation === "string") interviewLocation = h.interviewLocation as string;
+        if (responseDeadline && interviewLocation) break;
+      }
+    }
+    return { responseDeadline, interviewLocation };
+  }
+
   const rows = await prismaAny.jobApplication.findMany({
     where,
     orderBy: { createdAt: "desc" },
@@ -45,6 +60,7 @@ export async function GET(request: Request) {
       createdAt: true,
       interviewAt: true,
       responseAt: true,
+      history: true,
       jobPost: {
         select: {
           id: true,
@@ -66,6 +82,7 @@ export async function GET(request: Request) {
       response: r.response,
       appliedAt: r.createdAt?.toISOString?.() ?? null,
       interviewAt: r.interviewAt?.toISOString?.() ?? null,
+      ...extractHistoryMeta(Array.isArray(r.history) ? r.history : []),
       responseAt: r.responseAt?.toISOString?.() ?? null,
       job: {
         id: r.jobPost.id,

@@ -17,6 +17,7 @@ export type StudentListItem = {
   cohort: string;
   degree: Degree;
   internshipStatus: InternshipStatus;
+  hasSupervisor: boolean;
   phone: string | null;
   email: string;
   birthDate: string | null;

@@ -106,6 +106,15 @@
   box-shadow: 0 0 0 3px rgba(0, 91, 172, 0.12);
 }
 
+.comboControlGreen {
+  border-color: rgba(0, 91, 172, 0.55);
+}
+
+.comboControlOpenGreen {
+  border-color: rgba(0, 91, 172, 0.55);
+  box-shadow: 0 0 0 3px rgba(0, 91, 172, 0.12);
+}
+
 .comboControl:disabled {
   opacity: 0.65;
   cursor: not-allowed;
@@ -208,6 +217,11 @@
   box-shadow: 0 0 0 3px rgba(0, 91, 172, 0.12);
 }
 
+.comboSearchGreen:focus {
+  border-color: rgba(0, 91, 172, 0.55);
+  box-shadow: 0 0 0 3px rgba(0, 91, 172, 0.12);
+}
+
 .comboList {
   max-height: 240px;
   overflow: auto;
@@ -237,6 +251,10 @@
   background: #eaf3fb;
 }
 
+.comboOptionSelectedGreen {
+  background: #eaf3fb;
+}
+
 .comboOption:disabled {
   opacity: 0.65;
   cursor: not-allowed;
@@ -245,6 +263,10 @@
 .comboOptionCheck {
   color: #005bac;
   font-weight: 700;
+}
+
+.comboOptionCheckGreen {
+  color: #005bac;
 }
 
 .comboOptionText {

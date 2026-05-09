@@ -18,6 +18,13 @@ function parseDateTime(input: string) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+function tomorrowStart(): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 function canUpdateStatus(
   currentStatus: JobApplicationStatus,
   response: JobApplicationResponse,
@@ -158,6 +165,19 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     if (!parsedInterview) return NextResponse.json({ success: false, message: "Thời gian phỏng vấn không hợp lệ." }, { status: 400 });
     const parsedDeadline = parseDateTime(responseDeadlineRaw);
     if (!parsedDeadline) return NextResponse.json({ success: false, message: "Thời hạn phản hồi không hợp lệ." }, { status: 400 });
+    const min = tomorrowStart().getTime();
+    if (!(parsedInterview.getTime() >= min)) {
+      return NextResponse.json({ success: false, message: "Thời gian phỏng vấn phải từ ngày mai trở đi." }, { status: 400 });
+    }
+    if (!(parsedDeadline.getTime() >= min)) {
+      return NextResponse.json({ success: false, message: "Thời hạn phản hồi phải từ ngày mai trở đi." }, { status: 400 });
+    }
+    if (!(parsedDeadline.getTime() >= parsedInterview.getTime())) {
+      return NextResponse.json(
+        { success: false, message: "Thời hạn phản hồi phải lớn hơn hoặc bằng thời gian phỏng vấn." },
+        { status: 400 }
+      );
+    }
     interviewAt = parsedInterview;
     responseDeadline = parsedDeadline;
   }
@@ -168,6 +188,10 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     }
     const parsedDeadline = parseDateTime(responseDeadlineRaw);
     if (!parsedDeadline) return NextResponse.json({ success: false, message: "Thời hạn phản hồi không hợp lệ." }, { status: 400 });
+    const min = tomorrowStart().getTime();
+    if (!(parsedDeadline.getTime() >= min)) {
+      return NextResponse.json({ success: false, message: "Thời hạn phản hồi phải từ ngày mai trở đi." }, { status: 400 });
+    }
     responseDeadline = parsedDeadline;
   }
 

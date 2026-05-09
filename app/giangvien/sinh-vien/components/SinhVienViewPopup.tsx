@@ -172,13 +172,7 @@ export default function SinhVienViewPopup({ viewTarget, onClose }: Props) {
                     <td>{viewTarget.report?.supervisorPoint != null ? viewTarget.report.supervisorPoint : "—"}</td>
                   </tr>
                   <tr>
-                    <th scope="row">Đánh giá của DN</th>
-                    <td style={{ whiteSpace: "pre-wrap" }}>
-                      {viewTarget.report?.enterpriseEvaluation ?? "—"}
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Điểm KTHP (DN)</th>
+                    <th scope="row">Điểm KTHP (Giảng viên hướng dẫn)</th>
                     <td>{viewTarget.report?.enterprisePoint != null ? viewTarget.report.enterprisePoint : "—"}</td>
                   </tr>
                   <tr>

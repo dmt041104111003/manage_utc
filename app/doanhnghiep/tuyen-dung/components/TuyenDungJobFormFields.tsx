@@ -1,18 +1,51 @@
 import type { JobFormState } from "@/lib/types/doanhnghiep-tuyen-dung";
 import formStyles from "../../../auth/styles/register.module.css";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
   form: JobFormState;
   fieldErrors: Record<string, string>;
   disabled: boolean;
   onChange: (updates: Partial<JobFormState>) => void;
+  facultyOptions: string[];
 };
 
+function tomorrowDateInputValue(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function TuyenDungJobFormFields({ form, fieldErrors, disabled, onChange }: Props) {
+  const minDeadlineAt = tomorrowDateInputValue();
+  const [facultyOpen, setFacultyOpen] = useState(false);
+  const facultyRootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!facultyOpen) return;
+    const onDocMouseDown = (e: MouseEvent) => {
+      const el = facultyRootRef.current;
+      if (!el) return;
+      if (e.target instanceof Node && !el.contains(e.target)) setFacultyOpen(false);
+    };
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [facultyOpen]);
+
+  const selectedFaculties = useMemo(() => {
+    const set = new Set(form.allowedFaculties.map((x) => String(x || "").trim()).filter(Boolean));
+    return Array.from(set.values());
+  }, [form.allowedFaculties]);
+
+  const facultySummary = selectedFaculties.length ? selectedFaculties.join(", ") : "Chọn ngành/khoa";
+
   return (
     <fieldset disabled={disabled} style={{ border: 0, padding: 0, marginTop: 10 }}>
       <div className={formStyles.field}>
-        <label className={formStyles.label}>Thông tin doanh nghiệp</label>
+        <label className={formStyles.label}>Giới thiệu về công ty</label>
         <textarea
           className={formStyles.input as string}
           value={form.companyIntro}
@@ -57,16 +90,73 @@ export default function TuyenDungJobFormFields({ form, fieldErrors, disabled, on
         </div>
         <div className={formStyles.field}>
           <label className={formStyles.label}>
-            Chuyên môn <span className={formStyles.required}>*</span>
+            Vị trí tuyển dụng <span className={formStyles.required}>*</span>
           </label>
           <input
             className={formStyles.input}
             value={form.expertise}
             onChange={(e) => onChange({ expertise: e.target.value })}
-            placeholder="Nhập chuyên môn"
+            placeholder="Nhập vị trí tuyển dụng"
           />
           {fieldErrors.expertise ? <p className={formStyles.error}>{fieldErrors.expertise}</p> : null}
         </div>
+      </div>
+
+      <div className={formStyles.field}>
+        <label className={formStyles.label}>
+          Ngành/Khoa <span className={formStyles.required}>*</span>
+        </label>
+        <div ref={facultyRootRef} className={formStyles.comboRoot}>
+          <button
+            type="button"
+            className={`${formStyles.comboControl} ${facultyOpen ? formStyles.comboControlOpen : ""}`}
+            aria-haspopup="listbox"
+            aria-expanded={facultyOpen}
+            onClick={() => setFacultyOpen((v) => !v)}
+            title={!facultyOptions.length ? "Chưa có danh sách khoa." : undefined}
+          >
+            <span className={formStyles.comboValue}>
+              {selectedFaculties.length ? facultySummary : <span className={formStyles.comboPlaceholder}>{facultySummary}</span>}
+            </span>
+            <span className={formStyles.comboCaret} aria-hidden="true">
+              ▾
+            </span>
+          </button>
+
+          {facultyOpen ? (
+            <div className={formStyles.comboDropdown} role="dialog" aria-label="Chọn ngành/khoa">
+              <div className={formStyles.comboList} role="listbox" aria-multiselectable="true">
+                {facultyOptions.length ? (
+                  facultyOptions.map((f) => {
+                    const checked = selectedFaculties.includes(f);
+                    return (
+                      <label
+                        key={f}
+                        className={formStyles.comboOption}
+                        style={{ display: "flex", gap: 10, alignItems: "center" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            const next = checked
+                              ? selectedFaculties.filter((x) => x !== f)
+                              : [...selectedFaculties, f];
+                            onChange({ allowedFaculties: next });
+                          }}
+                        />
+                        <span className={formStyles.comboOptionText}>{f}</span>
+                      </label>
+                    );
+                  })
+                ) : (
+                  <div className={formStyles.comboEmpty}>Không có dữ liệu khoa.</div>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </div>
+        {fieldErrors.allowedFaculties ? <p className={formStyles.error}>{fieldErrors.allowedFaculties}</p> : null}
       </div>
 
       <div className={formStyles.field}>
@@ -120,6 +210,7 @@ export default function TuyenDungJobFormFields({ form, fieldErrors, disabled, on
           className={formStyles.input}
           type="date"
           value={form.deadlineAt}
+          min={minDeadlineAt}
           onChange={(e) => onChange({ deadlineAt: e.target.value })}
           placeholder="Chọn ngày"
         />

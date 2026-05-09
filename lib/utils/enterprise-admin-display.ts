@@ -19,7 +19,7 @@ export function formatEnterpriseStatusVi(status: EnterpriseStatus | null | undef
 export function buildEnterpriseHeadquartersAddress(meta: unknown): string {
   if (!meta || typeof meta !== "object" || Array.isArray(meta)) return "—";
   const m = meta as Record<string, unknown>;
-  const parts = [m.province, m.ward, m.addressDetail].filter((x) => typeof x === "string" && String(x).trim());
+  const parts = [m.addressDetail, m.ward, m.province].filter((x) => typeof x === "string" && String(x).trim());
   return parts.length ? parts.map(String).join(", ") : "—";
 }
 

@@ -7,6 +7,7 @@ type Props = {
   editDetail: JobDetailResponse | null;
   editLoading: boolean;
   form: JobFormState;
+  facultyOptions: string[];
   fieldErrors: Record<string, string>;
   busyId: string | null;
   onChange: (updates: Partial<JobFormState>) => void;
@@ -19,6 +20,7 @@ export default function TuyenDungEditPopup({
   editDetail,
   editLoading,
   form,
+  facultyOptions,
   fieldErrors,
   busyId,
   onChange,
@@ -43,6 +45,7 @@ export default function TuyenDungEditPopup({
             ) : null}
             <TuyenDungJobFormFields
               form={form}
+              facultyOptions={facultyOptions}
               fieldErrors={fieldErrors}
               disabled={busyId !== null}
               onChange={onChange}

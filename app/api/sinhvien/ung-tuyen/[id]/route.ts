@@ -5,6 +5,7 @@ import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/lib/mail";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
+import { escapeHtml, mailCalloutHtml } from "@/lib/mail-layout";
 
 type StudentAction = "CONFIRM_INTERVIEW" | "DECLINE_INTERVIEW" | "CONFIRM_INTERNSHIP" | "DECLINE_INTERNSHIP";
 
@@ -226,7 +227,40 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
           ? `Kính gửi ${svFullName},\n\nBạn đã XÁC NHẬN thực tập tại ${companyName} cho vị trí "${jobTitle}". Trạng thái thực tập của bạn đã được cập nhật sang "Đang thực tập".\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
           : `Kính gửi ${svFullName},\n\nBạn đã TỪ CHỐI thực tập tại ${companyName} cho vị trí "${jobTitle}".\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`;
 
-      await sendMail(svEmail, svSubject, svBody);
+      const safeSv = escapeHtml(svFullName);
+      const safeCompany = escapeHtml(companyName);
+      const safeJob = escapeHtml(jobTitle);
+      const safeUrl = escapeHtml(`${appUrl}/sinhvien`);
+
+      const actionLabel =
+        action === "CONFIRM_INTERVIEW"
+          ? "Xác nhận phỏng vấn"
+          : action === "DECLINE_INTERVIEW"
+            ? "Từ chối phỏng vấn"
+            : action === "CONFIRM_INTERNSHIP"
+              ? "Xác nhận thực tập"
+              : "Từ chối thực tập";
+
+      const mainLine =
+        action === "CONFIRM_INTERVIEW"
+          ? `Bạn đã <strong>XÁC NHẬN</strong> tham gia phỏng vấn cho vị trí <strong>"${safeJob}"</strong> tại <strong>${safeCompany}</strong>. Doanh nghiệp sẽ liên hệ với bạn để sắp xếp lịch.`
+          : action === "DECLINE_INTERVIEW"
+            ? `Bạn đã <strong>TỪ CHỐI</strong> tham gia phỏng vấn cho vị trí <strong>"${safeJob}"</strong> tại <strong>${safeCompany}</strong>.`
+            : action === "CONFIRM_INTERNSHIP"
+              ? `Bạn đã <strong>XÁC NHẬN</strong> thực tập cho vị trí <strong>"${safeJob}"</strong> tại <strong>${safeCompany}</strong>. Trạng thái thực tập của bạn đã được cập nhật.`
+              : `Bạn đã <strong>TỪ CHỐI</strong> thực tập cho vị trí <strong>"${safeJob}"</strong> tại <strong>${safeCompany}</strong>.`;
+
+      const svHtml = `
+        <p style="margin:0 0 14px;">Kính gửi <strong>${safeSv}</strong>,</p>
+        ${mailCalloutHtml("success", actionLabel, `<p style="margin:0;">${mainLine}</p>`)}
+        <p style="margin:0 0 14px;">
+          Đường dẫn hệ thống: <a href="${safeUrl}" style="color:#005bac;text-decoration:underline;">${safeUrl}</a>
+        </p>
+        <p style="margin:0;">Trân trọng,</p>
+        <p style="margin:0;">Hệ thống quản lý thực tập UTC</p>
+      `.trim();
+
+      await sendMail(svEmail, svSubject, svBody, svHtml);
     }
   } catch {
     // Email failure should not block the main response

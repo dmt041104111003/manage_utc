@@ -4,20 +4,21 @@
 }
 
 .jobCard {
-  border: 1px solid #86efac;
-  border-radius: 12px;
-  background: #f0fdf4;
-  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 14px 16px;
 }
 
 .titleLink {
-  color: #ef4444;
-  font-size: 20px;
+  color: #111827;
+  font-size: 18px;
   font-weight: 700;
   text-decoration: none;
 }
 
 .titleLink:hover {
+  color: #1d4ed8;
   text-decoration: underline;
 }
 

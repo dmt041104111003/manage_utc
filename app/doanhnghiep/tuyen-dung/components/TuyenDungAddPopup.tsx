@@ -5,6 +5,7 @@ import adminStyles from "../../../admin/styles/dashboard.module.css";
 type Props = {
   open: boolean;
   form: JobFormState;
+  facultyOptions: string[];
   fieldErrors: Record<string, string>;
   busyId: string | null;
   onChange: (updates: Partial<JobFormState>) => void;
@@ -12,7 +13,7 @@ type Props = {
   onSubmit: () => void;
 };
 
-export default function TuyenDungAddPopup({ open, form, fieldErrors, busyId, onChange, onCancel, onSubmit }: Props) {
+export default function TuyenDungAddPopup({ open, form, facultyOptions, fieldErrors, busyId, onChange, onCancel, onSubmit }: Props) {
   if (!open) return null;
 
   return (
@@ -21,6 +22,7 @@ export default function TuyenDungAddPopup({ open, form, fieldErrors, busyId, onC
         <h2 id="job-add-title">Thêm tin tuyển dụng mới</h2>
         <TuyenDungJobFormFields
           form={form}
+          facultyOptions={facultyOptions}
           fieldErrors={fieldErrors}
           disabled={busyId !== null}
           onChange={onChange}

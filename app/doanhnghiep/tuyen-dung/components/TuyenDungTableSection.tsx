@@ -46,7 +46,7 @@ export default function TuyenDungTableSection({
               <th>Tiêu đề</th>
               <th>Ngày đăng tin</th>
               <th>Số lượng tuyển dụng</th>
-              <th>Chuyên môn</th>
+              <th>Vị trí tuyển dụng</th>
               <th>Hình thức làm việc</th>
               <th>Trạng thái tin</th>
               <th>Thao tác</th>
@@ -66,7 +66,7 @@ export default function TuyenDungTableSection({
                   <td data-label="Tiêu đề">{row.title}</td>
                   <td data-label="Ngày đăng tin">{formatDateVi(row.createdAt)}</td>
                   <td data-label="Số lượng tuyển dụng">{row.recruitmentCount}</td>
-                  <td data-label="Chuyên môn">{row.expertise}</td>
+                  <td data-label="Vị trí tuyển dụng">{row.expertise}</td>
                   <td data-label="Hình thức làm việc">{DOANHNGHIEP_TUYEN_DUNG_WORK_TYPE_LABEL[row.workType]}</td>
                   <td data-label="Trạng thái tin">{DOANHNGHIEP_TUYEN_DUNG_STATUS_LABEL[row.status as JobStatus]}</td>
                   <td data-label="Thao tác">

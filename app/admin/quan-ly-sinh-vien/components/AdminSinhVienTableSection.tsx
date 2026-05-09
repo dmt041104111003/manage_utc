@@ -42,6 +42,7 @@ export default function AdminSinhVienTableSection(props: Props) {
               <th>Lớp</th>
               <th>Khoa</th>
               <th>Bậc</th>
+              <th>Trạng thái GVHD</th>
               <th>Trạng thái thực tập</th>
               <th>Thao tác</th>
             </tr>
@@ -49,7 +50,7 @@ export default function AdminSinhVienTableSection(props: Props) {
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={8} className={styles.modulePlaceholder}>
+                <td colSpan={9} className={styles.modulePlaceholder}>
                   Không có sinh viên phù hợp.
                 </td>
               </tr>
@@ -62,6 +63,7 @@ export default function AdminSinhVienTableSection(props: Props) {
                   <td data-label="Lớp">{row.className}</td>
                   <td data-label="Khoa">{row.faculty}</td>
                   <td data-label="Bậc">{ADMIN_QUAN_LY_SINH_VIEN_DEGREE_LABEL[row.degree]}</td>
+                  <td data-label="Trạng thái GVHD">{row.hasSupervisor ? "Đã có GVHD" : "Chưa có GVHD"}</td>
                   <td data-label="Trạng thái thực tập">
                     {ADMIN_QUAN_LY_SINH_VIEN_INTERNSHIP_STATUS_LABEL[row.internshipStatus]}
                   </td>

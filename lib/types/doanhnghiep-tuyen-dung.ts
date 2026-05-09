@@ -40,6 +40,7 @@ export type JobFormState = {
   companyWebsite: string;
   salary: string;
   expertise: string;
+  allowedFaculties: string[];
   experienceRequirement: string;
   recruitmentCount: string;
   workType: WorkType | "";

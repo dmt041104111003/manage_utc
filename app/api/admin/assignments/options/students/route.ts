@@ -25,7 +25,7 @@ export async function GET(request: Request) {
 
   const where: any = {
     faculty,
-    internshipStatus: { in: ["NOT_STARTED", "DOING"] },
+    internshipStatus: { not: "REJECTED" },
     id: { notIn: Array.from(assignedSet) }
   };
 

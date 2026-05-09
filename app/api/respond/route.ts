@@ -1,32 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyRespondToken } from "@/lib/utils/respond-token";
+import { buildMailShell, escapeHtml, mailCalloutHtml, MAIL_ACCENT } from "@/lib/mail-layout";
 
-function htmlPage(title: string, body: string, isSuccess: boolean) {
-  const accentColor = isSuccess ? "#16a34a" : "#dc2626";
-  return `<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${title}</title>
-  <style>
-    body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #f3f4f6; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.1); padding: 40px 48px; max-width: 480px; width: 90%; text-align: center; }
-    .icon { font-size: 48px; margin-bottom: 16px; }
-    h1 { font-size: 22px; font-weight: 700; color: #111827; margin: 0 0 12px; }
-    p { font-size: 15px; color: #6b7280; line-height: 1.6; margin: 0 0 24px; }
-    .badge { display: inline-block; background: ${accentColor}; color: #fff; border-radius: 6px; padding: 8px 20px; font-size: 15px; font-weight: 600; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="icon">${isSuccess ? "✅" : "❌"}</div>
-    <h1>${title}</h1>
-    ${body}
-  </div>
-</body>
-</html>`;
+function htmlPage(title: string, bodyHtml: string, isSuccess: boolean) {
+  const safeTitle = escapeHtml(title);
+  const variant = isSuccess ? "success" : "danger";
+  const iconBg = isSuccess ? "#ecfdf5" : "#fff1f0";
+  const iconBorder = isSuccess ? MAIL_ACCENT.success : MAIL_ACCENT.danger;
+  const iconColor = isSuccess ? MAIL_ACCENT.success : MAIL_ACCENT.danger;
+  const iconSvg = isSuccess
+    ? `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+         <path d="M20 6L9 17l-5-5" stroke="${iconColor}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+       </svg>`
+    : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+         <path d="M18 6L6 18M6 6l12 12" stroke="${iconColor}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+       </svg>`;
+
+  return buildMailShell({
+    bodyHtml: `
+      <div style="display:flex;align-items:center;justify-content:center;margin:0 0 12px;">
+        <div style="width:56px;height:56px;border-radius:999px;background:${iconBg};
+                    border:1px solid ${iconBorder};display:flex;align-items:center;justify-content:center;">
+          ${iconSvg}
+        </div>
+      </div>
+      <h2 style="margin:0 0 12px;font-size:18px;line-height:1.35;color:#111827;">
+        ${safeTitle}
+      </h2>
+      ${mailCalloutHtml(variant, "Thông báo", bodyHtml)}
+    `.trim()
+  });
 }
 
 export async function GET(request: NextRequest) {
@@ -34,7 +38,7 @@ export async function GET(request: NextRequest) {
 
   if (!token) {
     return new NextResponse(
-      htmlPage("Liên kết không hợp lệ", `<p>Liên kết này không hợp lệ hoặc đã hết hạn.</p>`, false),
+      htmlPage("Không thể ghi nhận phản hồi", `<p style="margin:0;">Liên kết này không hợp lệ hoặc đã hết hạn.</p>`, false),
       { headers: { "Content-Type": "text/html; charset=utf-8" } }
     );
   }
@@ -45,8 +49,8 @@ export async function GET(request: NextRequest) {
   } catch {
     return new NextResponse(
       htmlPage(
-        "Liên kết đã hết hạn",
-        `<p>Liên kết này đã hết hạn hoặc không hợp lệ. Phản hồi mặc định của bạn đã được ghi nhận là <strong>Từ chối</strong>.</p>`,
+        "Không thể ghi nhận phản hồi",
+        `<p style="margin:0;">Liên kết này đã hết hạn hoặc không hợp lệ. Phản hồi mặc định của bạn đã được ghi nhận là <strong>Từ chối</strong>.</p>`,
         false
       ),
       { headers: { "Content-Type": "text/html; charset=utf-8" } }
@@ -70,7 +74,7 @@ export async function GET(request: NextRequest) {
 
   if (!app) {
     return new NextResponse(
-      htmlPage("Không tìm thấy hồ sơ", `<p>Hồ sơ ứng tuyển không tồn tại.</p>`, false),
+      htmlPage("Không thể ghi nhận phản hồi", `<p style="margin:0;">Hồ sơ ứng tuyển không tồn tại.</p>`, false),
       { headers: { "Content-Type": "text/html; charset=utf-8" } }
     );
   }
@@ -79,8 +83,8 @@ export async function GET(request: NextRequest) {
   if (app.response !== "PENDING") {
     return new NextResponse(
       htmlPage(
-        "Đã phản hồi trước đó",
-        `<p>Bạn đã phản hồi hồ sơ này trước đó. Không thể thay đổi phản hồi.</p>`,
+        "Đã ghi nhận phản hồi",
+        `<p style="margin:0;">Bạn đã phản hồi hồ sơ này trước đó. Không thể thay đổi phản hồi.</p>`,
         false
       ),
       { headers: { "Content-Type": "text/html; charset=utf-8" } }
@@ -163,16 +167,25 @@ export async function GET(request: NextRequest) {
   const successMessage =
     purpose === "respond_interview"
       ? isConfirm
-        ? `<p>Bạn đã <strong>chấp nhận lời mời phỏng vấn</strong> từ <strong>${company}</strong> cho vị trí <strong>"${jobTitle}"</strong>. Doanh nghiệp sẽ liên hệ với bạn sớm.</p>`
-        : `<p>Bạn đã <strong>từ chối lời mời phỏng vấn</strong> từ <strong>${company}</strong> cho vị trí <strong>"${jobTitle}"</strong>.</p>`
+        ? `<p style="margin:0 0 8px;">Bạn đã <strong>XÁC NHẬN</strong> tham gia phỏng vấn cho vị trí <strong>"${escapeHtml(jobTitle)}"</strong> tại <strong>${escapeHtml(company)}</strong>.</p>
+           <p style="margin:0;">Doanh nghiệp sẽ liên hệ với bạn để sắp xếp lịch.</p>`
+        : `<p style="margin:0;">Bạn đã <strong>TỪ CHỐI</strong> tham gia phỏng vấn cho vị trí <strong>"${escapeHtml(jobTitle)}"</strong> tại <strong>${escapeHtml(company)}</strong>.</p>`
       : isConfirm
-        ? `<p>Bạn đã <strong>xác nhận thực tập</strong> tại <strong>${company}</strong> cho vị trí <strong>"${jobTitle}"</strong>. Chúc mừng ${svName}!</p>`
-        : `<p>Bạn đã <strong>từ chối lời mời thực tập</strong> từ <strong>${company}</strong> cho vị trí <strong>"${jobTitle}"</strong>.</p>`;
+        ? `<p style="margin:0 0 8px;">Bạn đã <strong>XÁC NHẬN</strong> thực tập cho vị trí <strong>"${escapeHtml(jobTitle)}"</strong> tại <strong>${escapeHtml(company)}</strong>.</p>
+           <p style="margin:0;">Chúc mừng <strong>${escapeHtml(svName)}</strong>!</p>`
+        : `<p style="margin:0;">Bạn đã <strong>TỪ CHỐI</strong> thực tập cho vị trí <strong>"${escapeHtml(jobTitle)}"</strong> tại <strong>${escapeHtml(company)}</strong>.</p>`;
 
   return new NextResponse(
     htmlPage(
-      actionLabel,
-      `${successMessage}<span class="badge">${actionLabel}</span>`,
+      "Đã ghi nhận phản hồi",
+      `
+        <p style="margin:0 0 10px;"><strong>Kết quả:</strong> ${escapeHtml(actionLabel)}</p>
+        ${successMessage}
+        <div style="margin-top:10px;font-size:13px;color:#6b7280;">
+          <div><strong style="color:#374151;">Doanh nghiệp:</strong> ${escapeHtml(company)}</div>
+          <div><strong style="color:#374151;">Tin:</strong> ${escapeHtml(jobTitle)}</div>
+        </div>
+      `.trim(),
       isConfirm
     ),
     { headers: { "Content-Type": "text/html; charset=utf-8" } }

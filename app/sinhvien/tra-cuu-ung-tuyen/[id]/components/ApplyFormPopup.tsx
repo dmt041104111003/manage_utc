@@ -3,6 +3,7 @@ import { SINHVIEN_TRA_CUU_UNG_TUYEN_APPLY_OPEN_TITLE } from "@/lib/constants/sin
 import FormPopup from "../../../../components/FormPopup";
 import adminStyles from "../../../../admin/styles/dashboard.module.css";
 import formStyles from "../../../../auth/styles/register.module.css";
+import { useRef } from "react";
 
 type Props = {
   busy: boolean;
@@ -43,6 +44,8 @@ export default function ApplyFormPopup({
   onClose,
   onSubmit
 }: Props) {
+  const cvInputRef = useRef<HTMLInputElement | null>(null);
+
   return (
     <FormPopup
       open
@@ -68,19 +71,43 @@ export default function ApplyFormPopup({
         </div>
         <div className={formStyles.grid2}>
           <div className={formStyles.field}>
-            <label className={formStyles.label}>SĐT</label>
-            <input className={formStyles.input} value={phone} onChange={(e) => onPhoneChange(e.target.value)} disabled={busy} />
+            <label className={formStyles.label}>
+              SĐT <span className={formStyles.required}>*</span>
+            </label>
+            <input
+              className={formStyles.input}
+              value={phone}
+              placeholder="Nhập số điện thoại (8–12 số)"
+              onChange={(e) => onPhoneChange(e.target.value)}
+              disabled={busy}
+            />
             {fieldErrors.phone ? <p className={formStyles.error}>{fieldErrors.phone}</p> : null}
           </div>
           <div className={formStyles.field}>
-            <label className={formStyles.label}>Email</label>
-            <input className={formStyles.input} value={email} onChange={(e) => onEmailChange(e.target.value)} disabled={busy} />
+            <label className={formStyles.label}>
+              Email <span className={formStyles.required}>*</span>
+            </label>
+            <input
+              className={formStyles.input}
+              value={email}
+              placeholder="example@domain.com"
+              onChange={(e) => onEmailChange(e.target.value)}
+              disabled={busy}
+            />
             {fieldErrors.email ? <p className={formStyles.error}>{fieldErrors.email}</p> : null}
           </div>
         </div>
         <div className={formStyles.field}>
-          <label className={formStyles.label}>Thư giới thiệu bản thân</label>
-          <textarea className={formStyles.textarea} value={intro} onChange={(e) => onIntroChange(e.target.value)} disabled={busy} />
+          <label className={formStyles.label}>
+            Thư giới thiệu bản thân <span className={formStyles.required}>*</span>
+          </label>
+          <textarea
+            className={formStyles.textarea}
+            value={intro}
+            placeholder="Giới thiệu ngắn gọn về bản thân và lý do bạn phù hợp với vị trí này (tối đa 3000 ký tự)."
+            onChange={(e) => onIntroChange(e.target.value)}
+            disabled={busy}
+          />
           {fieldErrors.intro ? <p className={formStyles.error}>{fieldErrors.intro}</p> : null}
         </div>
         <div className={formStyles.field}>
@@ -90,6 +117,7 @@ export default function ApplyFormPopup({
             type="file"
             accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             disabled={busy}
+            ref={cvInputRef}
             onChange={(e) => onChooseCv(e.target.files?.[0] ?? null)}
           />
           {cvBase64 && cvMime && cvFileName && !removeCv ? (
@@ -97,7 +125,14 @@ export default function ApplyFormPopup({
               <a className={adminStyles.detailLink} href={dataUrlFromBase64(cvMime, cvBase64)} download={cvFileName}>
                 {cvFileName}
               </a>
-              <button type="button" className={adminStyles.textLinkBtn} onClick={onRemoveCv}>
+              <button
+                type="button"
+                className={adminStyles.textLinkBtn}
+                onClick={() => {
+                  if (cvInputRef.current) cvInputRef.current.value = "";
+                  onRemoveCv();
+                }}
+              >
                 Xóa file
               </button>
             </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from "react";
 import { AuthShell } from "../components/AuthShell";
 import styles from "../styles/register.module.css";
+import MessagePopup from "@/app/components/MessagePopup";
 import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
 import type { FormDataState, VnProvince, VnWard } from "@/lib/types/enterprise-register";
 import { EMPTY_ENTERPRISE_REGISTER_FORM } from "@/lib/constants/auth/enterprise-register";
@@ -27,6 +28,8 @@ export default function EnterpriseRegisterPage() {
   const [companyLogo, setCompanyLogo] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
+  const [toast, setToast] = useState("");
+  const [shouldRedirectToLogin, setShouldRedirectToLogin] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const setField = useCallback((field: keyof FormDataState, value: string | string[]) => {
@@ -216,7 +219,8 @@ export default function EnterpriseRegisterPage() {
         return;
       }
       setIsSubmitting(false);
-      router.replace(typeof data.redirectPath === "string" ? data.redirectPath : "/auth/dangky");
+      setToast(typeof data?.message === "string" && data.message ? data.message : "Đăng ký thành công.");
+      setShouldRedirectToLogin(true);
     } catch (err) {
       if (err instanceof Error && err.message === "invalid data URL") {
         setSubmitError("Không đọc được file đính kèm. Vui lòng chọn file khác.");
@@ -268,6 +272,18 @@ export default function EnterpriseRegisterPage() {
       <div className={styles.linkRow}>
         <Link href="/auth/dangnhap">Quay lại đăng nhập</Link>
       </div>
+
+      {toast ? (
+        <MessagePopup
+          open
+          title="Thông báo"
+          message={toast}
+          onClose={() => {
+            setToast("");
+            if (shouldRedirectToLogin) router.replace("/auth/dangnhap");
+          }}
+        />
+      ) : null}
     </AuthShell>
   );
 }

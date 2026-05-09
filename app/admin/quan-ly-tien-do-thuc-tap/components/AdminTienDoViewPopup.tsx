@@ -64,7 +64,7 @@ export default function AdminTienDoViewPopup(props: Props) {
             <td>{degreeLabel[item.student.degree]}</td>
           </tr>
           <tr>
-            <th scope="row">GVHD - Bậc-SĐT-email</th>
+            <th scope="row">GVHD</th>
             <td style={{ whiteSpace: "pre-wrap" }}>{supervisorLine(item.supervisor)}</td>
           </tr>
           {item.enterprise ? (

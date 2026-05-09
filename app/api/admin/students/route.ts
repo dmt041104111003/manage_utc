@@ -97,6 +97,17 @@ export async function GET(request: Request) {
       }
     });
 
+    const profileIds = rows.map((r: any) => String(r.id)).filter(Boolean);
+    const supervisorLinked = new Set<string>();
+    if (profileIds.length) {
+      const links = await prismaAny.supervisorAssignmentStudent.findMany({
+        where: { studentProfileId: { in: profileIds } },
+        distinct: ["studentProfileId"],
+        select: { studentProfileId: true }
+      });
+      for (const l of links) supervisorLinked.add(String(l.studentProfileId));
+    }
+
     const userIds = rows.map((r: any) => r.userId);
     const linked = new Set<string>();
     if (userIds.length) {
@@ -196,6 +207,7 @@ export async function GET(request: Request) {
         cohort: r.cohort,
         degree: r.degree as Degree,
         internshipStatus: r.internshipStatus as InternshipStatus,
+        hasSupervisor: supervisorLinked.has(String(r.id)),
         birthDate: r.birthDate?.toISOString?.() ?? null,
         gender: r.gender as Gender,
         permanentProvinceCode: r.permanentProvinceCode,

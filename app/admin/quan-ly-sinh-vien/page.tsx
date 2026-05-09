@@ -290,7 +290,7 @@ export default function AdminQuanLySinhVienPage() {
           cohort: form.cohort.trim(),
           degree: form.degree,
           phone: form.phone.trim(),
-          email: editTarget.email, // keep login email
+          email: form.email.trim().toLowerCase(),
           birthDate: form.birthDate,
           gender: form.gender,
           permanentProvinceCode: form.permanentProvinceCode,

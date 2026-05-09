@@ -26,18 +26,18 @@ export default function SinhVienTraCuuUngTuyenPage() {
 
   const [q, setQ] = useState("");
   const [workType, setWorkType] = useState<WorkTypeFilter>("all");
-  const [field, setField] = useState("all");
-  const [fieldOptions, setFieldOptions] = useState<string[]>([]);
+  const [province, setProvince] = useState("all");
+  const [provinceOptions, setProvinceOptions] = useState<string[]>([]);
 
   async function load() {
     setLoading(true);
     setError("");
     try {
-      const result = await fetchSinhVienTraCuuUngTuyenList({ q, workType, field });
+      const result = await fetchSinhVienTraCuuUngTuyenList({ q, workType, province });
       setItems(result.items);
       setCanApply(result.canApply);
       setInternshipStatus(result.internshipStatus);
-      setFieldOptions(result.fieldOptions);
+      setProvinceOptions(result.provinceOptions);
     } catch (e: any) {
       setError(e?.message || SINHVIEN_TRA_CUU_UNG_TUYEN_LOAD_ERROR_DEFAULT);
     } finally {
@@ -66,11 +66,11 @@ export default function SinhVienTraCuuUngTuyenPage() {
       <TraCuuUngTuyenToolbar
         q={q}
         workType={workType}
-        field={field}
-        fieldOptions={fieldOptions}
+        province={province}
+        provinceOptions={provinceOptions}
         onQChange={setQ}
         onWorkTypeChange={setWorkType}
-        onFieldChange={setField}
+        onProvinceChange={setProvince}
         onSearch={() => void load()}
       />
 

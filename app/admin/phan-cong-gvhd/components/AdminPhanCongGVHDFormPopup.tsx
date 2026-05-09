@@ -2,6 +2,7 @@
 
 import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import type { OpenBatch, SupervisorOption, StudentOption } from "@/lib/types/admin-phan-cong-gvhd";
 import FormPopup from "../../../components/FormPopup";
@@ -48,6 +49,14 @@ export type Props = {
   setStudentQ: Dispatch<SetStateAction<string>>;
 };
 
+type AnchorPos = { top: number; left: number; width: number };
+
+function readAnchorPos(el: HTMLElement | null): AnchorPos | null {
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  return { top: r.bottom + 6, left: r.left, width: r.width };
+}
+
 export default function AdminPhanCongGVHDFormPopup(props: Props) {
   const {
     open,
@@ -84,6 +93,14 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
   const [supervisorOpen, setSupervisorOpen] = useState(false);
   const supervisorRootRef = useRef<HTMLDivElement | null>(null);
   const supervisorSearchRef = useRef<HTMLInputElement | null>(null);
+  const supervisorBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [supervisorPos, setSupervisorPos] = useState<AnchorPos | null>(null);
+
+  const [studentOpen, setStudentOpen] = useState(false);
+  const studentRootRef = useRef<HTMLDivElement | null>(null);
+  const studentSearchRef = useRef<HTMLInputElement | null>(null);
+  const studentBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [studentPos, setStudentPos] = useState<AnchorPos | null>(null);
 
   const selectedSupervisor = useMemo(
     () => supervisorOptions.find((s) => s.id === formSupervisorId) ?? null,
@@ -107,11 +124,63 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
     return () => window.clearTimeout(t);
   }, [supervisorOpen]);
 
+  useEffect(() => {
+    if (!supervisorOpen) return;
+    const update = () => setSupervisorPos(readAnchorPos(supervisorBtnRef.current));
+    update();
+    window.addEventListener("resize", update);
+    document.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      document.removeEventListener("scroll", update, true);
+    };
+  }, [supervisorOpen]);
+
+  useEffect(() => {
+    if (!studentOpen) return;
+    const onDocMouseDown = (e: MouseEvent) => {
+      const el = studentRootRef.current;
+      if (!el) return;
+      if (e.target instanceof Node && !el.contains(e.target)) setStudentOpen(false);
+    };
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [studentOpen]);
+
+  useEffect(() => {
+    if (!studentOpen) return;
+    const t = window.setTimeout(() => studentSearchRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, [studentOpen]);
+
+  useEffect(() => {
+    if (!studentOpen) return;
+    const update = () => setStudentPos(readAnchorPos(studentBtnRef.current));
+    update();
+    window.addEventListener("resize", update);
+    document.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      document.removeEventListener("scroll", update, true);
+    };
+  }, [studentOpen]);
+
   const filteredSupervisors = useMemo(() => {
     if (!supervisorQ.trim()) return supervisorOptions;
     const nq = normalize(supervisorQ);
     return supervisorOptions.filter((s) => normalize(s.fullName).includes(nq));
   }, [supervisorOptions, supervisorQ]);
+
+  const selectedStudents = useMemo(() => {
+    const set = new Set(formStudentIds.map(String));
+    return studentOptions.filter((s) => set.has(String(s.id)));
+  }, [formStudentIds, studentOptions]);
+
+  const filteredStudents = useMemo(() => {
+    if (!studentQ.trim()) return studentOptions;
+    const nq = normalize(studentQ);
+    return studentOptions.filter((s) => normalize(`${s.msv} ${s.fullName}`).includes(nq));
+  }, [studentOptions, studentQ]);
 
   return (
     <FormPopup
@@ -184,8 +253,11 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
         <label className={formStyles.label}>Giảng viên hướng dẫn</label>
         <div ref={supervisorRootRef} className={formStyles.comboRoot}>
           <button
+            ref={supervisorBtnRef}
             type="button"
-            className={`${formStyles.comboControl} ${supervisorOpen ? formStyles.comboControlOpen : ""}`}
+            className={`${formStyles.comboControl} ${formStyles.comboControlGreen} ${
+              supervisorOpen ? formStyles.comboControlOpenGreen : ""
+            }`}
             disabled={!formFaculty || !formBatchId}
             aria-haspopup="listbox"
             aria-expanded={supervisorOpen}
@@ -206,49 +278,69 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
             </span>
           </button>
 
-          {supervisorOpen ? (
-            <div className={formStyles.comboDropdown} role="dialog" aria-label="Chọn giảng viên hướng dẫn">
-              <div className={formStyles.comboSearchRow}>
-                <input
-                  ref={supervisorSearchRef}
-                  className={formStyles.comboSearch}
-                  value={supervisorQ}
-                  onChange={(e) => setSupervisorQ(e.target.value)}
-                  placeholder="Tìm kiếm giảng viên hướng dẫn theo họ tên…"
-                  disabled={!formFaculty || !formBatchId}
-                />
-              </div>
-              <div className={formStyles.comboList} role="listbox" aria-multiselectable="false">
-                {filteredSupervisors.length ? (
-                  filteredSupervisors.map((s) => {
-                    const selected = s.id === formSupervisorId;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        className={`${formStyles.comboOption} ${selected ? formStyles.comboOptionSelected : ""}`}
-                        role="option"
-                        aria-selected={selected}
-                        onClick={() => {
-                          setFormSupervisorId(s.id);
-                          setSupervisorOpen(false);
-                        }}
-                      >
-                        <span className={formStyles.comboOptionCheck} aria-hidden="true">
-                          {selected ? "✓" : ""}
-                        </span>
-                        <span className={formStyles.comboOptionText}>
-                          {supervisorDisplay({ fullName: s.fullName, degree: s.degree })}
-                        </span>
-                      </button>
-                    );
-                  })
-                ) : (
-                  <div className={formStyles.comboEmpty}>Không có kết quả.</div>
-                )}
-              </div>
-            </div>
-          ) : null}
+          {supervisorOpen && supervisorPos
+            ? createPortal(
+                <div
+                  className={formStyles.comboDropdown}
+                  role="dialog"
+                  aria-label="Chọn giảng viên hướng dẫn"
+                  style={{
+                    position: "fixed",
+                    top: supervisorPos.top,
+                    left: supervisorPos.left,
+                    width: supervisorPos.width,
+                    zIndex: 9999
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  <div className={formStyles.comboSearchRow}>
+                    <input
+                      ref={supervisorSearchRef}
+                      className={`${formStyles.comboSearch} ${formStyles.comboSearchGreen}`}
+                      value={supervisorQ}
+                      onChange={(e) => setSupervisorQ(e.target.value)}
+                      placeholder="Tìm kiếm giảng viên hướng dẫn theo họ tên…"
+                      disabled={!formFaculty || !formBatchId}
+                    />
+                  </div>
+                  <div className={formStyles.comboList} role="listbox" aria-multiselectable="false">
+                    {filteredSupervisors.length ? (
+                      filteredSupervisors.map((s) => {
+                        const selected = s.id === formSupervisorId;
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            className={`${formStyles.comboOption} ${
+                              selected ? formStyles.comboOptionSelectedGreen : ""
+                            }`}
+                            role="option"
+                            aria-selected={selected}
+                            onClick={() => {
+                              setFormSupervisorId(s.id);
+                              setSupervisorOpen(false);
+                            }}
+                          >
+                            <span
+                              className={`${formStyles.comboOptionCheck} ${formStyles.comboOptionCheckGreen}`}
+                              aria-hidden="true"
+                            >
+                              {selected ? "✓" : ""}
+                            </span>
+                            <span className={formStyles.comboOptionText}>
+                              {supervisorDisplay({ fullName: s.fullName, degree: s.degree })}
+                            </span>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className={formStyles.comboEmpty}>Không có kết quả.</div>
+                    )}
+                  </div>
+                </div>,
+                document.body
+              )
+            : null}
         </div>
         {fieldErrors.supervisorProfileId ? (
           <p className={styles.error}>{fieldErrors.supervisorProfileId}</p>
@@ -257,45 +349,99 @@ export default function AdminPhanCongGVHDFormPopup(props: Props) {
 
       <div className={formStyles.formGroup}>
         <label className={formStyles.label}>SV hướng dẫn</label>
-        <input
-          className={formStyles.input}
-          placeholder="Tìm kiếm SV theo MSV hoặc họ tên"
-          value={studentQ}
-          onChange={(e) => setStudentQ(e.target.value)}
-          disabled={!formFaculty || !formBatchId}
-        />
+        <div ref={studentRootRef} className={formStyles.comboRoot}>
+          <button
+            ref={studentBtnRef}
+            type="button"
+            className={`${formStyles.comboControl} ${formStyles.comboControlGreen} ${
+              studentOpen ? formStyles.comboControlOpenGreen : ""
+            }`}
+            disabled={!formFaculty || !formBatchId}
+            aria-haspopup="listbox"
+            aria-expanded={studentOpen}
+            onClick={() => setStudentOpen((v) => !v)}
+            title={!formFaculty || !formBatchId ? "Vui lòng chọn khoa và đợt thực tập trước." : undefined}
+          >
+            <span className={formStyles.comboValue}>
+              {selectedStudents.length ? (
+                studentDisplay(selectedStudents[0])
+              ) : (
+                <span className={formStyles.comboPlaceholder}>
+                  {optionsLoading ? "Đang tải..." : "Chọn sinh viên hướng dẫn"}
+                </span>
+              )}
+            </span>
+            <span className={formStyles.comboCaret} aria-hidden="true">
+              ▾
+            </span>
+          </button>
 
-        <div style={{ border: "1px solid #d0d5dd", borderRadius: 8, padding: 10, maxHeight: 220, overflow: "auto" }}>
-          {!formFaculty || !formBatchId ? (
-            <div style={{ color: "#667085" }} />
-          ) : optionsLoading ? (
-            <div style={{ color: "#667085" }}>Đang tải danh sách sinh viên...</div>
-          ) : studentOptions.length === 0 ? (
-            <div style={{ color: "#667085" }}>Không có sinh viên phù hợp.</div>
-          ) : (
-            studentOptions.map((s) => {
-              const checked = formStudentIds.includes(s.id);
-              return (
-                <label key={s.id} style={{ display: "flex", gap: 8, alignItems: "center", padding: "6px 0" }}>
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => {
-                      setFormStudentIds((prev) => (prev.includes(s.id) ? prev.filter((x) => x !== s.id) : [...prev, s.id]));
-                    }}
-                  />
-                  <span>
-                    {studentDisplay({ msv: s.msv, fullName: s.fullName, degree: s.degree })}
-                  </span>
-                </label>
-              );
-            })
-          )}
+          {studentOpen && studentPos
+            ? createPortal(
+                <div
+                  className={formStyles.comboDropdown}
+                  role="dialog"
+                  aria-label="Chọn sinh viên hướng dẫn"
+                  style={{
+                    position: "fixed",
+                    top: studentPos.top,
+                    left: studentPos.left,
+                    width: studentPos.width,
+                    zIndex: 9999
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  <div className={formStyles.comboSearchRow}>
+                    <input
+                      ref={studentSearchRef}
+                      className={`${formStyles.comboSearch} ${formStyles.comboSearchGreen}`}
+                      value={studentQ}
+                      onChange={(e) => setStudentQ(e.target.value)}
+                      placeholder="Tìm kiếm SV theo MSV hoặc họ tên"
+                      disabled={!formFaculty || !formBatchId}
+                    />
+                  </div>
+                  <div className={formStyles.comboList} role="listbox" aria-multiselectable="false">
+                    {filteredStudents.length ? (
+                      filteredStudents.map((s) => {
+                        const selected = formStudentIds.includes(s.id);
+                        return (
+                          <button
+                            key={s.id}
+                            type="button"
+                            className={`${formStyles.comboOption} ${
+                              selected ? formStyles.comboOptionSelectedGreen : ""
+                            }`}
+                            role="option"
+                            aria-selected={selected}
+                            onClick={() => {
+                              setFormStudentIds([s.id]);
+                              setStudentOpen(false);
+                            }}
+                          >
+                            <span
+                              className={`${formStyles.comboOptionCheck} ${formStyles.comboOptionCheckGreen}`}
+                              aria-hidden="true"
+                            >
+                              {selected ? "✓" : ""}
+                            </span>
+                            <span className={formStyles.comboOptionText}>
+                              {studentDisplay({ msv: s.msv, fullName: s.fullName, degree: s.degree })}
+                            </span>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className={formStyles.comboEmpty}>Không có kết quả.</div>
+                    )}
+                  </div>
+                </div>,
+                document.body
+              )
+            : null}
         </div>
 
-        {fieldErrors.studentProfileIds ? (
-          <p className={styles.error}>{fieldErrors.studentProfileIds}</p>
-        ) : null}
+        {fieldErrors.studentProfileIds ? <p className={styles.error}>{fieldErrors.studentProfileIds}</p> : null}
       </div>
     </FormPopup>
   );

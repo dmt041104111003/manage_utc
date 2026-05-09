@@ -32,6 +32,15 @@ export function todayDateInputValue(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+export function tomorrowDateInputValue(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export function formatDateVi(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -46,6 +55,7 @@ export function buildEmptyJobFormState(): JobFormState {
     companyWebsite: "",
     salary: "",
     expertise: "",
+    allowedFaculties: [],
     experienceRequirement: "",
     recruitmentCount: "",
     workType: "",
@@ -55,7 +65,7 @@ export function buildEmptyJobFormState(): JobFormState {
     benefits: "",
     workLocation: "",
     workTime: "",
-    applicationMethod: ""
+    applicationMethod: "Ứng viên nộp hồ sơ trực tuyến bằng cách bấm \"Ứng tuyển ngay\" dưới đây."
   };
 }
 
@@ -68,9 +78,9 @@ export function buildJobFormForAdd(args: {
 }): JobFormState {
   return {
     ...buildEmptyJobFormState(),
-    companyIntro: args.enterpriseDefaults.intro || "",
+    companyIntro: "",
     companyWebsite: args.enterpriseDefaults.website || "",
-    deadlineAt: todayDateInputValue()
+    deadlineAt: tomorrowDateInputValue()
   };
 }
 
@@ -83,10 +93,11 @@ export function buildJobFormForEdit(args: {
 
   return {
     title: job.title || "",
-    companyIntro: job.companyIntro || args.enterpriseDefaults.intro || "",
+    companyIntro: job.companyIntro || "",
     companyWebsite: job.companyWebsite || args.enterpriseDefaults.website || "",
     salary: job.salary || "",
     expertise: job.expertise || "",
+    allowedFaculties: Array.isArray(job.allowedFaculties) ? job.allowedFaculties.map(String).filter(Boolean) : [],
     experienceRequirement: job.experienceRequirement || "",
     recruitmentCount: job.recruitmentCount != null ? String(job.recruitmentCount) : "",
     workType: isWorkType(workTypeRaw) ? workTypeRaw : "",
@@ -109,6 +120,8 @@ export function validateJobForm(
   if (!form.salary || !DOANHNGHIEP_TUYEN_DUNG_SALARY_PATTERN.test(form.salary.trim())) next.salary = DOANHNGHIEP_TUYEN_DUNG_ERROR_SALARY;
   if (!form.expertise || !DOANHNGHIEP_TUYEN_DUNG_EXPERTISE_PATTERN.test(form.expertise.trim()))
     next.expertise = DOANHNGHIEP_TUYEN_DUNG_ERROR_EXPERTISE;
+  if (!Array.isArray(form.allowedFaculties) || form.allowedFaculties.length === 0)
+    next.allowedFaculties = "Ngành/Khoa bắt buộc.";
   if (
     !form.experienceRequirement ||
     !DOANHNGHIEP_TUYEN_DUNG_EXPERTISE_PATTERN.test(form.experienceRequirement.trim())
@@ -153,6 +166,7 @@ export function buildJobCreatePayload(form: JobFormState) {
     companyWebsite: form.companyWebsite.trim() || null,
     salary: form.salary.trim(),
     expertise: form.expertise.trim(),
+    allowedFaculties: Array.from(new Set(form.allowedFaculties.map((x) => String(x || "").trim()).filter(Boolean))),
     experienceRequirement: form.experienceRequirement.trim(),
     recruitmentCount: Number(form.recruitmentCount.trim()),
     workType: form.workType as WorkType,

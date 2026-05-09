@@ -8,6 +8,8 @@ export type SinhVienQuanLyDangKyUngTuyenRow = {
   response: ResponseStatus;
   appliedAt: string | null;
   interviewAt: string | null;
+  interviewLocation: string | null;
+  responseDeadline: string | null;
   responseAt: string | null;
   job: {
     id: string;

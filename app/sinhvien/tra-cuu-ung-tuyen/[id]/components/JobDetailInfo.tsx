@@ -17,29 +17,119 @@ export default function JobDetailInfo({ job, onOpenApply }: Props) {
   return (
     <section className={styles.card} style={{ padding: "18px 22px" }}>
       <div className={adminStyles.detailSectionTitle}>Thông tin tuyển dụng</div>
-      <table className={adminStyles.viewModalDetailTable}>
-        <tbody>
-          <tr><th scope="row">Tiêu đề</th><td>{job.title}</td></tr>
-          <tr><th scope="row">Tên doanh nghiệp</th><td>{job.enterprise.companyName}</td></tr>
-          <tr><th scope="row">MST</th><td>{job.enterprise.taxCode}</td></tr>
-          <tr><th scope="row">Lĩnh vực</th><td>{job.enterprise.businessFields}</td></tr>
-          <tr><th scope="row">Địa điểm trụ sở chính</th><td>{job.enterprise.headquartersAddress}</td></tr>
-          <tr><th scope="row">Giới thiệu công ty</th><td>{job.enterprise.intro || "—"}</td></tr>
-          <tr><th scope="row">Website</th><td>{job.enterprise.website || "—"}</td></tr>
-          <tr><th scope="row">Mức lương</th><td>{job.salary}</td></tr>
-          <tr><th scope="row">Chuyên môn</th><td>{job.expertise}</td></tr>
-          <tr><th scope="row">Yêu cầu kinh nghiệm</th><td>{job.experienceRequirement}</td></tr>
-          <tr><th scope="row">Số lượng tuyển dụng</th><td>{job.recruitmentCount}</td></tr>
-          <tr><th scope="row">Hình thức làm việc</th><td>{workTypeLabel[job.workType]}</td></tr>
-          <tr><th scope="row">Hạn tuyển dụng</th><td>{formatDateVi(job.deadlineAt)}</td></tr>
-          <tr><th scope="row">Mô tả công việc</th><td style={{ whiteSpace: "pre-wrap" }}>{job.jobDescription}</td></tr>
-          <tr><th scope="row">Yêu cầu ứng viên</th><td style={{ whiteSpace: "pre-wrap" }}>{job.candidateRequirements}</td></tr>
-          <tr><th scope="row">Quyền lợi</th><td style={{ whiteSpace: "pre-wrap" }}>{job.benefits}</td></tr>
-          <tr><th scope="row">Địa điểm làm việc</th><td>{job.workLocation}</td></tr>
-          <tr><th scope="row">Thời gian làm việc</th><td>{job.workTime}</td></tr>
-          <tr><th scope="row">Cách thức ứng tuyển</th><td>{job.applicationMethod || "Ứng tuyển trực tiếp trên hệ thống"}</td></tr>
-        </tbody>
-      </table>
+      <div style={{ marginTop: 10, display: "grid", gap: 14 }}>
+        <div>
+          <h2 style={{ margin: "0 0 6px", fontSize: 20, color: "#111827", letterSpacing: "-0.01em" }}>{job.title}</h2>
+          <div style={{ fontSize: 14, color: "#374151", fontWeight: 600 }}>{job.enterprise.companyName || "—"}</div>
+          <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>
+            {job.enterprise.businessFields ? <span>{job.enterprise.businessFields}</span> : null}
+            {job.enterprise.headquartersAddress ? (
+              <>
+                {job.enterprise.businessFields ? <span> · </span> : null}
+                <span>{job.enterprise.headquartersAddress}</span>
+              </>
+            ) : null}
+          </div>
+        </div>
+
+        <div>
+          <div className={adminStyles.detailSectionTitle} style={{ margin: "0 0 8px" }}>
+            Tóm tắt
+          </div>
+          <dl className={adminStyles.detailList}>
+            <div className={adminStyles.detailListRow}>
+              <dt>Mức lương</dt>
+              <dd>{job.salary}</dd>
+            </div>
+            <div className={adminStyles.detailListRow}>
+              <dt>Vị trí tuyển dụng</dt>
+              <dd>{job.expertise}</dd>
+            </div>
+            <div className={adminStyles.detailListRow}>
+              <dt>Kinh nghiệm</dt>
+              <dd>{job.experienceRequirement}</dd>
+            </div>
+            <div className={adminStyles.detailListRow}>
+              <dt>Số lượng</dt>
+              <dd>{job.recruitmentCount}</dd>
+            </div>
+            <div className={adminStyles.detailListRow}>
+              <dt>Hình thức</dt>
+              <dd>{workTypeLabel[job.workType]}</dd>
+            </div>
+            <div className={adminStyles.detailListRow}>
+              <dt>Hạn tuyển dụng</dt>
+              <dd>{formatDateVi(job.deadlineAt)}</dd>
+            </div>
+            <div className={adminStyles.detailListRow}>
+              <dt>Địa điểm làm việc</dt>
+              <dd>{job.workLocation}</dd>
+            </div>
+            <div className={adminStyles.detailListRow}>
+              <dt>Thời gian làm việc</dt>
+              <dd>{job.workTime}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div>
+          <div className={adminStyles.detailSectionTitle} style={{ margin: "0 0 8px" }}>
+            Mô tả công việc
+          </div>
+          <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.6, color: "#111827" }}>{job.jobDescription}</div>
+        </div>
+
+        <div>
+          <div className={adminStyles.detailSectionTitle} style={{ margin: "0 0 8px" }}>
+            Yêu cầu ứng viên
+          </div>
+          <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.6, color: "#111827" }}>{job.candidateRequirements}</div>
+        </div>
+
+        <div>
+          <div className={adminStyles.detailSectionTitle} style={{ margin: "0 0 8px" }}>
+            Quyền lợi
+          </div>
+          <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.6, color: "#111827" }}>{job.benefits}</div>
+        </div>
+
+        <div>
+          <div className={adminStyles.detailSectionTitle} style={{ margin: "0 0 8px" }}>
+            Thông tin doanh nghiệp
+          </div>
+          <dl className={adminStyles.detailList}>
+            <div className={adminStyles.detailListRow}>
+              <dt>Tên doanh nghiệp</dt>
+              <dd>{job.enterprise.companyName || "—"}</dd>
+            </div>
+            <div className={adminStyles.detailListRow}>
+              <dt>MST</dt>
+              <dd>{job.enterprise.taxCode || "—"}</dd>
+            </div>
+            <div className={adminStyles.detailListRow}>
+              <dt>Địa điểm trụ sở chính</dt>
+              <dd>{job.enterprise.headquartersAddress || "—"}</dd>
+            </div>
+            <div className={adminStyles.detailListRow}>
+              <dt>Giới thiệu công ty</dt>
+              <dd style={{ whiteSpace: "pre-wrap" }}>{job.enterprise.intro || "—"}</dd>
+            </div>
+            <div className={adminStyles.detailListRow}>
+              <dt>Website</dt>
+              <dd>{job.enterprise.website || "—"}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div>
+          <div className={adminStyles.detailSectionTitle} style={{ margin: "0 0 8px" }}>
+            Cách thức ứng tuyển
+          </div>
+          <div style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.6, color: "#111827" }}>
+            {job.applicationMethod || "Ứng tuyển trực tiếp trên hệ thống"}
+          </div>
+        </div>
+      </div>
       <div style={{ marginTop: 14 }}>
         <button
           type="button"

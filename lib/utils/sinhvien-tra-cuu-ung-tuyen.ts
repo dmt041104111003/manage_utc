@@ -14,32 +14,20 @@ export function parseInternshipStatus(value: unknown): InternshipStatus {
   return (allowed as string[]).includes(v) ? (v as InternshipStatus) : "NOT_STARTED";
 }
 
-export function buildSinhVienTraCuuUngTuyenListUrl(args: { q: string; workType: WorkTypeFilter; field: string }): string {
+export function buildSinhVienTraCuuUngTuyenListUrl(args: { q: string; workType: WorkTypeFilter; province: string }): string {
   const sp = new URLSearchParams();
   if (args.q.trim()) sp.set("q", args.q.trim());
   if (args.workType !== "all") sp.set("workType", args.workType);
-  if (args.field !== "all") sp.set("field", args.field);
+  if (args.province !== "all") sp.set("province", args.province);
   const qs = sp.toString();
   return qs ? `${SINHVIEN_TRA_CUU_UNG_TUYEN_ENDPOINT}?${qs}` : SINHVIEN_TRA_CUU_UNG_TUYEN_ENDPOINT;
 }
 
-export function extractFieldOptions(items: SinhVienTraCuuUngTuyenItem[]): string[] {
-  const setFields = new Set<string>();
-  items.forEach((x) => {
-    String(x.businessField || "—")
-      .split(",")
-      .map((v) => v.trim())
-      .filter(Boolean)
-      .forEach((v) => setFields.add(v));
-  });
-  return Array.from(setFields.values());
-}
-
-export async function fetchSinhVienTraCuuUngTuyenList(args: { q: string; workType: WorkTypeFilter; field: string }): Promise<{
+export async function fetchSinhVienTraCuuUngTuyenList(args: { q: string; workType: WorkTypeFilter; province: string }): Promise<{
   items: SinhVienTraCuuUngTuyenItem[];
   canApply: boolean;
   internshipStatus: InternshipStatus;
-  fieldOptions: string[];
+  provinceOptions: string[];
 }> {
   const res = await fetch(buildSinhVienTraCuuUngTuyenListUrl(args));
   const data = await res.json();
@@ -49,12 +37,13 @@ export async function fetchSinhVienTraCuuUngTuyenList(args: { q: string; workTyp
 
   const nextItems: SinhVienTraCuuUngTuyenItem[] = Array.isArray(data.items) ? data.items : [];
   const internshipStatus = parseInternshipStatus(data.internshipStatus ?? "NOT_STARTED");
+  const provinceOptions: string[] = Array.isArray(data.provinceOptions) ? data.provinceOptions : [];
 
   return {
     items: nextItems,
     canApply: Boolean(data.canApply),
     internshipStatus,
-    fieldOptions: extractFieldOptions(nextItems)
+    provinceOptions
   };
 }
 

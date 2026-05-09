@@ -172,6 +172,7 @@ model JobPost {
   workType         WorkType
   recruitmentCount Int
   expertise        String
+  allowedFaculties String[] @default([])
 
   salary                 String
   experienceRequirement String

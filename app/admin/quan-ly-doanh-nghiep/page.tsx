@@ -248,15 +248,15 @@ export default function AdminQuanLyDoanhNghiepPage() {
       {!loading && enterpriseStatusStats ? (
         <section aria-label="Thống kê trạng thái doanh nghiệp" style={{ marginBottom: 8 }}>
           <div className={styles.statsGrid3}>
-            <div className={styles.statCard}>
+            <div className={`${styles.statCard} ${styles.statCardTintPending}`}>
               <p className={styles.statLabel}>DN chờ phê duyệt</p>
               <p className={styles.statValue}>{enterpriseStatusStats.pending}</p>
             </div>
-            <div className={styles.statCard}>
+            <div className={`${styles.statCard} ${styles.statCardTintApproved}`}>
               <p className={styles.statLabel}>DN đã phê duyệt</p>
               <p className={styles.statValue}>{enterpriseStatusStats.approved}</p>
             </div>
-            <div className={styles.statCard}>
+            <div className={`${styles.statCard} ${styles.statCardTintRejected}`}>
               <p className={styles.statLabel}>DN bị từ chối</p>
               <p className={styles.statValue}>{enterpriseStatusStats.rejected}</p>
             </div>

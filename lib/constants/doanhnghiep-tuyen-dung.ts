@@ -15,21 +15,22 @@ export const DOANHNGHIEP_TUYEN_DUNG_WORK_TYPE_LABEL: Record<WorkType, string> = 
   FULL_TIME: "full-time"
 };
 
-export const DOANHNGHIEP_TUYEN_DUNG_TITLE_PATTERN = /^[\p{L}\d\s]{1,255}$/u;
-export const DOANHNGHIEP_TUYEN_DUNG_EXPERTISE_PATTERN = /^[\p{L}\d\s]{1,255}$/u;
+// Allow common punctuation used in job titles (e.g. "React/Next.js", "(Intern)", "C++").
+export const DOANHNGHIEP_TUYEN_DUNG_TITLE_PATTERN = /^[\p{L}\d\s.,/()&+\-_'":]{1,255}$/u;
+export const DOANHNGHIEP_TUYEN_DUNG_EXPERTISE_PATTERN = /^[\p{L}\d\s.,/()&+\-_'":]{1,255}$/u;
 export const DOANHNGHIEP_TUYEN_DUNG_SALARY_PATTERN = /^[\p{L}\d\s\-]{1,150}$/u;
 export const DOANHNGHIEP_TUYEN_DUNG_COUNT_PATTERN = /^\d{1,10}$/;
 
 export const DOANHNGHIEP_TUYEN_DUNG_DEADLINE_AT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export const DOANHNGHIEP_TUYEN_DUNG_ERROR_TITLE =
-  "Tiêu đề chỉ gồm ký tự chữ và số (1–255).";
+  "Tiêu đề tối đa 255 ký tự.";
 export const DOANHNGHIEP_TUYEN_DUNG_ERROR_SALARY =
   "Mức lương chỉ gồm chữ, số, '-' (1–150).";
 export const DOANHNGHIEP_TUYEN_DUNG_ERROR_EXPERTISE =
-  "Chuyên môn chỉ gồm chữ, số (1–255).";
+  "Vị trí tuyển dụng tối đa 255 ký tự.";
 export const DOANHNGHIEP_TUYEN_DUNG_ERROR_EXPERIENCE_REQUIREMENT =
-  "Yêu cầu kinh nghiệm chỉ gồm chữ, số (1–255).";
+  "Yêu cầu kinh nghiệm tối đa 255 ký tự.";
 export const DOANHNGHIEP_TUYEN_DUNG_ERROR_RECRUITMENT_COUNT =
   "Số lượng tuyển dụng chỉ gồm số (1–10).";
 export const DOANHNGHIEP_TUYEN_DUNG_ERROR_WORK_TYPE = "Hình thức làm việc không hợp lệ.";

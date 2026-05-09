@@ -46,10 +46,6 @@ export default function AdminPhanCongGVHDDeletePopup(props: Props) {
       }
     >
       <div style={{ display: "grid", gap: 10 }}>
-        <p style={{ margin: 0 }}>
-          Bạn có chắc chắn muốn xóa phân công giữa sinh viên và giảng viên hướng dẫn không?
-        </p>
-
         <table className={styles.viewModalDetailTable}>
           <tbody>
             <tr>

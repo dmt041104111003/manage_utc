@@ -66,7 +66,7 @@ export default function TuyenDungViewPopup({ viewJob, viewLoading, onClose }: Pr
                   <td>{viewJob.job.salary || "—"}</td>
                 </tr>
                 <tr>
-                  <th scope="row">Chuyên môn</th>
+                  <th scope="row">Vị trí tuyển dụng</th>
                   <td>{viewJob.job.expertise || "—"}</td>
                 </tr>
                 <tr>

@@ -28,6 +28,7 @@ export default function DoanhNghiepTuyenDungPage() {
   const [items, setItems] = useState<JobListItem[]>([]);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
+  const [facultyOptions, setFacultyOptions] = useState<string[]>([]);
 
   const [searchQ, setSearchQ] = useState("");
   const [searchDate, setSearchDate] = useState("");
@@ -61,9 +62,8 @@ export default function DoanhNghiepTuyenDungPage() {
     const data = (await res.json()) as ApiResponse<AdminEnterpriseDetail>;
     if (!res.ok || !data.success || !data.item) return;
     const m = metaRecord(data.item.enterpriseMeta);
-    const intro = Array.isArray(m.businessFields) ? m.businessFields.map(String).join(", ") : "";
     const website = typeof m.website === "string" ? m.website : "";
-    setEnterpriseDefaults({ intro, website });
+    setEnterpriseDefaults({ intro: "", website });
   };
 
   const load = async (params?: { q?: string; date?: string }) => {
@@ -94,6 +94,13 @@ export default function DoanhNghiepTuyenDungPage() {
   useEffect(() => {
     void (async () => {
       await loadEnterpriseDefaults();
+      try {
+        const res = await fetch("/api/public/faculties");
+        const data = await res.json();
+        setFacultyOptions(Array.isArray(data?.faculties) ? data.faculties : []);
+      } catch {
+        setFacultyOptions([]);
+      }
       await load({ q: searchQ, date: searchDate });
     })();
   }, []);
@@ -342,6 +349,7 @@ export default function DoanhNghiepTuyenDungPage() {
       <TuyenDungAddPopup
         open={addOpen}
         form={form}
+        facultyOptions={facultyOptions}
         fieldErrors={fieldErrors}
         busyId={busyId}
         onChange={handleFormChange}
@@ -354,6 +362,7 @@ export default function DoanhNghiepTuyenDungPage() {
         editDetail={editDetail}
         editLoading={editLoading}
         form={form}
+        facultyOptions={facultyOptions}
         fieldErrors={fieldErrors}
         busyId={busyId}
         onChange={handleFormChange}

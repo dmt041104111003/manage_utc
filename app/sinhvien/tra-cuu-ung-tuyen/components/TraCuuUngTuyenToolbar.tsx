@@ -5,33 +5,32 @@ import adminStyles from "../../../admin/styles/dashboard.module.css";
 type Props = {
   q: string;
   workType: WorkTypeFilter;
-  field: string;
-  fieldOptions: string[];
+  province: string;
+  provinceOptions: string[];
   onQChange: (v: string) => void;
   onWorkTypeChange: (v: WorkTypeFilter) => void;
-  onFieldChange: (v: string) => void;
+  onProvinceChange: (v: string) => void;
   onSearch: () => void;
 };
 
 export default function TraCuuUngTuyenToolbar({
   q,
   workType,
-  field,
-  fieldOptions,
+  province,
+  provinceOptions,
   onQChange,
   onWorkTypeChange,
-  onFieldChange,
+  onProvinceChange,
   onSearch
 }: Props) {
   return (
     <div className={adminStyles.searchToolbar}>
       <div className={adminStyles.searchField}>
-        <label>Chuyên môn</label>
         <input
           className={adminStyles.textInputSearch}
           value={q}
           onChange={(e) => onQChange(e.target.value)}
-          placeholder="Nhập chuyên môn"
+          placeholder="Tìm theo vị trí tuyển dụng/tên doanh nghiệp"
         />
       </div>
       <div className={adminStyles.searchField}>
@@ -47,11 +46,11 @@ export default function TraCuuUngTuyenToolbar({
         </select>
       </div>
       <div className={adminStyles.searchField}>
-        <label>Lĩnh vực</label>
-        <select className={adminStyles.selectInput} value={field} onChange={(e) => onFieldChange(e.target.value)}>
+        <label>Địa điểm (Tỉnh/Thành)</label>
+        <select className={adminStyles.selectInput} value={province} onChange={(e) => onProvinceChange(e.target.value)}>
           <option value="all">Tất cả</option>
-          {fieldOptions.map((f) => (
-            <option key={f} value={f}>{f}</option>
+          {provinceOptions.map((p) => (
+            <option key={p} value={p}>{p}</option>
           ))}
         </select>
       </div>

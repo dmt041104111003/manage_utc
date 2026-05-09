@@ -25,12 +25,12 @@ export default function TuyenDungToolbar({
   return (
     <div className={adminStyles.searchToolbar}>
       <div className={adminStyles.searchField} style={{ minWidth: 280, flex: 1 }}>
-        <label>Tên tiêu đề / Chuyên môn</label>
+        <label>Tên tiêu đề / Vị trí tuyển dụng</label>
         <input
           className={adminStyles.textInputSearch}
           value={searchQ}
           onChange={(e) => onSearchQChange(e.target.value)}
-          placeholder="Nhập tiêu đề hoặc chuyên môn"
+          placeholder="Nhập tiêu đề hoặc vị trí tuyển dụng"
           style={{ width: "100%" }}
         />
       </div>

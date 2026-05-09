@@ -121,17 +121,17 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
       await tx.studentProfile.update({
         where: { id: report.studentProfileId },
-        data: { internshipStatus: "REJECTED" }
+        data: { internshipStatus: "REPORT_SUBMITTED" }
       });
 
-      if (prevStatus && prevStatus !== "REJECTED") {
+      if (prevStatus && prevStatus !== "REPORT_SUBMITTED") {
         await tx.internshipStatusHistory.create({
           data: {
             studentProfileId: report.studentProfileId,
             fromStatus: prevStatus,
-            toStatus: "REJECTED",
+            toStatus: "REPORT_SUBMITTED",
             byRole: "giangvien",
-            message: "GVHD từ chối duyệt BCTT",
+            message: "GVHD từ chối duyệt BCTT (SV có thể sửa và nộp lại)",
             meta: { reportId: report.id }
           }
         });
@@ -233,7 +233,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     if (svEmail) {
       const scoreLines = [
         `- Điểm ĐQT (GVHD): ${supervisorPointNum}`,
-        enterprisePointNum != null ? `- Điểm KTHP (DN): ${enterprisePointNum}` : null,
+        enterprisePointNum != null ? `- Điểm KTHP (GVHD): ${enterprisePointNum}` : null,
         supervisorEvaluation ? `- Đánh giá: ${supervisorEvaluation}` : null
       ]
         .filter(Boolean)

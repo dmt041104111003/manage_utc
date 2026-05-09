@@ -17,15 +17,11 @@ export default function BaoCaoThucTapResultSection({ report, reportFileLink }: P
             <td style={{ whiteSpace: "pre-wrap" }}>{report?.supervisorEvaluation ?? "—"}</td>
           </tr>
           <tr>
-            <th scope="row">Điểm Giảng viên hướng dẫn</th>
+            <th scope="row">Điểm ĐQT (Giảng viên hướng dẫn)</th>
             <td>{report?.supervisorPoint ?? "—"}</td>
           </tr>
           <tr>
-            <th scope="row">Đánh giá DN</th>
-            <td style={{ whiteSpace: "pre-wrap" }}>{report?.enterpriseEvaluation ?? "—"}</td>
-          </tr>
-          <tr>
-            <th scope="row">Điểm DN</th>
+            <th scope="row">Điểm KTHP (Giảng viên hướng dẫn)</th>
             <td>{report?.enterprisePoint ?? "—"}</td>
           </tr>
           <tr>

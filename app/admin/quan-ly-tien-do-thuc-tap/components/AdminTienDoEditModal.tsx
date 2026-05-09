@@ -66,7 +66,7 @@ export default function AdminTienDoEditModal(props: Props) {
               <td>{degreeLabel[item.student.degree]}</td>
             </tr>
             <tr>
-              <th scope="row">Giảng viên hướng dẫn - Bậc - SĐT - Email</th>
+              <th scope="row">GVHD</th>
               <td style={{ whiteSpace: "pre-wrap" }}>{supervisorLine(item.supervisor)}</td>
             </tr>
             <tr>
@@ -82,17 +82,13 @@ export default function AdminTienDoEditModal(props: Props) {
               </td>
             </tr>
             <tr>
-              <th scope="row">Điểm/đánh giá giảng viên hướng dẫn</th>
+              <th scope="row">Điểm/đánh giá GVHD</th>
               <td>
-                {item.report?.supervisorPoint ?? "—"} - {item.report?.supervisorEvaluation ?? "—"}
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Điểm/đánh giá DN</th>
-              <td>
-                {item.enterprise
-                  ? `${item.report?.enterprisePoint ?? "—"} - ${item.report?.enterpriseEvaluation ?? "—"}`
-                  : "—"}
+                <div style={{ display: "grid", gap: 4 }}>
+                  <div>ĐQT: {item.report?.supervisorPoint ?? "—"}</div>
+                  <div>Điểm KTHP: {item.report?.enterprisePoint ?? "—"}</div>
+                  <div>Đánh giá: {item.report?.supervisorEvaluation ?? "—"}</div>
+                </div>
               </td>
             </tr>
           </tbody>

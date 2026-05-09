@@ -10,8 +10,8 @@ function enterpriseMetaAsRecord(meta: unknown): Record<string, unknown> {
   return meta as Record<string, unknown>;
 }
 
-const TITLE_PATTERN = /^[\p{L}\d\s]{1,255}$/u;
-const EXPERTISE_PATTERN = /^[\p{L}\d\s]{1,255}$/u;
+const TITLE_PATTERN = /^[\p{L}\d\s.,/()&+\-_'":]{1,255}$/u;
+const EXPERTISE_PATTERN = /^[\p{L}\d\s.,/()&+\-_'":]{1,255}$/u;
 const SALARY_PATTERN = /^[\p{L}\d\s\-]{1,150}$/u;
 const COUNT_PATTERN = /^\d{1,10}$/;
 
@@ -78,9 +78,6 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
     select: { companyName: true, taxCode: true, enterpriseMeta: true }
   });
   const meta = enterpriseMetaAsRecord(user?.enterpriseMeta);
-  const enterpriseDefaultsIntro =
-    job.companyIntro ??
-    (typeof meta.businessFields !== "undefined" ? formatBusinessFields(user?.enterpriseMeta) : null);
   const enterpriseDefaultsWebsite =
     job.companyWebsite ??
     (typeof meta.website === "string" && meta.website.trim() ? meta.website.trim() : null);
@@ -92,7 +89,7 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
       taxCode: user?.taxCode ?? null,
       businessFields: formatBusinessFields(user?.enterpriseMeta),
       headquartersAddress: buildEnterpriseHeadquartersAddress(user?.enterpriseMeta),
-      intro: enterpriseDefaultsIntro,
+      intro: job.companyIntro ?? null,
       website: enterpriseDefaultsWebsite
     }
   };
@@ -106,6 +103,7 @@ type EditBody = {
   companyWebsite?: string | null;
   salary?: string;
   expertise?: string;
+  allowedFaculties?: unknown;
   experienceRequirement?: string;
   recruitmentCount?: number | string;
   workType?: "PART_TIME" | "FULL_TIME";
@@ -150,16 +148,24 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
   const errors: Record<string, string> = {};
   const title = (body.title || "").trim();
-  if (!title || !TITLE_PATTERN.test(title)) errors.title = "Tiêu đề chỉ gồm ký tự chữ và số (dài 1–255).";
+  if (!title || !TITLE_PATTERN.test(title)) errors.title = "Tiêu đề không hợp lệ (tối đa 255 ký tự).";
 
   const salary = (body.salary || "").trim();
   if (!salary || !SALARY_PATTERN.test(salary)) errors.salary = "Mức lương chỉ gồm ký tự chữ và số, ký tự '-' (dài 1–150).";
 
   const expertise = (body.expertise || "").trim();
-  if (!expertise || !EXPERTISE_PATTERN.test(expertise)) errors.expertise = "Chuyên môn chỉ gồm ký tự chữ và số (dài 1–255).";
+  if (!expertise || !EXPERTISE_PATTERN.test(expertise)) errors.expertise = "Vị trí tuyển dụng không hợp lệ (tối đa 255 ký tự).";
+
+  const allowedFacultiesRaw = body.allowedFaculties;
+  const allowedFaculties = Array.isArray(allowedFacultiesRaw)
+    ? allowedFacultiesRaw.map((x) => String(x || "").trim()).filter(Boolean)
+    : [];
+  if (allowedFaculties.length === 0) errors.allowedFaculties = "Ngành/Khoa bắt buộc.";
+  if (allowedFaculties.length > 30) errors.allowedFaculties = "Ngành/Khoa tối đa 30 giá trị.";
+  if (allowedFaculties.some((x) => x.length > 255)) errors.allowedFaculties = "Ngành/Khoa không hợp lệ.";
 
   const expReq = (body.experienceRequirement || "").trim();
-  if (!expReq || !EXPERTISE_PATTERN.test(expReq)) errors.experienceRequirement = "Yêu cầu kinh nghiệm chỉ gồm ký tự chữ và số (dài 1–255).";
+  if (!expReq || !EXPERTISE_PATTERN.test(expReq)) errors.experienceRequirement = "Yêu cầu kinh nghiệm không hợp lệ (tối đa 255 ký tự).";
 
   const recruitmentCountStr = body.recruitmentCount == null ? "" : String(body.recruitmentCount).trim();
   if (!recruitmentCountStr || !COUNT_PATTERN.test(recruitmentCountStr)) errors.recruitmentCount = "Số lượng tuyển dụng chỉ gồm số (dài 1–10).";
@@ -221,6 +227,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       companyWebsite,
       salary,
       expertise,
+      allowedFaculties: Array.from(new Set(allowedFaculties)),
       experienceRequirement: expReq,
       recruitmentCount: Number(recruitmentCountStr),
       workType,
