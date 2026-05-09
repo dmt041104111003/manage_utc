@@ -1,0 +1,285 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getAdminSession } from "@/lib/auth/admin-session";
+import { hashPassword } from "@/lib/auth/password";
+import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
+import { fetchProvinceList, fetchWardsForProvince } from "@/lib/vn-open-api";
+
+const MSV_PATTERN = /^\d{8,15}$/;
+const NAME_PATTERN = /^[\p{L}\s]{1,255}$/u;
+const PHONE_PATTERN = /^\d{8,12}$/;
+const CLASS_PATTERN = /^[\p{L}\d]{1,255}$/u;
+const KHOL_PATTERN = /^[\p{L}\d]{1,10}$/u;
+
+type Degree = "BACHELOR" | "ENGINEER";
+type Gender = "MALE" | "FEMALE" | "OTHER";
+type InternshipStatus = "NOT_STARTED" | "DOING" | "SELF_FINANCED" | "REPORT_SUBMITTED" | "COMPLETED";
+
+function parseDateOnly(input: string) {
+  // input: YYYY-MM-DD
+  return new Date(`${input}T00:00:00.000Z`);
+}
+
+function calcAge(date: Date, now = new Date()) {
+  let age = now.getFullYear() - date.getUTCFullYear();
+  const m = now.getUTCMonth() - date.getUTCMonth();
+  if (m < 0 || (m === 0 && now.getUTCDate() < date.getUTCDate())) age -= 1;
+  return age;
+}
+
+async function resolveProvinceWardNames(provinceCode: string, wardCode: string) {
+  const provinces = await fetchProvinceList();
+  const prov = provinces.find((p) => String(p.code) === String(provinceCode));
+  if (!prov) return { provinceName: null as string | null, wardName: null as string | null };
+  const wards = await fetchWardsForProvince(String(provinceCode));
+  const ward = wards.find((w) => String(w.code) === String(wardCode));
+  return { provinceName: prov.name, wardName: ward?.name ?? null };
+}
+
+export async function GET(request: Request) {
+  const admin = await getAdminSession();
+  if (!admin) return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
+
+  const { searchParams } = new URL(request.url);
+  const q = searchParams.get("q")?.trim() || "";
+  const faculty = searchParams.get("faculty")?.trim() || "all";
+  const status = (searchParams.get("status")?.trim() || "all") as InternshipStatus | "all";
+  const degree = (searchParams.get("degree")?.trim() || "all") as Degree | "all";
+
+  const prismaAny = prisma as any;
+
+  const where: any = {};
+  const andParts: any[] = [];
+
+  // filters
+  if (faculty && faculty !== "all") andParts.push({ faculty });
+  if (status && status !== "all") andParts.push({ internshipStatus: status });
+  if (degree && degree !== "all") andParts.push({ degree });
+  if (andParts.length) where.AND = andParts;
+
+  // search q across msv + fullName + phone + email
+  if (q) {
+    andParts.push({
+      OR: [
+        { msv: { contains: q, mode: "insensitive" } },
+        { user: { fullName: { contains: q, mode: "insensitive" } } },
+        { user: { phone: { contains: q, mode: "insensitive" } } },
+        { user: { email: { contains: q, mode: "insensitive" } } }
+      ]
+    });
+  }
+
+  if (andParts.length) where.AND = andParts;
+
+  const rows = await prismaAny.studentProfile.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      userId: true,
+      msv: true,
+      className: true,
+      faculty: true,
+      cohort: true,
+      degree: true,
+      gender: true,
+      birthDate: true,
+      permanentProvinceCode: true,
+      permanentProvinceName: true,
+      permanentWardCode: true,
+      permanentWardName: true,
+      internshipStatus: true,
+      user: {
+        select: {
+          fullName: true,
+          email: true,
+          phone: true
+        }
+      }
+    }
+  });
+
+  const userIds = rows.map((r: any) => r.userId);
+  const linked = new Set<string>();
+  if (userIds.length) {
+    const distinctApps = await prismaAny.jobApplication.findMany({
+      where: { studentUserId: { in: userIds } },
+      select: { studentUserId: true },
+      distinct: ["studentUserId"]
+    });
+    for (const a of distinctApps) linked.add(String(a.studentUserId));
+  }
+
+  // meta: distinct faculties (for dropdown)
+  let faculties: string[] = [];
+  try {
+    const fRows = await prismaAny.studentProfile.findMany({
+      distinct: ["faculty"],
+      select: { faculty: true }
+    });
+    faculties = fRows.map((r: any) => String(r.faculty)).filter(Boolean).sort((a: string, b: string) => a.localeCompare(b, "vi"));
+  } catch {
+    faculties = [];
+  }
+
+  return NextResponse.json({
+    success: true,
+    items: rows.map((r: any) => ({
+      id: r.id,
+      msv: r.msv,
+      fullName: r.user?.fullName ?? "",
+      phone: r.user?.phone ?? null,
+      email: r.user?.email ?? "",
+      className: r.className,
+      faculty: r.faculty,
+      cohort: r.cohort,
+      degree: r.degree as Degree,
+      internshipStatus: r.internshipStatus as InternshipStatus,
+      birthDate: r.birthDate?.toISOString?.() ?? null,
+      gender: r.gender as Gender,
+      permanentProvinceCode: r.permanentProvinceCode,
+      permanentProvinceName: r.permanentProvinceName ?? null,
+      permanentWardCode: r.permanentWardCode,
+      permanentWardName: r.permanentWardName ?? null,
+      hasLinkedData: linked.has(String(r.userId))
+    })),
+    faculties
+  });
+}
+
+type CreateStudentBody = {
+  msv: string;
+  fullName: string;
+  className: string;
+  faculty: string;
+  cohort: string;
+  degree: Degree;
+  phone: string;
+  email: string;
+  birthDate: string; // YYYY-MM-DD
+  gender: Gender;
+  permanentProvinceCode: string;
+  permanentWardCode: string;
+};
+
+function validateCreate(body: CreateStudentBody) {
+  const errors: Record<string, string> = {};
+
+  const msv = (body.msv || "").trim();
+  if (!MSV_PATTERN.test(msv)) errors.msv = "Mã sinh viên chỉ gồm số (8–15 ký tự).";
+
+  const fullName = (body.fullName || "").trim();
+  if (!fullName || !NAME_PATTERN.test(fullName)) errors.fullName = "Họ tên chỉ gồm chữ và dấu cách (1–255 ký tự).";
+
+  const phone = (body.phone || "").trim();
+  if (!PHONE_PATTERN.test(phone)) errors.phone = "Số điện thoại chỉ gồm số (8–12 ký tự).";
+
+  const email = (body.email || "").trim();
+  if (!AUTH_EMAIL_REGISTER_PATTERN.test(email)) errors.email = "Email không đúng định dạng example@domain.com.";
+
+  const birthDateStr = (body.birthDate || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDateStr)) errors.birthDate = "Ngày sinh không hợp lệ (YYYY-MM-DD).";
+  else {
+    const birth = parseDateOnly(birthDateStr);
+    if (Number.isNaN(birth.getTime())) errors.birthDate = "Ngày sinh không hợp lệ.";
+    else {
+      const age = calcAge(birth);
+      if (age < 18) errors.birthDate = "Sinh viên phải đủ 18 tuổi trở lên.";
+      if (birth.getTime() > Date.now()) errors.birthDate = "Ngày sinh không hợp lệ.";
+    }
+  }
+
+  if (!body.gender || !["MALE", "FEMALE", "OTHER"].includes(String(body.gender))) errors.gender = "Giới tính không hợp lệ.";
+
+  const permanentProvinceCode = (body.permanentProvinceCode || "").trim();
+  const permanentWardCode = (body.permanentWardCode || "").trim();
+  if (!permanentProvinceCode || !/^\d+$/.test(permanentProvinceCode)) errors.permanentProvinceCode = "Tỉnh/thành không hợp lệ.";
+  if (!permanentWardCode || !/^\d+$/.test(permanentWardCode)) errors.permanentWardCode = "Phường/xã không hợp lệ.";
+
+  const className = (body.className || "").trim();
+  if (!className || !CLASS_PATTERN.test(className)) errors.className = "Lớp chỉ gồm chữ và số (1–255 ký tự).";
+
+  const faculty = (body.faculty || "").trim();
+  if (!faculty) errors.faculty = "Khoa bắt buộc.";
+
+  const cohort = (body.cohort || "").trim();
+  if (!KHOL_PATTERN.test(cohort)) errors.cohort = "Khóa chỉ gồm chữ và số (1–10 ký tự).";
+
+  if (!body.degree || !["BACHELOR", "ENGINEER"].includes(String(body.degree))) errors.degree = "Bậc không hợp lệ.";
+
+  return errors;
+}
+
+export async function POST(request: Request) {
+  const admin = await getAdminSession();
+  if (!admin) return NextResponse.json({ message: "Không có quyền truy cập." }, { status: 403 });
+
+  const body = (await request.json()) as CreateStudentBody;
+  const errors = validateCreate(body);
+  if (Object.keys(errors).length) return NextResponse.json({ success: false, errors }, { status: 400 });
+
+  const prismaAny = prisma as any;
+
+  const msv = body.msv.trim();
+  const email = body.email.trim();
+  const phone = body.phone.trim();
+
+  const existingProfile = await prismaAny.studentProfile.findFirst({ where: { msv }, select: { userId: true } });
+  const existingUserByEmail = await prismaAny.user.findUnique({ where: { email }, select: { id: true } });
+  const existingUserByPhone = await prismaAny.user.findUnique({ where: { phone }, select: { id: true } });
+
+  const uniqErrors: Record<string, string> = {};
+  if (existingProfile) uniqErrors.msv = "Mã sinh viên đã tồn tại trong hệ thống.";
+  if (existingUserByEmail) uniqErrors.email = "Email đã tồn tại trong hệ thống.";
+  if (existingUserByPhone) uniqErrors.phone = "Số điện thoại đã tồn tại trong hệ thống.";
+  if (Object.keys(uniqErrors).length) return NextResponse.json({ success: false, errors: uniqErrors }, { status: 400 });
+
+  const { provinceName, wardName } = await resolveProvinceWardNames(body.permanentProvinceCode, body.permanentWardCode);
+  if (!provinceName || !wardName) {
+    return NextResponse.json(
+      { success: false, errors: { permanentProvinceCode: "Tỉnh/thành hoặc Phường/xã không tồn tại.", permanentWardCode: "Tỉnh/thành hoặc Phường/xã không tồn tại." } },
+      { status: 400 }
+    );
+  }
+
+  const birthDateStr = body.birthDate.trim();
+  const passwordHash = await hashPassword(birthDateStr);
+
+  const user = await prismaAny.user.create({
+    data: {
+      email,
+      phone,
+      passwordHash,
+      fullName: body.fullName.trim(),
+      role: "sinhvien",
+      isLocked: false,
+      enterpriseStatus: null,
+      companyName: null,
+      taxCode: null,
+      representativeTitle: null,
+      enterpriseMeta: null
+    },
+    select: { id: true }
+  });
+
+  await prismaAny.studentProfile.create({
+    data: {
+      userId: user.id,
+      msv,
+      className: body.className.trim(),
+      faculty: body.faculty.trim(),
+      cohort: body.cohort.trim(),
+      degree: body.degree,
+      gender: body.gender,
+      birthDate: parseDateOnly(birthDateStr),
+      permanentProvinceCode: body.permanentProvinceCode.trim(),
+      permanentProvinceName: provinceName,
+      permanentWardCode: body.permanentWardCode.trim(),
+      permanentWardName: wardName,
+      internshipStatus: "NOT_STARTED"
+    }
+  });
+
+  return NextResponse.json({ success: true, message: "Tạo sinh viên thành công." });
+}
+

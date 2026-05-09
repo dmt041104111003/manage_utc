@@ -37,6 +37,25 @@ enum JobStatus {
   STOPPED
 }
 
+enum StudentInternshipStatus {
+  NOT_STARTED
+  DOING
+  SELF_FINANCED
+  REPORT_SUBMITTED
+  COMPLETED
+}
+
+enum StudentGender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum StudentDegree {
+  BACHELOR
+  ENGINEER
+}
+
 enum InternshipBatchSemester {
   HK_I
   HK_II
@@ -63,6 +82,9 @@ model User {
   // Recruitment module relations (only used by doanhnghiep / sinhvien roles).
   jobPosts         JobPost[]
   jobApplications  JobApplication[]
+
+  // Student profile (only used by sinhvien role; managed by admin)
+  studentProfile   StudentProfile?
 }
 
 model InternshipBatch {
@@ -133,4 +155,31 @@ model JobApplication {
 
   jobPost JobPost @relation(fields: [jobPostId], references: [id])
   studentUser User @relation(fields: [studentUserId], references: [id])
+}
+
+model StudentProfile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  msv String @unique
+
+  className String // Lớp
+  faculty String // Khoa
+  degree StudentDegree
+  cohort String // Khóa (niên khóa)
+
+  gender StudentGender
+  birthDate DateTime
+
+  permanentProvinceCode String
+  permanentProvinceName String?
+  permanentWardCode String
+  permanentWardName String?
+
+  internshipStatus StudentInternshipStatus @default(NOT_STARTED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
 }
