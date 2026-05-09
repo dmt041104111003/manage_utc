@@ -6,7 +6,6 @@ import styles from "../styles/dashboard.module.css";
 import adminStyles from "../../admin/styles/dashboard.module.css";
 import MessagePopup from "../../components/MessagePopup";
 import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
-import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
 import type {
   InternshipStatus,
   Report,
@@ -174,7 +173,7 @@ export default function SinhvienBaoCaoThucTapPage() {
     }
   }
 
-  const reportFileLink = report ? dataUrlFromBase64(report.reportMime, report.reportBase64) : null;
+  const reportFileLink = report?.reportUrl || null;
 
   return (
     <main className={styles.page}>

@@ -4,6 +4,7 @@ import { sendMail } from "@/lib/mail";
 import { validateEnterpriseRegisterPayload, type EnterpriseRegisterPayload } from "@/lib/enterprise-register-validate";
 import { SCHOOL_NAME } from "@/lib/constants/school";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
+import { toCloudinaryRef, uploadEnterpriseLicenseBytesToCloudinary, uploadEnterpriseLogoBytesToCloudinary } from "@/lib/storage/cloudinary";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as EnterpriseRegisterPayload;
@@ -18,9 +19,46 @@ export async function POST(request: Request) {
 
   const { userCreate } = validated;
   const email = userCreate.email as string;
+  const enterpriseMeta =
+    userCreate.enterpriseMeta && typeof userCreate.enterpriseMeta === "object" && !Array.isArray(userCreate.enterpriseMeta)
+      ? ({ ...(userCreate.enterpriseMeta as Record<string, unknown>) } as Record<string, unknown>)
+      : {};
+
+  const businessLicenseName = String(enterpriseMeta.businessLicenseName || "").trim();
+  const businessLicenseMime = String(enterpriseMeta.businessLicenseMime || "").trim();
+  const businessLicenseBase64 = String(enterpriseMeta.businessLicenseBase64 || "").trim();
+  const companyLogoName = String(enterpriseMeta.companyLogoName || "").trim();
+  const companyLogoMime = String(enterpriseMeta.companyLogoMime || "").trim();
+  const companyLogoBase64 = String(enterpriseMeta.companyLogoBase64 || "").trim();
+
+  if (businessLicenseBase64 && businessLicenseName && businessLicenseMime) {
+    const uploadedLicense = await uploadEnterpriseLicenseBytesToCloudinary({
+      bytes: Buffer.from(businessLicenseBase64, "base64"),
+      mimeType: businessLicenseMime,
+      ownerKey: String(userCreate.taxCode || email || "enterprise"),
+      originalName: businessLicenseName
+    });
+    enterpriseMeta.businessLicensePublicId = toCloudinaryRef(uploadedLicense.publicId);
+    delete enterpriseMeta.businessLicenseBase64;
+    delete enterpriseMeta.businessLicenseByteLength;
+  }
+
+  if (companyLogoBase64 && companyLogoName && companyLogoMime) {
+    const uploadedLogo = await uploadEnterpriseLogoBytesToCloudinary({
+      bytes: Buffer.from(companyLogoBase64, "base64"),
+      mimeType: companyLogoMime,
+      ownerKey: String(userCreate.taxCode || email || "enterprise"),
+      originalName: companyLogoName
+    });
+    enterpriseMeta.companyLogoPublicId = toCloudinaryRef(uploadedLogo.publicId);
+    delete enterpriseMeta.companyLogoBase64;
+    delete enterpriseMeta.companyLogoByteLength;
+  }
+
+  const nextUserCreate = { ...userCreate, enterpriseMeta };
 
   try {
-    await prisma.user.create({ data: userCreate });
+    await prisma.user.create({ data: nextUserCreate });
   } catch (e) {
     console.error("register-enterprise create user", e);
     return NextResponse.json(

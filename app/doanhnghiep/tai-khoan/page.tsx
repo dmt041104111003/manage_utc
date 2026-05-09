@@ -19,6 +19,7 @@ import {
 } from "@/lib/utils/enterprise-admin-display";
 import { metaRecord } from "@/lib/utils/enterprise-meta";
 import { formatAdminEnterpriseStatusLine } from "@/lib/utils/admin-enterprise-display";
+import { buildCloudinaryImageDeliveryUrl, buildCloudinaryRawDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
 import {
   buildEnterpriseAccountPatchPayload,
   mapEnterpriseAccountFormFromMe,
@@ -129,11 +130,21 @@ export default function EnterpriseAccountPage() {
   const licName = typeof m.businessLicenseName === "string" && m.businessLicenseName.trim() ? m.businessLicenseName : "—";
   const licMime = typeof m.businessLicenseMime === "string" ? m.businessLicenseMime : "application/octet-stream";
   const licB64 = typeof m.businessLicenseBase64 === "string" ? m.businessLicenseBase64 : null;
-  const licHref = licB64 ? dataUrlFromBase64(licMime, licB64) : null;
+  const licPublicId = fromCloudinaryRef(typeof m.businessLicensePublicId === "string" ? m.businessLicensePublicId : null);
+  const licHref = licPublicId
+    ? buildCloudinaryRawDeliveryUrl(licPublicId)
+    : licB64
+      ? dataUrlFromBase64(licMime, licB64)
+      : null;
 
   const logoMime = typeof m.companyLogoMime === "string" ? m.companyLogoMime : "";
   const logoB64 = typeof m.companyLogoBase64 === "string" ? m.companyLogoBase64 : null;
-  const logoSrc = logoB64 && logoMime.startsWith("image/") ? dataUrlFromBase64(logoMime, logoB64) : null;
+  const logoPublicId = fromCloudinaryRef(typeof m.companyLogoPublicId === "string" ? m.companyLogoPublicId : null);
+  const logoSrc = logoPublicId
+    ? buildCloudinaryImageDeliveryUrl(logoPublicId)
+    : logoB64 && logoMime.startsWith("image/")
+      ? dataUrlFromBase64(logoMime, logoB64)
+      : null;
 
   const statusText = formatAdminEnterpriseStatusLine(me.enterpriseStatus);
 

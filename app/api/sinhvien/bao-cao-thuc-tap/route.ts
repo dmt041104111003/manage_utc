@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { decodeEnterpriseFilePayload } from "@/lib/enterprise-register-files";
 import { sendMail } from "@/lib/mail";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
+import { toCloudinaryRef, uploadInternshipReportBytesToCloudinary } from "@/lib/storage/cloudinary";
 
 const BCTT_ALLOWED_MIMES = [
   "application/pdf",
@@ -129,7 +130,7 @@ export async function GET() {
         supervisorRejectReason: profile.internshipReport.supervisorRejectReason ?? null,
         reportFileName: profile.internshipReport.reportFileName,
         reportMime: profile.internshipReport.reportMime,
-        reportBase64: profile.internshipReport.reportBase64,
+        reportUrl: `/api/files/internship-report/${profile.internshipReport.id}`,
         supervisorEvaluation: profile.internshipReport.supervisorEvaluation ?? null,
         enterpriseEvaluation: profile.internshipReport.enterpriseEvaluation ?? null,
         supervisorPoint: null as number | null,
@@ -218,13 +219,20 @@ export async function POST(request: Request) {
   const existing = await prismaAny.internshipReport.findFirst({ where: { studentProfileId: profile.id }, select: { id: true } });
   if (existing) return NextResponse.json({ success: false, message: "Bạn đã nộp BCTT trước đó." }, { status: 409 });
 
+  const uploaded = await uploadInternshipReportBytesToCloudinary({
+    bytes: Buffer.from(decoded.base64, "base64"),
+    mimeType: decoded.mime,
+    ownerId: profile.id,
+    originalName: fileName
+  });
+
   await prismaAny.$transaction(async (tx: any) => {
     await tx.internshipReport.create({
       data: {
         studentProfileId: profile.id,
         reportFileName: fileName,
         reportMime: decoded.mime,
-        reportBase64: decoded.base64,
+        reportBase64: toCloudinaryRef(uploaded.publicId),
         reviewStatus: "PENDING",
         history: [
           {
@@ -310,13 +318,20 @@ export async function PATCH(request: Request) {
 
   const prevInternshipStatus = profile.internshipStatus as InternshipStatus;
 
+  const uploaded = await uploadInternshipReportBytesToCloudinary({
+    bytes: Buffer.from(decoded.base64, "base64"),
+    mimeType: decoded.mime,
+    ownerId: profile.id,
+    originalName: fileName
+  });
+
   await prismaAny.$transaction(async (tx: any) => {
     await tx.internshipReport.update({
       where: { id: report.id },
       data: {
         reportFileName: fileName,
         reportMime: decoded.mime,
-        reportBase64: decoded.base64,
+        reportBase64: toCloudinaryRef(uploaded.publicId),
         reviewStatus: "PENDING",
         supervisorRejectReason: null,
         reviewedAt: null,

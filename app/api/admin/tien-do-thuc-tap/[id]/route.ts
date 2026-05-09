@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth/admin-session";
-import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
 import { sendMail } from "@/lib/mail";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
 
@@ -53,8 +52,6 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
           id: true,
           reviewStatus: true,
           reportFileName: true,
-          reportMime: true,
-          reportBase64: true,
           supervisorEvaluation: true,
           supervisorPoint: true,
           enterpriseEvaluation: true,
@@ -130,7 +127,7 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
         id: profile.internshipReport.id,
         reviewStatus: profile.internshipReport.reviewStatus as ReportReviewStatus,
         reportFileName: profile.internshipReport.reportFileName,
-        reportUrl: dataUrlFromBase64(profile.internshipReport.reportMime, profile.internshipReport.reportBase64),
+        reportUrl: `/api/files/internship-report/${profile.internshipReport.id}`,
         supervisorEvaluation: profile.internshipReport.supervisorEvaluation ?? null,
         supervisorPoint: profile.internshipReport.supervisorPoint ?? null,
         enterpriseEvaluation: profile.internshipReport.enterpriseEvaluation ?? null,

@@ -131,9 +131,8 @@ export async function GET(request: Request) {
           },
           internshipReport: {
             select: {
+              id: true,
               reportFileName: true,
-              reportMime: true,
-              reportBase64: true,
               reviewStatus: true,
               supervisorEvaluation: true,
               supervisorPoint: true,
@@ -190,9 +189,9 @@ export async function GET(request: Request) {
       })),
       report: r
         ? {
+            id: r.id,
             reportFileName: r.reportFileName,
-            reportMime: r.reportMime,
-            reportBase64: r.reportBase64,
+            reportUrl: `/api/files/internship-report/${r.id}`,
             reviewStatus: r.reviewStatus,
             supervisorEvaluation: r.supervisorEvaluation ?? null,
             supervisorPoint: r.supervisorPoint ?? null,

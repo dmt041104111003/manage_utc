@@ -7,7 +7,6 @@ import {
   internshipStatusLabel
 } from "@/lib/constants/giangvien-sinh-vien";
 import { formatDateVi } from "@/lib/utils/giangvien-sinh-vien";
-import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import styles from "../../styles/dashboard.module.css";
 
@@ -22,10 +21,7 @@ export default function SinhVienViewPopup({ viewTarget, onClose }: Props) {
   const isGuidanceCompleted = viewTarget.guidanceStatus === "COMPLETED";
   const isInternshipCompleted = viewTarget.internshipStatus === "COMPLETED";
 
-  const reportFileLink =
-    viewTarget.report
-      ? dataUrlFromBase64(viewTarget.report.reportMime, viewTarget.report.reportBase64)
-      : null;
+  const reportFileLink = viewTarget.report?.reportUrl ?? null;
 
   return (
     <MessagePopup open title="Xem chi tiết sinh viên" size="extraWide" onClose={onClose}>
@@ -182,7 +178,6 @@ export default function SinhVienViewPopup({ viewTarget, onClose }: Props) {
                         <a
                           className={adminStyles.detailLink}
                           href={reportFileLink}
-                          download={viewTarget.report.reportFileName}
                           target="_blank"
                           rel="noreferrer"
                         >

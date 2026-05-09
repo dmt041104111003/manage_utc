@@ -73,8 +73,8 @@ export default function AdminTienDoEditModal(props: Props) {
               <th scope="row">File BCTT</th>
               <td>
                 {item.report?.reportUrl ? (
-                  <a className={styles.detailLink} href={item.report.reportUrl} download={item.report.reportFileName}>
-                    Tải BCTT
+                  <a className={styles.detailLink} href={item.report.reportUrl} target="_blank" rel="noreferrer">
+                    Xem BCTT
                   </a>
                 ) : (
                   "—"

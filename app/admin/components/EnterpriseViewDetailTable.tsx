@@ -9,6 +9,7 @@ import {
 } from "@/lib/utils/enterprise-admin-display";
 import { formatAdminEnterpriseStatusLine } from "@/lib/utils/admin-enterprise-display";
 import { resolveRepresentativeTitle } from "@/lib/utils/enterprise-representative";
+import { buildCloudinaryImageDeliveryUrl, buildCloudinaryRawDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
 import styles from "../styles/dashboard.module.css";
 
 type Props = { item: AdminEnterpriseDetail };
@@ -26,8 +27,18 @@ export function EnterpriseViewDetailTable({ item }: Props) {
   const logoB64 = typeof m.companyLogoBase64 === "string" ? m.companyLogoBase64 : null;
   const website = typeof m.website === "string" && m.website ? m.website : null;
 
-  const licHref = licB64 ? dataUrlFromBase64(licMime, licB64) : null;
-  const logoSrc = logoB64 && logoMime.startsWith("image/") ? dataUrlFromBase64(logoMime, logoB64) : null;
+  const licPublicId = fromCloudinaryRef(typeof m.businessLicensePublicId === "string" ? m.businessLicensePublicId : null);
+  const logoPublicId = fromCloudinaryRef(typeof m.companyLogoPublicId === "string" ? m.companyLogoPublicId : null);
+  const licHref = licPublicId
+    ? buildCloudinaryRawDeliveryUrl(licPublicId)
+    : licB64
+      ? dataUrlFromBase64(licMime, licB64)
+      : null;
+  const logoSrc = logoPublicId
+    ? buildCloudinaryImageDeliveryUrl(logoPublicId)
+    : logoB64 && logoMime.startsWith("image/")
+      ? dataUrlFromBase64(logoMime, logoB64)
+      : null;
 
   const statusLine = formatAdminEnterpriseStatusLine(item.enterpriseStatus);
 

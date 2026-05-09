@@ -32,7 +32,7 @@ export type Report = {
   supervisorRejectReason: string | null;
   reportFileName: string;
   reportMime: string;
-  reportBase64: string;
+  reportUrl: string;
   supervisorEvaluation: string | null;
   supervisorPoint: number | null;
   enterpriseEvaluation: string | null;

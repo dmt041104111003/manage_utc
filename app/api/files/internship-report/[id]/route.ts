@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
+import { buildCloudinaryRawDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
 
 function safeFilename(name: string): string {
   return String(name || "bctt.pdf").replace(/["\r\n]/g, "").trim() || "bctt.pdf";
@@ -59,17 +60,31 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
 
   if (!allowed) return NextResponse.json({ success: false, message: "Không có quyền truy cập." }, { status: 403 });
 
-  const base64 = String(report.reportBase64 || "").trim();
-  if (!base64) return NextResponse.json({ success: false, message: "Không có file BCTT." }, { status: 404 });
+  const stored = String(report.reportBase64 || "").trim();
+  if (!stored) return NextResponse.json({ success: false, message: "Không có file BCTT." }, { status: 404 });
 
   let bytes: Buffer;
-  try {
-    bytes = Buffer.from(base64, "base64");
-  } catch {
-    return NextResponse.json({ success: false, message: "File BCTT không hợp lệ." }, { status: 500 });
+  let mime = String(report.reportMime || "").trim() || "application/pdf";
+  const cloudPublicId = fromCloudinaryRef(stored);
+  if (cloudPublicId) {
+    try {
+      const upstream = await fetch(buildCloudinaryRawDeliveryUrl(cloudPublicId));
+      if (!upstream.ok) return NextResponse.json({ success: false, message: "Không thể tải file BCTT." }, { status: 502 });
+      const ab = await upstream.arrayBuffer();
+      bytes = Buffer.from(ab);
+      const upstreamType = String(upstream.headers.get("content-type") || "").trim().toLowerCase();
+      if (upstreamType && upstreamType !== "application/octet-stream") mime = upstreamType;
+    } catch {
+      return NextResponse.json({ success: false, message: "Không thể tải file BCTT." }, { status: 500 });
+    }
+  } else {
+    try {
+      bytes = Buffer.from(stored, "base64");
+    } catch {
+      return NextResponse.json({ success: false, message: "File BCTT không hợp lệ." }, { status: 500 });
+    }
   }
 
-  const mime = String(report.reportMime || "").trim() || "application/pdf";
   const filename = safeFilename(report.reportFileName || "bctt.pdf");
   const disposition = `${download ? "attachment" : "inline"}; filename="${filename}"`;
 

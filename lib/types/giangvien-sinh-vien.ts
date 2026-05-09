@@ -22,9 +22,9 @@ export type GuidanceHistoryEvent = {
 };
 
 export type InternshipReport = {
+  id: string;
   reportFileName: string;
-  reportMime: string;
-  reportBase64: string;
+  reportUrl: string;
   reviewStatus: string;
   supervisorEvaluation: string | null;
   supervisorPoint: number | null;
