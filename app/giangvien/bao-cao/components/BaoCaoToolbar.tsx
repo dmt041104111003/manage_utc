@@ -9,6 +9,8 @@ type Props = {
   onDegreeFilterChange: (v: "all" | Degree) => void;
   onStatusFilterChange: (v: "all" | InternshipStatus) => void;
   onSearch: () => void;
+  onExportFiltered: () => void;
+  busy: boolean;
 };
 
 export default function BaoCaoToolbar({
@@ -18,7 +20,9 @@ export default function BaoCaoToolbar({
   onQChange,
   onDegreeFilterChange,
   onStatusFilterChange,
-  onSearch
+  onSearch,
+  onExportFiltered,
+  busy
 }: Props) {
   return (
     <div className={adminStyles.searchToolbar}>
@@ -65,6 +69,9 @@ export default function BaoCaoToolbar({
         onClick={onSearch}
       >
         Tìm kiếm
+      </button>
+      <button type="button" className={adminStyles.btn} onClick={onExportFiltered} disabled={busy}>
+        Xuất Excel theo bộ lọc
       </button>
     </div>
   );

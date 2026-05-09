@@ -28,6 +28,16 @@ export const ADMIN_STUDENT_EXCEL_HEADER = [
   "Phường/Xã"
 ] as const;
 
+export const ADMIN_STUDENT_FILTER_EXPORT_EXTRA_HEADER = [
+  "Trạng thái thực tập",
+  "GVHD họ tên",
+  "GVHD email",
+  "GVHD SĐT",
+  "Tên đợt thực tập"
+] as const;
+
+export const ADMIN_STUDENT_FILTER_EXPORT_HEADER = [...ADMIN_STUDENT_EXCEL_HEADER, ...ADMIN_STUDENT_FILTER_EXPORT_EXTRA_HEADER];
+
 export const ADMIN_STUDENT_EXCEL_SAMPLE_ROWS: AdminStudentExcelRow[] = [
   {
     msv: "10000001",

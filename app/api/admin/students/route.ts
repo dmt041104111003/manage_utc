@@ -5,6 +5,7 @@ import { hashPassword } from "@/lib/auth/password";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import { fetchProvinceList, fetchWardsForProvince } from "@/lib/vn-open-api";
 import { ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE } from "@/lib/constants/admin-quan-ly-sinh-vien";
+import { buildAdminStudentListWhere } from "@/lib/server/admin-students-list-filter";
 
 const MSV_PATTERN = /^\d{8,15}$/;
 const NAME_PATTERN = /^[\p{L}\s]{1,255}$/u;
@@ -42,37 +43,12 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const q = searchParams.get("q")?.trim() || "";
-    const faculty = searchParams.get("faculty")?.trim() || "all";
-    const status = (searchParams.get("status")?.trim() || "all") as InternshipStatus | "all";
-    const degree = (searchParams.get("degree")?.trim() || "all") as Degree | "all";
     const page = Math.max(Number(searchParams.get("page") || "1") || 1, 1);
     const pageSize = Math.max(Number(searchParams.get("pageSize") || String(ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE)) || ADMIN_QUAN_LY_SINH_VIEN_PAGE_SIZE, 1);
 
     const prismaAny = prisma as any;
 
-    const where: any = {};
-    const andParts: any[] = [];
-
-    if (faculty && faculty !== "all") andParts.push({ faculty });
-    if (status && status !== "all") andParts.push({ internshipStatus: status });
-    if (degree && degree !== "all") andParts.push({ degree });
-    if (andParts.length) where.AND = andParts;
-
-    if (q) {
-      const isNumeric = /^\d+$/.test(q);
-      const isEmailLike = q.includes("@") || q.includes(".");
-      andParts.push({
-        OR: [
-          { msv: { startsWith: q } },
-          ...(q.length >= 2 ? [{ user: { fullName: { contains: q, mode: "insensitive" } } }] : []),
-          ...(isNumeric ? [{ user: { phone: { startsWith: q } } }] : []),
-          ...(isEmailLike ? [{ user: { email: { startsWith: q, mode: "insensitive" } } }] : [])
-        ]
-      });
-    }
-
-    if (andParts.length) where.AND = andParts;
+    const where = buildAdminStudentListWhere(searchParams) as any;
 
     const totalItems = await prismaAny.studentProfile.count({ where });
     const rows = await prismaAny.studentProfile.findMany({

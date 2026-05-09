@@ -2,6 +2,26 @@ import type { Degree } from "@/lib/types/giangvien-bao-cao-thuc-tap";
 
 export const degreeLabel: Record<Degree, string> = { BACHELOR: "Cử nhân", ENGINEER: "Kỹ sư" };
 
+export const GIANGVIEN_BAO_CAO_EXPORT_HEADER = [
+  "MSV",
+  "Họ tên",
+  "Lớp",
+  "Khoa",
+  "Khóa",
+  "Bậc",
+  "SĐT",
+  "Email",
+  "Trạng thái thực tập",
+  "Doanh nghiệp",
+  "Địa chỉ DN",
+  "Trạng thái duyệt BCTT",
+  "Ngày nộp BCTT",
+  "Điểm GVHD (ĐQT)",
+  "Điểm DN (KTHP)",
+  "Tên file BCTT",
+  "Đánh giá GVHD"
+] as const;
+
 export const pointPattern = /^\d+(\.\d+)?$/;
 export const noSpecialPattern = /^[\p{L}\d\s]*$/u;
 

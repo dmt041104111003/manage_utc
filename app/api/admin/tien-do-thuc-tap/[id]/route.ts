@@ -4,6 +4,7 @@ import { getAdminSession } from "@/lib/auth/admin-session";
 import { MAIL_PHONG_DAO_TAO_SUBJECT_PREFIX, MAIL_TRANSACTIONAL_SIGN_OFF } from "@/lib/constants/school";
 import { sendMail } from "@/lib/mail";
 import { getPublicAppUrl } from "@/lib/mail-enterprise";
+import { getAdminTienDoStatusLabel } from "@/lib/utils/admin-tien-do-status-label";
 
 type Degree = "BACHELOR" | "ENGINEER";
 type InternshipStatus =
@@ -15,19 +16,6 @@ type InternshipStatus =
   | "REJECTED";
 
 type ReportReviewStatus = "PENDING" | "REJECTED" | "APPROVED";
-
-function getStatusLabel(status: InternshipStatus, reportReviewStatus: ReportReviewStatus | null) {
-  if (status === "REPORT_SUBMITTED") {
-    if (reportReviewStatus === "APPROVED") return "Đã duyệt BCTT";
-    if (reportReviewStatus === "REJECTED") return "BCTT bị giảng viên hướng dẫn từ chối";
-    return "Chờ giảng viên hướng dẫn duyệt";
-  }
-  if (status === "REJECTED") return "Từ chối";
-  if (status === "COMPLETED") return "Hoàn thành thực tập";
-  if (status === "DOING") return "Đang thực tập";
-  if (status === "SELF_FINANCED") return "Thực tập tự túc";
-  return "Chưa thực tập";
-}
 
 export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
   const admin = await getAdminSession();
@@ -156,7 +144,7 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
       supervisor,
       enterprise,
       internshipStatus,
-      statusLabel: getStatusLabel(internshipStatus, reportReviewStatus),
+      statusLabel: getAdminTienDoStatusLabel(internshipStatus, reportReviewStatus),
       report,
       history: (profile.internshipStatusHistory || []).map((h: any) => ({
         fromStatus: h.fromStatus as InternshipStatus,

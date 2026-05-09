@@ -51,6 +51,7 @@ export default function AdminTienDoThucTapPage() {
   const [finalStatusDraft, setFinalStatusDraft] = useState<"COMPLETED" | "REJECTED">("COMPLETED");
 
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [exportBusy, setExportBusy] = useState(false);
   const [toast, setToast] = useState("");
 
   const fetchProgressDetailCached = async (id: string, force = false) =>
@@ -122,6 +123,50 @@ export default function AdminTienDoThucTapPage() {
       setEditOpen(true);
     } catch (e) {
       setToast(e instanceof Error ? e.message : "Không thể tải thông tin để cập nhật.");
+    }
+  }
+
+  async function exportFilteredExcel() {
+    setExportBusy(true);
+    try {
+      const params = new URLSearchParams();
+      if (q.trim()) params.set("q", q.trim());
+      if (filterFaculty !== "all") params.set("faculty", filterFaculty);
+      if (filterDegree !== "all") params.set("degree", filterDegree);
+      if (filterStatus !== "all") params.set("status", filterStatus);
+      const res = await fetch(`/api/admin/tien-do-thuc-tap/export?${params.toString()}`);
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(j?.message || "Không xuất được file Excel.");
+      }
+      const cd = res.headers.get("Content-Disposition");
+      let fn = "tien_do_thuc_tap_theo_loc.xlsx";
+      if (cd) {
+        const star = /filename\*=UTF-8''([^;\s]+)/i.exec(cd);
+        if (star?.[1]) {
+          try {
+            fn = decodeURIComponent(star[1]);
+          } catch {
+            fn = star[1];
+          }
+        } else {
+          const plain = /filename="([^"]+)"/i.exec(cd);
+          if (plain?.[1]) fn = plain[1];
+        }
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fn;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : "Không xuất được file Excel.");
+    } finally {
+      setExportBusy(false);
     }
   }
 
@@ -237,11 +282,13 @@ export default function AdminTienDoThucTapPage() {
         filterStatus={filterStatus}
         filterDegree={filterDegree}
         faculties={faculties}
+        busy={busyId !== null || exportBusy}
         onChangeQ={setQ}
         onChangeFilterFaculty={setFilterFaculty}
         onChangeFilterStatus={setFilterStatus}
         onChangeFilterDegree={setFilterDegree}
         onSearch={() => void load({ force: true })}
+        onExportFiltered={() => void exportFilteredExcel()}
       />
 
       <AdminTienDoTableSection

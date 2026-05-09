@@ -20,6 +20,7 @@ type Props = {
   onChangeFilterInternshipStatus: (v: InternshipStatus | "all") => void;
   onChangeFilterDegree: (v: Degree | "all") => void;
   onSearch: () => void;
+  onExportFiltered: () => void;
   onOpenAdd: () => void;
   onOpenImport: () => void;
 };
@@ -37,6 +38,7 @@ export default function AdminSinhVienToolbar(props: Props) {
     onChangeFilterInternshipStatus,
     onChangeFilterDegree,
     onSearch,
+    onExportFiltered,
     onOpenAdd,
     onOpenImport
   } = props;
@@ -99,6 +101,9 @@ export default function AdminSinhVienToolbar(props: Props) {
 
       <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onSearch}>
         Tìm kiếm
+      </button>
+      <button type="button" className={styles.btn} onClick={onExportFiltered} disabled={busy}>
+        Xuất Excel theo bộ lọc
       </button>
       <div className={styles.searchToolbarActions}>
         <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onOpenAdd} disabled={busy}>

@@ -293,6 +293,46 @@ export default function AdminQuanLyDotThucTapPage() {
 
   const canClose = (t: InternshipBatchRow) => t.status === "OPEN";
 
+  const exportStudentsExcel = async (row: InternshipBatchRow) => {
+    setBusyId(row.id);
+    setToast("");
+    try {
+      const res = await fetch(`/api/admin/internship-batches/${encodeURIComponent(row.id)}/export-students`);
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(j?.message || "Không xuất được file Excel.");
+      }
+      const cd = res.headers.get("Content-Disposition");
+      let fn = "danh_sach_sinh_vien.xlsx";
+      if (cd) {
+        const star = /filename\*=UTF-8''([^;\s]+)/i.exec(cd);
+        if (star?.[1]) {
+          try {
+            fn = decodeURIComponent(star[1]);
+          } catch {
+            fn = star[1];
+          }
+        } else {
+          const plain = /filename="([^"]+)"/i.exec(cd);
+          if (plain?.[1]) fn = plain[1];
+        }
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fn;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : "Không xuất được file Excel.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -354,6 +394,7 @@ export default function AdminQuanLyDotThucTapPage() {
         }}
         onDelete={setDeleteTarget}
         onOpenStatus={setStatusTarget}
+        onExportStudentsExcel={(r) => void exportStudentsExcel(r)}
       />
 
       <AdminInternshipBatchViewPopup viewTarget={viewTarget} onClose={() => setViewTarget(null)} />

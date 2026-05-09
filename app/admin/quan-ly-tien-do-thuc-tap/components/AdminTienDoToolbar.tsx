@@ -13,6 +13,8 @@ type Props = {
   onChangeFilterStatus: (v: string) => void;
   onChangeFilterDegree: (v: string) => void;
   onSearch: () => void;
+  onExportFiltered: () => void;
+  busy: boolean;
 };
 
 export default function AdminTienDoToolbar(props: Props) {
@@ -26,7 +28,9 @@ export default function AdminTienDoToolbar(props: Props) {
     onChangeFilterFaculty,
     onChangeFilterStatus,
     onChangeFilterDegree,
-    onSearch
+    onSearch,
+    onExportFiltered,
+    busy
   } = props;
 
   return (
@@ -74,6 +78,9 @@ export default function AdminTienDoToolbar(props: Props) {
       </div>
       <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onSearch}>
         Tìm kiếm
+      </button>
+      <button type="button" className={styles.btn} onClick={onExportFiltered} disabled={busy}>
+        Xuất Excel theo bộ lọc
       </button>
     </div>
   );

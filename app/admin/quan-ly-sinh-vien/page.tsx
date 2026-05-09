@@ -82,6 +82,7 @@ export default function AdminQuanLySinhVienPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [exportBusy, setExportBusy] = useState(false);
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -407,6 +408,50 @@ export default function AdminQuanLySinhVienPage() {
     }
   };
 
+  const exportFilteredExcel = async () => {
+    setExportBusy(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQ.trim()) params.set("q", searchQ.trim());
+      if (filterFaculty !== "all") params.set("faculty", filterFaculty);
+      if (filterInternshipStatus !== "all") params.set("status", filterInternshipStatus);
+      if (filterDegree !== "all") params.set("degree", filterDegree);
+      const res = await fetch(`/api/admin/students/export?${params.toString()}`);
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(j?.message || "Không xuất được file Excel.");
+      }
+      const cd = res.headers.get("Content-Disposition");
+      let fn = "danh_sach_sinh_vien_theo_loc.xlsx";
+      if (cd) {
+        const star = /filename\*=UTF-8''([^;\s]+)/i.exec(cd);
+        if (star?.[1]) {
+          try {
+            fn = decodeURIComponent(star[1]);
+          } catch {
+            fn = star[1];
+          }
+        } else {
+          const plain = /filename="([^"]+)"/i.exec(cd);
+          if (plain?.[1]) fn = plain[1];
+        }
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fn;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setToastPopup({ open: true, message: e instanceof Error ? e.message : "Không xuất được file Excel." });
+    } finally {
+      setExportBusy(false);
+    }
+  };
+
   // Excel import (bulk): parse in client and send rows to API.
   const [importBusy, setImportBusy] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -634,7 +679,7 @@ export default function AdminQuanLySinhVienPage() {
         filterInternshipStatus={filterInternshipStatus}
         filterDegree={filterDegree}
         faculties={faculties}
-        busy={busyId !== null}
+        busy={busyId !== null || exportBusy}
         onChangeSearchQ={setSearchQ}
         onChangeFilterFaculty={setFilterFaculty}
         onChangeFilterInternshipStatus={setFilterInternshipStatus}
@@ -643,6 +688,7 @@ export default function AdminQuanLySinhVienPage() {
           setPage(1);
           void load({ force: true, targetPage: 1 });
         }}
+        onExportFiltered={() => void exportFilteredExcel()}
         onOpenAdd={openAddSingle}
         onOpenImport={openAddBulk}
       />

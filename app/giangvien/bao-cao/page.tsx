@@ -60,6 +60,50 @@ export default function GiangvienQuanLyBCPage() {
   const [dqtPoint, setDqtPoint] = useState("");
   const [kthpPoint, setKthpPoint] = useState("");
   const [busy, setBusy] = useState(false);
+  const [exportBusy, setExportBusy] = useState(false);
+
+  async function exportFilteredExcel() {
+    setExportBusy(true);
+    try {
+      const params = new URLSearchParams();
+      if (q.trim()) params.set("q", q.trim());
+      if (degreeFilter !== "all") params.set("degree", degreeFilter);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      const res = await fetch(`/api/giangvien/bao-cao-thuc-tap/export?${params.toString()}`);
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(j?.message || "Không xuất được file Excel.");
+      }
+      const cd = res.headers.get("Content-Disposition");
+      let fn = "bao_cao_thuc_tap_theo_loc.xlsx";
+      if (cd) {
+        const star = /filename\*=UTF-8''([^;\s]+)/i.exec(cd);
+        if (star?.[1]) {
+          try {
+            fn = decodeURIComponent(star[1]);
+          } catch {
+            fn = star[1];
+          }
+        } else {
+          const plain = /filename="([^"]+)"/i.exec(cd);
+          if (plain?.[1]) fn = plain[1];
+        }
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fn;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: unknown) {
+      setToast(e instanceof Error ? e.message : "Không xuất được file Excel.");
+    } finally {
+      setExportBusy(false);
+    }
+  }
 
   async function load(opts?: { force?: boolean; silent?: boolean }) {
     const force = Boolean(opts?.force);
@@ -289,10 +333,12 @@ export default function GiangvienQuanLyBCPage() {
         q={q}
         degreeFilter={degreeFilter}
         statusFilter={statusFilter}
+        busy={busy || exportBusy}
         onQChange={setQ}
         onDegreeFilterChange={setDegreeFilter}
         onStatusFilterChange={setStatusFilter}
         onSearch={() => void load({ force: true })}
+        onExportFiltered={() => void exportFilteredExcel()}
       />
 
       <BaoCaoTableSection

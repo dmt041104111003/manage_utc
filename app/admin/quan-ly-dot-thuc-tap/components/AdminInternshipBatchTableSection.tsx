@@ -10,7 +10,7 @@ import { formatDateVi } from "@/lib/utils/admin-quan-ly-dot-thuc-tap-dates";
 
 import Pagination from "../../../components/Pagination";
 import TableIconButton from "../../../components/TableIconButton";
-import { FiEdit2, FiEye, FiRefreshCw, FiTrash2 } from "react-icons/fi";
+import { FiDownload, FiEdit2, FiEye, FiRefreshCw, FiTrash2 } from "react-icons/fi";
 import styles from "../../styles/dashboard.module.css";
 import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 
@@ -25,10 +25,12 @@ type Props = {
   onEdit: (row: InternshipBatchRow) => void;
   onDelete: (row: InternshipBatchRow) => void;
   onOpenStatus: (row: InternshipBatchRow) => void;
+  onExportStudentsExcel: (row: InternshipBatchRow) => void;
 };
 
 export default function AdminInternshipBatchTableSection(props: Props) {
-  const { loading, items, page, busyId, canClose, onPageChange, onView, onEdit, onDelete, onOpenStatus } = props;
+  const { loading, items, page, busyId, canClose, onPageChange, onView, onEdit, onDelete, onOpenStatus, onExportStudentsExcel } =
+    props;
 
   if (loading && items.length === 0) {
     return <ChartStyleLoading variant="compact" />;
@@ -81,6 +83,13 @@ export default function AdminInternshipBatchTableSection(props: Props) {
                       </TableIconButton>
                       <TableIconButton label="Cập nhật trạng thái đợt" disabled={busyId !== null || !canClose(row)} onClick={() => onOpenStatus(row)}>
                         <FiRefreshCw size={18} />
+                      </TableIconButton>
+                      <TableIconButton
+                        label="Xuất Excel danh sách sinh viên theo đợt"
+                        disabled={busyId !== null}
+                        onClick={() => onExportStudentsExcel(row)}
+                      >
+                        <FiDownload size={18} />
                       </TableIconButton>
                       <TableIconButton label="Xóa đợt thực tập" variant="danger" disabled={busyId !== null} onClick={() => onDelete(row)}>
                         <FiTrash2 size={18} />
