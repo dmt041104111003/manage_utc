@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth/admin-session";
 import { sendMail } from "@/lib/mail";
+import { getPublicAppUrl } from "@/lib/mail-enterprise";
 
 type AssignmentStatus = "GUIDING" | "COMPLETED";
 
@@ -220,6 +221,7 @@ export async function POST(request: Request) {
 
   // Send email notifications
   try {
+    const appUrl = getPublicAppUrl();
     const supervisorDegreeLabelMap: Record<string, string> = {
       MASTER: "Thạc sĩ",
       PHD: "Tiến sĩ",
@@ -235,6 +237,7 @@ export async function POST(request: Request) {
     const gvEmail: string | null = supervisor.user?.email ?? null;
     const gvDegree: string = supervisorDegreeLabelMap[supervisor.degree] ?? supervisor.degree ?? "";
     const gvPhone: string = supervisor.user?.phone ?? "—";
+    const facultyLabel = faculty ? `\n  Ngành/Khoa: ${faculty}` : "";
 
     if (gvEmail) {
       const svListLines = students
@@ -247,7 +250,7 @@ export async function POST(request: Request) {
       await sendMail(
         gvEmail,
         `[UTC] Phân công hướng dẫn thực tập – ${batchLabel}`,
-        `Kính gửi ${gvDegree} ${gvFullName},\n\nBạn đã được phân công hướng dẫn thực tập cho ${students.length} sinh viên trong ${batchLabel}.\n\nDanh sách sinh viên hướng dẫn:\n${svListLines}\n\nVui lòng đăng nhập hệ thống để xem thông tin chi tiết và theo dõi tiến độ thực tập của sinh viên.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${gvDegree} ${gvFullName},\n\nBạn đã được phân công hướng dẫn thực tập cho ${students.length} sinh viên trong ${batchLabel}.${facultyLabel}\n\nDanh sách sinh viên hướng dẫn:\n${svListLines}\n\nVui lòng đăng nhập hệ thống để xem thông tin chi tiết và theo dõi tiến độ thực tập của sinh viên.\nĐường dẫn hệ thống: ${appUrl}/giangvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
 
@@ -259,7 +262,7 @@ export async function POST(request: Request) {
       await sendMail(
         svEmail,
         `[UTC] Thông tin Giảng viên hướng dẫn thực tập – ${batchLabel}`,
-        `Kính gửi ${svFullName},\n\nBạn đã được phân công Giảng viên hướng dẫn (GVHD) cho ${batchLabel}.\n\nThông tin GVHD:\n  Họ tên: ${gvDegree} ${gvFullName}\n  Email: ${gvEmail ?? "—"}\n  Số điện thoại: ${gvPhone}\n\nVui lòng liên hệ GVHD để được hướng dẫn trong quá trình thực tập.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${svFullName},\n\nBạn đã được phân công Giảng viên hướng dẫn (GVHD) cho ${batchLabel}.${facultyLabel}\n\nThông tin GVHD:\n  Họ tên: ${gvDegree} ${gvFullName}\n  Email: ${gvEmail ?? "—"}\n  Số điện thoại: ${gvPhone}\n\nVui lòng liên hệ GVHD để được hướng dẫn trong quá trình thực tập.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
   } catch {

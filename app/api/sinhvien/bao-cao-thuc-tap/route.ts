@@ -5,6 +5,7 @@ import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 import { decodeEnterpriseFilePayload } from "@/lib/enterprise-register-files";
 import { sendMail } from "@/lib/mail";
+import { getPublicAppUrl } from "@/lib/mail-enterprise";
 
 const BCTT_ALLOWED_MIMES = [
   "application/pdf",
@@ -250,19 +251,20 @@ export async function POST(request: Request) {
   });
 
   try {
+    const appUrl = getPublicAppUrl();
     const { svFullName, svEmail, gvFullName, gvEmail } = await fetchMailParticipants(prismaAny, userId);
     if (gvEmail) {
       await sendMail(
         gvEmail,
         `[UTC] Sinh viên ${svFullName} đã nộp Báo cáo thực tập`,
-        `Kính gửi ${gvFullName},\n\nSinh viên ${svFullName} vừa nộp Báo cáo thực tập (BCTT).\nVui lòng đăng nhập hệ thống để xem xét và duyệt BCTT.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${gvFullName},\n\nSinh viên ${svFullName} vừa nộp Báo cáo thực tập (BCTT).\nVui lòng đăng nhập hệ thống để xem xét và duyệt BCTT.\nĐường dẫn hệ thống: ${appUrl}/giangvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
     if (svEmail) {
       await sendMail(
         svEmail,
         `[UTC] Nộp Báo cáo thực tập thành công`,
-        `Kính gửi ${svFullName},\n\nBạn đã nộp Báo cáo thực tập thành công. Vui lòng chờ GVHD xem xét và phê duyệt.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${svFullName},\n\nBạn đã nộp Báo cáo thực tập thành công. Vui lòng chờ GVHD xem xét và phê duyệt.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
   } catch {
@@ -344,12 +346,13 @@ export async function PATCH(request: Request) {
   });
 
   try {
+    const appUrl = getPublicAppUrl();
     const { svFullName, gvFullName, gvEmail } = await fetchMailParticipants(prismaAny, userId);
     if (gvEmail) {
       await sendMail(
         gvEmail,
         `[UTC] Sinh viên ${svFullName} đã nộp lại Báo cáo thực tập`,
-        `Kính gửi ${gvFullName},\n\nSinh viên ${svFullName} vừa nộp lại Báo cáo thực tập (BCTT) sau khi chỉnh sửa.\nVui lòng đăng nhập hệ thống để xem xét và duyệt BCTT.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${gvFullName},\n\nSinh viên ${svFullName} vừa nộp lại Báo cáo thực tập (BCTT) sau khi chỉnh sửa.\nVui lòng đăng nhập hệ thống để xem xét và duyệt BCTT.\nĐường dẫn hệ thống: ${appUrl}/giangvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
   } catch {

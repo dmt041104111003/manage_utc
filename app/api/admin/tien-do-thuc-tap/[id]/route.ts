@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getAdminSession } from "@/lib/auth/admin-session";
 import { dataUrlFromBase64 } from "@/lib/utils/enterprise-admin-display";
 import { sendMail } from "@/lib/mail";
+import { getPublicAppUrl } from "@/lib/mail-enterprise";
 
 type Degree = "BACHELOR" | "ENGINEER";
 type InternshipStatus =
@@ -289,19 +290,20 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
   // Send email notifications
   try {
+    const appUrl = getPublicAppUrl();
     if (finalStatus === "COMPLETED") {
       if (svEmail) {
         await sendMail(
           svEmail,
           "[UTC] Kết quả thực tập của bạn đã có",
-          `Kính gửi ${svFullName},\n\nKết quả thực tập của bạn đã được Admin xác nhận: Hoàn thành thực tập.\n\nVui lòng đăng nhập hệ thống để xem chi tiết kết quả.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+          `Kính gửi ${svFullName},\n\nKết quả thực tập của bạn đã được Admin xác nhận: Hoàn thành thực tập.\n\nVui lòng đăng nhập hệ thống để xem chi tiết kết quả.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
         );
       }
       if (gvEmail) {
         await sendMail(
           gvEmail,
           `[UTC] Hoàn thành hướng dẫn thực tập – Sinh viên ${svFullName}`,
-          `Kính gửi ${gvFullName},\n\nAdmin đã xác nhận sinh viên ${svFullName} hoàn thành thực tập.\nPhân công hướng dẫn của bạn đối với sinh viên này đã được cập nhật thành "Hoàn thành hướng dẫn".\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+          `Kính gửi ${gvFullName},\n\nAdmin đã xác nhận sinh viên ${svFullName} hoàn thành thực tập.\nPhân công hướng dẫn của bạn đối với sinh viên này đã được cập nhật thành "Hoàn thành hướng dẫn".\nĐường dẫn hệ thống: ${appUrl}/giangvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
         );
       }
     } else {
@@ -309,7 +311,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
         await sendMail(
           svEmail,
           "[UTC] Thông báo kết quả thực tập",
-          `Kính gửi ${svFullName},\n\nAdmin thông báo: Kết quả thực tập của bạn là Chưa hoàn thành thực tập.\n\nTài khoản của bạn hiện đã bị tạm dừng hoạt động. Vui lòng liên hệ với bộ phận quản lý để được hỗ trợ.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+          `Kính gửi ${svFullName},\n\nAdmin thông báo: Kết quả thực tập của bạn là Chưa hoàn thành thực tập.\n\nTài khoản của bạn hiện đã bị tạm dừng hoạt động. Vui lòng liên hệ với bộ phận quản lý để được hỗ trợ.\nĐường dẫn hệ thống: ${appUrl}/auth/dangnhap\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
         );
       }
     }

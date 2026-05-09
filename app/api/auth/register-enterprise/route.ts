@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/lib/mail";
 import { validateEnterpriseRegisterPayload, type EnterpriseRegisterPayload } from "@/lib/enterprise-register-validate";
 import { SCHOOL_NAME } from "@/lib/constants/school";
+import { getPublicAppUrl } from "@/lib/mail-enterprise";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as EnterpriseRegisterPayload;
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
     );
   }
 
+  const appUrl = getPublicAppUrl();
   const name = (userCreate.fullName as string) || email;
   const subject = `${SCHOOL_NAME} - Tiếp nhận đăng ký doanh nghiệp`;
   const text = [
@@ -38,6 +40,8 @@ export async function POST(request: Request) {
     "",
     "Hệ thống đã tiếp nhận hồ sơ đăng ký doanh nghiệp của bạn.",
     "Bạn sẽ nhận thông báo khi hồ sơ được phê duyệt.",
+    "",
+    `Đường dẫn hệ thống: ${appUrl}/auth/dangnhap`,
     "",
     "Nếu không phải bạn thực hiện, vui lòng liên hệ quản trị hệ thống."
   ].join("\n");

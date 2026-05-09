@@ -54,9 +54,10 @@ function canUpdateStatus(
 }
 
 function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000";
+  const base = process.env.APP_URL?.replace(/\/$/, "");
+  if (base) return base;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
 }
 
 export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -100,12 +101,13 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       interviewAt: true,
       history: true,
       jobPost: {
-        select: {
-          id: true,
-          title: true,
-          enterpriseUserId: true,
-          enterpriseUser: { select: { companyName: true, email: true } }
-        }
+      select: {
+        id: true,
+        title: true,
+        expertise: true,
+        enterpriseUserId: true,
+        enterpriseUser: { select: { companyName: true, email: true } }
+      }
       },
       studentUser: {
         select: {
@@ -137,6 +139,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   const svEmail: string | null = current.studentUser?.email ?? null;
   const companyName: string = current.jobPost?.enterpriseUser?.companyName ?? "Doanh nghiệp";
   const jobTitle: string = current.jobPost?.title ?? "vị trí thực tập";
+  const expertiseLine = current.jobPost?.expertise ? `\n  Lĩnh vực: ${current.jobPost.expertise}` : "";
 
   let interviewAt: Date | null | undefined = undefined;
   let responseDeadline: Date | null = null;
@@ -219,7 +222,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       await sendMail(
         svEmail,
         `[UTC] ${companyName} mời bạn tham gia phỏng vấn – ${jobTitle}`,
-        `Kính gửi ${svFullName},\n\nDoanh nghiệp ${companyName} mời bạn tham gia phỏng vấn cho vị trí "${jobTitle}".\n\nThời gian phỏng vấn: ${interviewDateStr}\nĐịa điểm: ${interviewLocationRaw}\nThời hạn phản hồi: ${deadlineStr}\n\nVui lòng nhấn một trong hai liên kết bên dưới để xác nhận:\n\n[CHẤP NHẬN PHỎNG VẤN]: ${confirmUrl}\n[TỪ CHỐI PHỎNG VẤN]: ${declineUrl}\n\nLưu ý: Sau ${deadlineStr}, hai nút trên sẽ không còn hiệu lực và phản hồi mặc định là Từ chối.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`,
+        `Kính gửi ${svFullName},\n\nDoanh nghiệp ${companyName} mời bạn tham gia phỏng vấn cho vị trí "${jobTitle}".${expertiseLine}\n\nThời gian phỏng vấn: ${interviewDateStr}\nĐịa điểm: ${interviewLocationRaw}\nThời hạn phản hồi: ${deadlineStr}\n\nVui lòng nhấn một trong hai liên kết bên dưới để xác nhận:\n\n[CHẤP NHẬN PHỎNG VẤN]: ${confirmUrl}\n[TỪ CHỐI PHỎNG VẤN]: ${declineUrl}\n\nLưu ý: Sau ${deadlineStr}, hai nút trên sẽ không còn hiệu lực và phản hồi mặc định là Từ chối.\nĐường dẫn hệ thống: ${baseUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`,
         `
         <p>Kính gửi <strong>${svFullName}</strong>,</p>
         <p>Doanh nghiệp <strong>${companyName}</strong> mời bạn tham gia phỏng vấn cho vị trí <strong>"${jobTitle}"</strong>.</p>
@@ -254,7 +257,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       await sendMail(
         svEmail,
         `[UTC] ${companyName} thông báo Trúng tuyển – ${jobTitle}`,
-        `Kính gửi ${svFullName},\n\nChúc mừng! Doanh nghiệp ${companyName} thông báo bạn đã TRÚNG TUYỂN vị trí "${jobTitle}".\n\nThời hạn phản hồi: ${deadlineStr}\n\nVui lòng nhấn một trong hai liên kết bên dưới:\n\n[XÁC NHẬN THỰC TẬP]: ${confirmUrl}\n[TỪ CHỐI THỰC TẬP]: ${declineUrl}\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`,
+        `Kính gửi ${svFullName},\n\nChúc mừng! Doanh nghiệp ${companyName} thông báo bạn đã TRÚNG TUYỂN vị trí "${jobTitle}".${expertiseLine}\n\nThời hạn phản hồi: ${deadlineStr}\n\nVui lòng nhấn một trong hai liên kết bên dưới:\n\n[XÁC NHẬN THỰC TẬP]: ${confirmUrl}\n[TỪ CHỐI THỰC TẬP]: ${declineUrl}\n\nĐường dẫn hệ thống: ${baseUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`,
         `
         <p>Kính gửi <strong>${svFullName}</strong>,</p>
         <p>Chúc mừng! Doanh nghiệp <strong>${companyName}</strong> thông báo bạn đã <strong>TRÚNG TUYỂN</strong> vị trí <strong>"${jobTitle}"</strong>.</p>
@@ -273,7 +276,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       await sendMail(
         svEmail,
         `[UTC] Thông báo kết quả ứng tuyển – ${jobTitle}`,
-        `Kính gửi ${svFullName},\n\nCảm ơn bạn đã ứng tuyển vào vị trí "${jobTitle}" tại ${companyName}.\n\nRất tiếc, sau khi xem xét, doanh nghiệp không thể tiếp tục tiến trình tuyển dụng với bạn.\n\nChúc bạn thành công trong việc tìm kiếm nơi thực tập phù hợp.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${svFullName},\n\nCảm ơn bạn đã ứng tuyển vào vị trí "${jobTitle}" tại ${companyName}.${expertiseLine}\n\nRất tiếc, sau khi xem xét, doanh nghiệp không thể tiếp tục tiến trình tuyển dụng với bạn.\n\nChúc bạn thành công trong việc tìm kiếm nơi thực tập phù hợp.\nĐường dẫn hệ thống: ${baseUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
   } catch {

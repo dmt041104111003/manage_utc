@@ -4,6 +4,7 @@ import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/lib/mail";
+import { getPublicAppUrl } from "@/lib/mail-enterprise";
 
 type ReportAction = "APPROVE" | "REJECT";
 
@@ -138,12 +139,13 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     });
 
     try {
+      const appUrl = getPublicAppUrl();
       const { svFullName, svEmail } = await fetchStudentMailInfo(report.studentProfileId);
       if (svEmail) {
         await sendMail(
           svEmail,
           "[UTC] GVHD từ chối duyệt Báo cáo thực tập",
-          `Kính gửi ${svFullName},\n\nGiảng viên hướng dẫn đã TỪ CHỐI duyệt Báo cáo thực tập (BCTT) của bạn.\n\nLý do: ${rejectReason}\n\nVui lòng chỉnh sửa và nộp lại BCTT theo hướng dẫn của GVHD.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+          `Kính gửi ${svFullName},\n\nGiảng viên hướng dẫn đã TỪ CHỐI duyệt Báo cáo thực tập (BCTT) của bạn.\n\nLý do: ${rejectReason}\n\nVui lòng chỉnh sửa và nộp lại BCTT theo hướng dẫn của GVHD.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
         );
       }
     } catch {
@@ -226,6 +228,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   });
 
   try {
+    const appUrl = getPublicAppUrl();
     const { svFullName, svEmail } = await fetchStudentMailInfo(report.studentProfileId);
     if (svEmail) {
       const scoreLines = [
@@ -239,7 +242,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       await sendMail(
         svEmail,
         "[UTC] GVHD đã duyệt Báo cáo thực tập",
-        `Kính gửi ${svFullName},\n\nGiảng viên hướng dẫn ${supervisorName} đã DUYỆT Báo cáo thực tập (BCTT) của bạn.\n\n${scoreLines}\n\nKết quả đã được ghi nhận và gửi về Khoa. Vui lòng đăng nhập hệ thống để xem chi tiết.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${svFullName},\n\nGiảng viên hướng dẫn ${supervisorName} đã DUYỆT Báo cáo thực tập (BCTT) của bạn.\n\n${scoreLines}\n\nKết quả đã được ghi nhận và gửi về Ngành/Khoa. Vui lòng đăng nhập hệ thống để xem chi tiết.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
   } catch {

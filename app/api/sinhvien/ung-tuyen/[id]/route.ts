@@ -4,6 +4,7 @@ import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/lib/mail";
+import { getPublicAppUrl } from "@/lib/mail-enterprise";
 
 type StudentAction = "CONFIRM_INTERVIEW" | "DECLINE_INTERVIEW" | "CONFIRM_INTERNSHIP" | "DECLINE_INTERNSHIP";
 
@@ -29,6 +30,7 @@ async function fetchMailContext(prismaAny: any, applicationId: string) {
       jobPost: {
         select: {
           title: true,
+          expertise: true,
           enterpriseUser: { select: { email: true, companyName: true } }
         }
       },
@@ -37,6 +39,7 @@ async function fetchMailContext(prismaAny: any, applicationId: string) {
   });
   return {
     jobTitle: (app?.jobPost?.title ?? "") as string,
+    expertise: (app?.jobPost?.expertise ?? null) as string | null,
     companyName: (app?.jobPost?.enterpriseUser?.companyName ?? "") as string,
     enterpriseEmail: (app?.jobPost?.enterpriseUser?.email ?? null) as string | null,
     svFullName: (app?.studentUser?.fullName ?? "Sinh viên") as string,
@@ -167,37 +170,39 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
   // Send email notifications
   try {
-    const { jobTitle, companyName, enterpriseEmail, svFullName, svEmail, svPhone } =
+    const appUrl = getPublicAppUrl();
+    const { jobTitle, expertise, companyName, enterpriseEmail, svFullName, svEmail, svPhone } =
       await fetchMailContext(prismaAny, id);
 
     const phoneInfo = svPhone ? ` - SĐT: ${svPhone}` : "";
+    const expertiseDnLine = expertise ? `\n  Lĩnh vực: ${expertise}` : "";
 
     if (action === "CONFIRM_INTERVIEW" && enterpriseEmail) {
       await sendMail(
         enterpriseEmail,
         `[UTC] ${svFullName} đã xác nhận tham gia phỏng vấn – ${jobTitle}`,
-        `Kính gửi ${companyName},\n\nSinh viên ${svFullName}${phoneInfo} đã XÁC NHẬN tham gia phỏng vấn cho vị trí "${jobTitle}".\n\nVui lòng liên hệ sinh viên để sắp xếp lịch phỏng vấn chi tiết.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${companyName},\n\nSinh viên ${svFullName}${phoneInfo} đã XÁC NHẬN tham gia phỏng vấn cho vị trí "${jobTitle}".${expertiseDnLine}\n\nVui lòng liên hệ sinh viên để sắp xếp lịch phỏng vấn chi tiết.\nĐường dẫn hệ thống: ${appUrl}/doanhnghiep\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
     if (action === "DECLINE_INTERVIEW" && enterpriseEmail) {
       await sendMail(
         enterpriseEmail,
         `[UTC] ${svFullName} đã từ chối tham gia phỏng vấn – ${jobTitle}`,
-        `Kính gửi ${companyName},\n\nSinh viên ${svFullName} đã TỪ CHỐI tham gia phỏng vấn cho vị trí "${jobTitle}".\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${companyName},\n\nSinh viên ${svFullName} đã TỪ CHỐI tham gia phỏng vấn cho vị trí "${jobTitle}".${expertiseDnLine}\nĐường dẫn hệ thống: ${appUrl}/doanhnghiep\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
     if (action === "CONFIRM_INTERNSHIP" && enterpriseEmail) {
       await sendMail(
         enterpriseEmail,
         `[UTC] ${svFullName} đã xác nhận nhận thực tập – ${jobTitle}`,
-        `Kính gửi ${companyName},\n\nSinh viên ${svFullName}${phoneInfo} đã XÁC NHẬN tham gia thực tập tại quý doanh nghiệp cho vị trí "${jobTitle}".\n\nSinh viên sẽ liên hệ với quý doanh nghiệp để sắp xếp lịch bắt đầu thực tập.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${companyName},\n\nSinh viên ${svFullName}${phoneInfo} đã XÁC NHẬN tham gia thực tập tại quý doanh nghiệp cho vị trí "${jobTitle}".${expertiseDnLine}\n\nSinh viên sẽ liên hệ với quý doanh nghiệp để sắp xếp lịch bắt đầu thực tập.\nĐường dẫn hệ thống: ${appUrl}/doanhnghiep\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
     if (action === "DECLINE_INTERNSHIP" && enterpriseEmail) {
       await sendMail(
         enterpriseEmail,
         `[UTC] ${svFullName} đã từ chối nhận thực tập – ${jobTitle}`,
-        `Kính gửi ${companyName},\n\nSinh viên ${svFullName} đã TỪ CHỐI tham gia thực tập tại quý doanh nghiệp cho vị trí "${jobTitle}".\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+        `Kính gửi ${companyName},\n\nSinh viên ${svFullName} đã TỪ CHỐI tham gia thực tập tại quý doanh nghiệp cho vị trí "${jobTitle}".${expertiseDnLine}\nĐường dẫn hệ thống: ${appUrl}/doanhnghiep\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
       );
     }
 
@@ -214,12 +219,12 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
 
       const svBody =
         action === "CONFIRM_INTERVIEW"
-          ? `Kính gửi ${svFullName},\n\nBạn đã XÁC NHẬN tham gia phỏng vấn cho vị trí "${jobTitle}" tại ${companyName}. Doanh nghiệp sẽ liên hệ với bạn để sắp xếp lịch.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+          ? `Kính gửi ${svFullName},\n\nBạn đã XÁC NHẬN tham gia phỏng vấn cho vị trí "${jobTitle}" tại ${companyName}. Doanh nghiệp sẽ liên hệ với bạn để sắp xếp lịch.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
           : action === "DECLINE_INTERVIEW"
-          ? `Kính gửi ${svFullName},\n\nBạn đã TỪ CHỐI tham gia phỏng vấn cho vị trí "${jobTitle}" tại ${companyName}.\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+          ? `Kính gửi ${svFullName},\n\nBạn đã TỪ CHỐI tham gia phỏng vấn cho vị trí "${jobTitle}" tại ${companyName}.\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
           : action === "CONFIRM_INTERNSHIP"
-          ? `Kính gửi ${svFullName},\n\nBạn đã XÁC NHẬN thực tập tại ${companyName} cho vị trí "${jobTitle}". Trạng thái thực tập của bạn đã được cập nhật sang "Đang thực tập".\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
-          : `Kính gửi ${svFullName},\n\nBạn đã TỪ CHỐI thực tập tại ${companyName} cho vị trí "${jobTitle}".\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`;
+          ? `Kính gửi ${svFullName},\n\nBạn đã XÁC NHẬN thực tập tại ${companyName} cho vị trí "${jobTitle}". Trạng thái thực tập của bạn đã được cập nhật sang "Đang thực tập".\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`
+          : `Kính gửi ${svFullName},\n\nBạn đã TỪ CHỐI thực tập tại ${companyName} cho vị trí "${jobTitle}".\nĐường dẫn hệ thống: ${appUrl}/sinhvien\n\nTrân trọng,\nHệ thống quản lý thực tập UTC`;
 
       await sendMail(svEmail, svSubject, svBody);
     }
