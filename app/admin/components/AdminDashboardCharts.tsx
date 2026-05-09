@@ -1,240 +1,45 @@
 "use client";
 
-import { useId } from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart as RechartsBarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  LineChart as RechartsLineChart,
-  Line
-} from "recharts";
-
+import { useMemo } from "react";
 import styles from "../styles/dashboard.module.css";
 import type { DonutSegment, SimpleChartSeries } from "@/lib/types/admin-dashboard";
 import { PROGRESS_STATUS_COLORS } from "@/lib/constants/admin-dashboard-charts";
+import { ReactEchart } from "@/app/components/charts/ReactEchart";
 import {
-  formatChartInt,
-  RECHARTS_GRID_PROPS,
-  RECHARTS_GRID_PROPS_LINE,
-  RECHARTS_LEGEND_WRAPPER_STYLE,
-  RECHARTS_TICK_PROPS,
-  RECHARTS_TOOLTIP_PROPS
-} from "@/lib/constants/recharts-dashboard-ui";
-import { darkenHex } from "@/lib/utils/chart-colors";
-
-const ANIM = { isAnimationActive: true, animationDuration: 900, animationEasing: "ease-out" as const };
+  buildDonutChartOption,
+  buildLineMultiSeriesOption,
+  buildPerBarColorChartOption,
+  buildSingleBarChartOption
+} from "@/lib/utils/echarts-dashboard-options";
 
 export function DonutChart({ segments }: { segments: DonutSegment[] }) {
-  const uid = useId().replace(/:/g, "");
+  const option = useMemo(() => buildDonutChartOption(segments), [segments]);
   if (segments.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-
-  const data = segments.map((s) => ({ name: s.label, value: s.value, color: s.color }));
-  const total = data.reduce((acc, d) => acc + d.value, 0);
-
-  return (
-    <div style={{ position: "relative", width: "100%", height: 280 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <defs>
-            {data.map((d, i) => (
-              <linearGradient key={d.name} id={`${uid}-donut-${i}`} x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor={d.color} stopOpacity={1} />
-                <stop offset="100%" stopColor={darkenHex(d.color, 0.28)} stopOpacity={1} />
-              </linearGradient>
-            ))}
-          </defs>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="48%"
-            innerRadius={62}
-            outerRadius={96}
-            paddingAngle={2.5}
-            dataKey="value"
-            stroke="#fff"
-            strokeWidth={2}
-            {...ANIM}
-          >
-            {data.map((entry, i) => (
-              <Cell key={`cell-${i}`} fill={`url(#${uid}-donut-${i})`} />
-            ))}
-          </Pie>
-          <Tooltip
-            {...RECHARTS_TOOLTIP_PROPS}
-            formatter={(value) => [formatChartInt(value as number | undefined), "Giá trị"]}
-          />
-          <Legend
-            verticalAlign="bottom"
-            iconType="circle"
-            iconSize={11}
-            wrapperStyle={{ ...RECHARTS_LEGEND_WRAPPER_STYLE, paddingTop: 8 }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: 0,
-          height: "76%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "none",
-          flexDirection: "column",
-          gap: 2
-        }}
-      >
-        <span style={{ fontSize: 11, fontWeight: 600, color: "#64748b", letterSpacing: "0.04em" }}>TỔNG</span>
-        <span style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", lineHeight: 1, letterSpacing: "-0.02em" }}>
-          {formatChartInt(total)}
-        </span>
-      </div>
-    </div>
-  );
+  return <ReactEchart option={option} height={280} />;
 }
 
 export function BarChart({ labels, values }: { labels: string[]; values: number[] }) {
-  const uid = useId().replace(/:/g, "");
-  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-
-  const data = labels.map((name, i) => ({ name, value: values[i] ?? 0 }));
-
-  return (
-    <ResponsiveContainer width="100%" height={248}>
-      <RechartsBarChart data={data} margin={{ top: 12, right: 20, left: 4, bottom: 52 }}>
-        <defs>
-          <linearGradient id={`${uid}-bar-blue`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#60a5fa" />
-            <stop offset="55%" stopColor="#2563eb" />
-            <stop offset="100%" stopColor="#1e3a8a" />
-          </linearGradient>
-        </defs>
-        <CartesianGrid {...RECHARTS_GRID_PROPS} />
-        <XAxis
-          dataKey="name"
-          tick={RECHARTS_TICK_PROPS}
-          interval={0}
-          angle={-28}
-          textAnchor="end"
-          height={70}
-          axisLine={{ stroke: "#cbd5e1" }}
-          tickLine={{ stroke: "#cbd5e1" }}
-        />
-        <YAxis
-          tick={RECHARTS_TICK_PROPS}
-          allowDecimals={false}
-          width={40}
-          axisLine={false}
-          tickLine={false}
-        />
-        <Tooltip
-          {...RECHARTS_TOOLTIP_PROPS}
-          formatter={(value) => [formatChartInt(value as number | undefined), "Số lượng"]}
-        />
-        <Bar
-          dataKey="value"
-          name="Số lượng"
-          fill={`url(#${uid}-bar-blue)`}
-          radius={[12, 12, 0, 0]}
-          maxBarSize={52}
-          {...ANIM}
-        />
-      </RechartsBarChart>
-    </ResponsiveContainer>
+  const option = useMemo(
+    () => buildSingleBarChartOption(labels, values, { valueLabel: "Số lượng" }),
+    [labels, values]
   );
+  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
+  return <ReactEchart option={option} height={248} />;
 }
 
 export function ProgressColumnChart({ labels, values }: { labels: string[]; values: number[] }) {
-  const uid = useId().replace(/:/g, "");
-  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-
-  const data = labels.map((name, i) => ({
-    name,
-    value: values[i] ?? 0,
-    color: PROGRESS_STATUS_COLORS[i % PROGRESS_STATUS_COLORS.length]
-  }));
-
-  return (
-    <ResponsiveContainer width="100%" height={248}>
-      <RechartsBarChart data={data} margin={{ top: 12, right: 20, left: 4, bottom: 52 }}>
-        <defs>
-          {data.map((d, i) => (
-            <linearGradient key={`${d.name}-${i}`} id={`${uid}-prog-${i}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={d.color} stopOpacity={1} />
-              <stop offset="100%" stopColor={darkenHex(d.color, 0.25)} stopOpacity={1} />
-            </linearGradient>
-          ))}
-        </defs>
-        <CartesianGrid {...RECHARTS_GRID_PROPS} />
-        <XAxis
-          dataKey="name"
-          tick={RECHARTS_TICK_PROPS}
-          interval={0}
-          angle={-28}
-          textAnchor="end"
-          height={70}
-          axisLine={{ stroke: "#cbd5e1" }}
-          tickLine={{ stroke: "#cbd5e1" }}
-        />
-        <YAxis tick={RECHARTS_TICK_PROPS} allowDecimals={false} width={40} axisLine={false} tickLine={false} />
-        <Tooltip
-          {...RECHARTS_TOOLTIP_PROPS}
-          formatter={(value) => [formatChartInt(value as number | undefined), "Sinh viên"]}
-        />
-        <Bar dataKey="value" name="Sinh viên" radius={[12, 12, 0, 0]} maxBarSize={52} {...ANIM}>
-          {data.map((_, i) => (
-            <Cell key={`cell-${i}`} fill={`url(#${uid}-prog-${i})`} />
-          ))}
-        </Bar>
-      </RechartsBarChart>
-    </ResponsiveContainer>
+  const option = useMemo(
+    () => buildPerBarColorChartOption(labels, values, PROGRESS_STATUS_COLORS, "Sinh viên"),
+    [labels, values]
   );
+  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
+  return <ReactEchart option={option} height={248} />;
 }
 
 export function LineChart({ labels, series }: { labels: string[]; series: SimpleChartSeries[] }) {
+  const option = useMemo(() => buildLineMultiSeriesOption(labels, series), [labels, series]);
   if (series.length === 0 || labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-
-  const data = labels.map((name, i) => {
-    const point: Record<string, string | number> = { name };
-    series.forEach((s) => {
-      point[s.name] = s.data[i] ?? 0;
-    });
-    return point;
-  });
-
-  return (
-    <ResponsiveContainer width="100%" height={292}>
-      <RechartsLineChart data={data} margin={{ top: 16, right: 28, left: 4, bottom: 16 }}>
-        <CartesianGrid {...RECHARTS_GRID_PROPS_LINE} />
-        <XAxis dataKey="name" tick={RECHARTS_TICK_PROPS} axisLine={{ stroke: "#cbd5e1" }} tickLine={{ stroke: "#cbd5e1" }} />
-        <YAxis tick={RECHARTS_TICK_PROPS} allowDecimals={false} width={42} axisLine={false} tickLine={false} />
-        <Tooltip {...RECHARTS_TOOLTIP_PROPS} formatter={(value) => formatChartInt(value as number | undefined)} />
-        <Legend iconType="circle" iconSize={11} wrapperStyle={RECHARTS_LEGEND_WRAPPER_STYLE} />
-        {series.map((s) => (
-          <Line
-            key={s.name}
-            type="monotone"
-            dataKey={s.name}
-            stroke={s.color}
-            strokeWidth={2.75}
-            dot={{ r: 4, strokeWidth: 2, stroke: "#fff", fill: s.color }}
-            activeDot={{ r: 7, strokeWidth: 0, fill: s.color }}
-            {...ANIM}
-          />
-        ))}
-      </RechartsLineChart>
-    </ResponsiveContainer>
-  );
+  return <ReactEchart option={option} height={292} />;
 }
 
 export function TopFacultiesCard({
