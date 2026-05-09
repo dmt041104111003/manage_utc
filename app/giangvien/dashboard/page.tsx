@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import { ChartCardShell } from "@/app/components/ChartCardShell";
+import { ProgressColumnChart } from "@/app/admin/components/AdminDashboardCharts";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 
 type Batch = { id: string; name: string; status: string };
@@ -21,11 +22,6 @@ type OverviewPayload = {
   internshipStatus: ChartData;
 };
 
-const GUIDANCE_COLORS = ["#2563eb", "#16a34a"];
-const INTERNSHIP_COLORS = [
-  "#6b7280", "#2563eb", "#0ea5e9", "#f59e0b", "#16a34a", "#ef4444"
-];
-
 const shellChartMin = { minHeight: 300 } as const;
 
 function gvDashboardOverviewCacheKey(batchId: string) {
@@ -36,40 +32,6 @@ function gvDashboardOverviewCacheKey(batchId: string) {
 }
 
 const GV_DASHBOARD_INITIAL_KEY = gvDashboardOverviewCacheKey("all");
-
-function SimpleBarBlock({
-  labels,
-  values,
-  colors
-}: {
-  labels: string[];
-  values: number[];
-  colors: string[];
-}) {
-  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-  const max = Math.max(1, ...values);
-  return (
-    <div className={styles.barChart}>
-      <div className={styles.barArea}>
-        {labels.map((label, i) => (
-          <div key={`${label}-${i}`} className={styles.barCol}>
-            <div
-              className={styles.bar}
-              style={{
-                height: `${Math.max(2, Math.round(((values[i] ?? 0) / max) * 160))}px`,
-                background: colors[i % colors.length]
-              }}
-            />
-            <div className={styles.barLabel}>{label}</div>
-            <div className={styles.muted} style={{ fontSize: 11, fontWeight: 600 }}>
-              {values[i] ?? 0}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export default function LecturerDashboardPage() {
   const [loading, setLoading] = useState(() => !hasCachedValue(GV_DASHBOARD_INITIAL_KEY));
@@ -158,7 +120,15 @@ export default function LecturerDashboardPage() {
             <article className={styles.card}>
               <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái hướng dẫn</h2>
               <div className={styles.chartPadding}>
-                <SimpleBarBlock labels={guidanceStatus.labels} values={guidanceStatus.values} colors={GUIDANCE_COLORS} />
+                {guidanceStatus.values.every((v) => v === 0) ? (
+                  <div className={styles.muted}>Chưa có dữ liệu.</div>
+                ) : (
+                  <ProgressColumnChart
+                    labels={guidanceStatus.labels}
+                    values={guidanceStatus.values}
+                    valueAxisName="Sinh viên"
+                  />
+                )}
               </div>
             </article>
           </ChartCardShell>
@@ -167,11 +137,15 @@ export default function LecturerDashboardPage() {
             <article className={styles.card}>
               <h2 className={styles.panelTitle}>Số lượng sinh viên theo trạng thái thực tập</h2>
               <div className={styles.chartPadding}>
-                <SimpleBarBlock
-                  labels={internshipStatus.labels}
-                  values={internshipStatus.values}
-                  colors={INTERNSHIP_COLORS}
-                />
+                {internshipStatus.values.every((v) => v === 0) ? (
+                  <div className={styles.muted}>Chưa có dữ liệu.</div>
+                ) : (
+                  <ProgressColumnChart
+                    labels={internshipStatus.labels}
+                    values={internshipStatus.values}
+                    valueAxisName="Sinh viên"
+                  />
+                )}
               </div>
             </article>
           </ChartCardShell>

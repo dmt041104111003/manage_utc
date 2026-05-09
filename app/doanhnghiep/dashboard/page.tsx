@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/dashboard.module.css";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
 import { ChartCardShell } from "@/app/components/ChartCardShell";
-
-type SimpleChartSeries = { name: string; data: number[]; color: string };
+import {
+  GroupedBarChart,
+  LineChart,
+  ProgressColumnChart
+} from "@/app/admin/components/AdminDashboardCharts";
+import type { SimpleChartSeries } from "@/lib/types/admin-dashboard";
 
 type OverviewPayload = {
   success: boolean;
@@ -30,129 +34,6 @@ function enterpriseDashboardOverviewCacheKey(dateFrom: string, dateTo: string) {
 }
 
 const ENTERPRISE_DASHBOARD_INITIAL_KEY = enterpriseDashboardOverviewCacheKey("", "");
-
-function SimpleBarBlock({
-  labels,
-  values,
-  colors,
-  unit
-}: {
-  labels: string[];
-  values: number[];
-  colors: string[];
-  unit: string;
-}) {
-  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-  const max = Math.max(1, ...values);
-  return (
-    <div className={styles.barChart}>
-      <div className={styles.barArea}>
-        {labels.map((label, i) => (
-          <div key={`${label}-${i}`} className={styles.barCol}>
-            <div
-              className={styles.bar}
-              style={{
-                height: `${Math.max(2, Math.round(((values[i] ?? 0) / max) * 160))}px`,
-                background: colors[i % colors.length]
-              }}
-            />
-            <div className={styles.barLabel}>{label}</div>
-            <div className={styles.muted} style={{ fontSize: 11, fontWeight: 600 }}>
-              {values[i] ?? 0} {unit}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function DoubleBarBlock({
-  labels,
-  accepted,
-  declined
-}: {
-  labels: string[];
-  accepted: number[];
-  declined: number[];
-}) {
-  if (labels.length === 0) return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-  const max = Math.max(1, ...accepted, ...declined);
-  return (
-    <div className={styles.barChart}>
-      <div className={styles.barArea}>
-        {labels.map((label, i) => (
-          <div key={`${label}-${i}`} className={styles.barCol}>
-            <div className={styles.barPair}>
-              <div
-                className={styles.bar}
-                style={{
-                  height: `${Math.max(2, Math.round(((accepted[i] ?? 0) / max) * 120))}px`,
-                  background: "linear-gradient(180deg, #4ade80, #15803d)",
-                  maxWidth: 26
-                }}
-              />
-              <div
-                className={styles.bar}
-                style={{
-                  height: `${Math.max(2, Math.round(((declined[i] ?? 0) / max) * 120))}px`,
-                  background: "linear-gradient(180deg, #fb7185, #b91c1c)",
-                  maxWidth: 26
-                }}
-              />
-            </div>
-            <div className={styles.barLabel}>{label}</div>
-            <div className={styles.muted} style={{ fontSize: 10, lineHeight: 1.35 }}>
-              Chấp nhận: <strong>{accepted[i] ?? 0}</strong>
-              <br />
-              Từ chối: <strong>{declined[i] ?? 0}</strong>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function LineDataTable({
-  labels,
-  series
-}: {
-  labels: string[];
-  series: SimpleChartSeries[];
-}) {
-  if (labels.length === 0 || series.length === 0) {
-    return <div className={styles.muted}>Chưa có dữ liệu.</div>;
-  }
-  return (
-    <div className={styles.tableWrap}>
-      <table className={styles.dataTable}>
-        <thead>
-          <tr>
-            <th scope="col">Tháng</th>
-            {series.map((s) => (
-              <th key={s.name} scope="col" className={styles.numCell}>
-                {s.name}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {labels.map((label, rowIdx) => (
-            <tr key={label}>
-              <td>{label}</td>
-              {series.map((s) => (
-                <td key={s.name} className={styles.numCell}>
-                  {s.data[rowIdx] ?? 0}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
 export default function EnterpriseDashboardPage() {
   const [loading, setLoading] = useState(() => !hasCachedValue(ENTERPRISE_DASHBOARD_INITIAL_KEY));
@@ -207,6 +88,14 @@ export default function EnterpriseDashboardPage() {
   const applicationStatus = payload?.applicationStatus ?? { labels: [], values: [] };
   const jobStatus = payload?.jobStatus ?? { labels: [], values: [] };
 
+  const doubleBarGroups = useMemo(
+    () => [
+      { name: "Chấp nhận", data: doubleBar.accepted, colorTop: "#4ade80", colorBottom: "#15803d" },
+      { name: "Từ chối", data: doubleBar.declined, colorTop: "#fb7185", colorBottom: "#b91c1c" }
+    ],
+    [doubleBar.accepted, doubleBar.declined]
+  );
+
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -245,11 +134,11 @@ export default function EnterpriseDashboardPage() {
             <article className={styles.card}>
               <h2 className={styles.panelTitle}>Số SV chấp nhận &amp; từ chối thực tập theo ngành/khoa</h2>
               <div className={styles.chartPadding}>
-                <DoubleBarBlock
-                  labels={doubleBar.labels}
-                  accepted={doubleBar.accepted}
-                  declined={doubleBar.declined}
-                />
+                {doubleBar.labels.length === 0 ? (
+                  <div className={styles.muted}>Chưa có dữ liệu.</div>
+                ) : (
+                  <GroupedBarChart labels={doubleBar.labels} groups={doubleBarGroups} />
+                )}
               </div>
             </article>
           </ChartCardShell>
@@ -261,11 +150,11 @@ export default function EnterpriseDashboardPage() {
                 {applicationStatus.values.every((v) => v === 0) ? (
                   <div className={styles.muted}>Chưa có dữ liệu.</div>
                 ) : (
-                  <SimpleBarBlock
+                  <ProgressColumnChart
                     labels={applicationStatus.labels}
                     values={applicationStatus.values}
+                    valueAxisName="Hồ sơ"
                     colors={APP_STATUS_COLORS}
-                    unit="hồ sơ"
                   />
                 )}
               </div>
@@ -279,11 +168,11 @@ export default function EnterpriseDashboardPage() {
                 {jobStatus.values.every((v) => v === 0) ? (
                   <div className={styles.muted}>Chưa có dữ liệu.</div>
                 ) : (
-                  <SimpleBarBlock
+                  <ProgressColumnChart
                     labels={jobStatus.labels}
                     values={jobStatus.values}
+                    valueAxisName="Tin"
                     colors={JOB_STATUS_COLORS}
-                    unit="tin"
                   />
                 )}
               </div>
@@ -294,7 +183,7 @@ export default function EnterpriseDashboardPage() {
             <article className={styles.card}>
               <h2 className={styles.panelTitle}>Số lượng SV ứng tuyển theo ngành/khoa (theo tháng)</h2>
               <div className={styles.chartPadding}>
-                <LineDataTable labels={lineChart.labels} series={lineChart.series} />
+                <LineChart labels={lineChart.labels} series={lineChart.series} />
               </div>
             </article>
           </ChartCardShell>
