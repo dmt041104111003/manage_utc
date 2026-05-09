@@ -221,7 +221,7 @@ export default function AdminPhanCongGVHDPage() {
     if (!deleteTarget) return;
     setBusyId(deleteTarget.id);
     try {
-      const res = await fetch(`/api/admin/assignments/${deleteTarget.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/assignments/student-links/${deleteTarget.id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok || !data?.success) throw new Error(data?.message || "Không thể xóa phân công.");
       showPopup(data?.message || "Xóa phân công thành công.");

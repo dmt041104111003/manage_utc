@@ -47,7 +47,7 @@ export default function AdminPhanCongGVHDDeletePopup(props: Props) {
     >
       <div style={{ display: "grid", gap: 10 }}>
         <p style={{ margin: 0 }}>
-          Bạn có chắc chắn muốn xóa Phân công: <b>[SV hướng dẫn]</b> - Giảng viên hướng dẫn: <b>[Giảng viên hướng dẫn]</b> không?
+          Bạn có chắc chắn muốn xóa phân công giữa sinh viên và giảng viên hướng dẫn không?
         </p>
 
         <table className={styles.viewModalDetailTable}>
@@ -55,18 +55,7 @@ export default function AdminPhanCongGVHDDeletePopup(props: Props) {
             <tr>
               <th scope="row">SV hướng dẫn</th>
               <td>
-                {deleteTarget.students.length ? (
-                  <div style={{ display: "grid", gap: 4 }}>
-                    {deleteTarget.students.slice(0, 3).map((s) => (
-                      <div key={s.id ?? `${s.msv}-${s.fullName}`}>{studentDisplay(s as any)}</div>
-                    ))}
-                    {deleteTarget.students.length > 3 ? (
-                      <div style={{ color: "#6b7280" }}>+{deleteTarget.students.length - 3} SV</div>
-                    ) : null}
-                  </div>
-                ) : (
-                  "—"
-                )}
+                {deleteTarget.student?.msv ? studentDisplay(deleteTarget.student as any) : "—"}
               </td>
             </tr>
             <tr>

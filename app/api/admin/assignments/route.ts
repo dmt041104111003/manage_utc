@@ -38,23 +38,26 @@ export async function GET(request: Request) {
 
   if (andParts.length) where.AND = andParts;
 
-  const rows = await prismaAny.supervisorAssignment.findMany({
-    where,
+  const rows = await prismaAny.supervisorAssignmentStudent.findMany({
+    where: {
+      supervisorAssignment: where
+    },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
-      faculty: true,
-      status: true,
-      internshipBatch: { select: { id: true, name: true, semester: true, schoolYear: true, status: true } },
-      supervisorProfile: {
-        select: { id: true, degree: true, user: { select: { fullName: true } } }
-      },
-      students: {
+      supervisorAssignmentId: true,
+      supervisorAssignment: {
         select: {
-          studentProfile: {
-            select: { id: true, msv: true, degree: true, user: { select: { fullName: true } } }
+          faculty: true,
+          status: true,
+          internshipBatch: { select: { id: true, name: true, semester: true, schoolYear: true, status: true } },
+          supervisorProfile: {
+            select: { id: true, degree: true, user: { select: { fullName: true } } }
           }
         }
+      },
+      studentProfile: {
+        select: { id: true, msv: true, degree: true, user: { select: { fullName: true } } }
       }
     }
   });
@@ -72,26 +75,27 @@ export async function GET(request: Request) {
     faculties,
     items: rows.map((r: any) => ({
       id: r.id,
-      faculty: r.faculty,
-      status: r.status as AssignmentStatus,
+      supervisorAssignmentId: r.supervisorAssignmentId,
+      faculty: r.supervisorAssignment?.faculty ?? "",
+      status: (r.supervisorAssignment?.status ?? "GUIDING") as AssignmentStatus,
       batch: {
-        id: r.internshipBatch?.id ?? null,
-        name: r.internshipBatch?.name ?? null,
-        semester: r.internshipBatch?.semester ?? null,
-        schoolYear: r.internshipBatch?.schoolYear ?? null,
-        status: r.internshipBatch?.status ?? null
+        id: r.supervisorAssignment?.internshipBatch?.id ?? null,
+        name: r.supervisorAssignment?.internshipBatch?.name ?? null,
+        semester: r.supervisorAssignment?.internshipBatch?.semester ?? null,
+        schoolYear: r.supervisorAssignment?.internshipBatch?.schoolYear ?? null,
+        status: r.supervisorAssignment?.internshipBatch?.status ?? null
       },
       supervisor: {
-        id: r.supervisorProfile?.id ?? null,
-        fullName: r.supervisorProfile?.user?.fullName ?? "",
-        degree: r.supervisorProfile?.degree ?? null
+        id: r.supervisorAssignment?.supervisorProfile?.id ?? null,
+        fullName: r.supervisorAssignment?.supervisorProfile?.user?.fullName ?? "",
+        degree: r.supervisorAssignment?.supervisorProfile?.degree ?? null
       },
-      students: (r.students || []).map((x: any) => ({
-        id: x.studentProfile?.id ?? null,
-        msv: x.studentProfile?.msv ?? "",
-        fullName: x.studentProfile?.user?.fullName ?? "",
-        degree: x.studentProfile?.degree ?? null
-      }))
+      student: {
+        id: r.studentProfile?.id ?? null,
+        msv: r.studentProfile?.msv ?? "",
+        fullName: r.studentProfile?.user?.fullName ?? "",
+        degree: r.studentProfile?.degree ?? null
+      }
     }))
   });
 }

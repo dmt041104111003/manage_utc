@@ -49,7 +49,7 @@ export default function AdminEnterpriseTable(props: Props) {
                 <td data-label="Tên doanh nghiệp">{row.companyName || "—"}</td>
                 <td data-label="MST">{row.taxCode || "—"}</td>
                 <td data-label="Trạng thái">
-                  <EnterpriseStatusCell status={row.enterpriseStatus} />
+                  <EnterpriseStatusCell status={row.enterpriseStatus} isLocked={row.isLocked} />
                 </td>
                 <td data-label="Thao tác">
                   <div className={styles.rowActions} style={{ gap: 10 }}>

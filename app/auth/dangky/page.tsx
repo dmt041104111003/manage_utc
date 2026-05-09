@@ -6,7 +6,6 @@ import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from "react"
 import { AuthShell } from "../components/AuthShell";
 import styles from "../styles/register.module.css";
 import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
-import { DEMO_ENTERPRISE_REGISTER_FORM } from "./demo-register-data";
 import type { FormDataState, VnProvince, VnWard } from "@/lib/types/enterprise-register";
 import { EMPTY_ENTERPRISE_REGISTER_FORM } from "@/lib/constants/auth/enterprise-register";
 import { getInitialRegisterForm, validateEnterpriseRegisterForm } from "@/lib/utils/auth/enterprise-register";
@@ -17,7 +16,7 @@ import RepresentativeSection from "./components/RepresentativeSection";
 export default function EnterpriseRegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState<FormDataState>(() =>
-    getInitialRegisterForm(EMPTY_ENTERPRISE_REGISTER_FORM, DEMO_ENTERPRISE_REGISTER_FORM, process.env.NEXT_PUBLIC_PREFILL_REGISTER)
+    getInitialRegisterForm(EMPTY_ENTERPRISE_REGISTER_FORM, {}, process.env.NEXT_PUBLIC_PREFILL_REGISTER)
   );
   const [facultyOptions, setFacultyOptions] = useState<string[]>([]);
   const [provinces, setProvinces] = useState<VnProvince[]>([]);

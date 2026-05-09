@@ -17,6 +17,7 @@ export type AdminEnterpriseListItem = {
   companyName: string | null;
   taxCode: string | null;
   enterpriseStatus: EnterpriseStatus | null;
+  isLocked: boolean;
   createdAt: string;
 };
 

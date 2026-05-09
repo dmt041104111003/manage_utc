@@ -31,7 +31,6 @@ import AdminSinhVienTableSection from "./components/AdminSinhVienTableSection";
 import AdminSinhVienViewPopup from "./components/AdminSinhVienViewPopup";
 import AdminSinhVienDeletePopup from "./components/AdminSinhVienDeletePopup";
 import AdminSinhVienFormPopup from "./components/AdminSinhVienFormPopup";
-import AdminSinhVienStatusPopup from "./components/AdminSinhVienStatusPopup";
 import AdminSinhVienImportPopup from "./components/AdminSinhVienImportPopup";
 
 export default function AdminQuanLySinhVienPage() {
@@ -328,34 +327,9 @@ export default function AdminQuanLySinhVienPage() {
     }
   };
 
-  const [statusTarget, setStatusTarget] = useState<StudentListItem | null>(null);
-  const [statusDraft, setStatusDraft] = useState<InternshipStatus>("NOT_STARTED");
+  // Removed "Theo dõi" internship status popup per requirement.
 
-  const openStatus = (row: StudentListItem) => {
-    setStatusTarget(row);
-    setStatusDraft(row.internshipStatus);
-  };
-
-  const submitStatus = async () => {
-    if (!statusTarget) return;
-    setBusyId(statusTarget.id);
-    try {
-      const res = await fetch(`/api/admin/students/${statusTarget.id}/internship-status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ internshipStatus: statusDraft })
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || "Cập nhật trạng thái thất bại.");
-      showPopup(data.message || "Cập nhật trạng thái thành công.");
-      setStatusTarget(null);
-      await load();
-    } catch (e) {
-      showPopup(e instanceof Error ? e.message : "Cập nhật trạng thái thất bại.");
-    } finally {
-      setBusyId(null);
-    }
-  };
+  // (openStatus, submitStatus, statusTarget, statusDraft removed)
 
   const submitDelete = async () => {
     if (!deleteTarget) return;
@@ -597,7 +571,6 @@ export default function AdminQuanLySinhVienPage() {
         onView={(row) => void openView(row)}
         onEdit={openEdit}
         onDelete={setDeleteTarget}
-        onStatus={openStatus}
       />
 
       <AdminSinhVienViewPopup
@@ -642,15 +615,6 @@ export default function AdminQuanLySinhVienPage() {
         onClose={() => { setEditTarget(null); resetForm(); }}
         onSubmit={() => void submitEditSingle()}
         setForm={setForm}
-      />
-
-      <AdminSinhVienStatusPopup
-        target={statusTarget}
-        statusDraft={statusDraft}
-        busy={busyId !== null}
-        onClose={() => setStatusTarget(null)}
-        onConfirm={() => void submitStatus()}
-        onChangeStatus={setStatusDraft}
       />
 
       <AdminSinhVienImportPopup

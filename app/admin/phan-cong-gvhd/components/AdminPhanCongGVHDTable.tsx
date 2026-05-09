@@ -3,7 +3,6 @@
 import type { AssignmentItem } from "@/lib/types/admin-phan-cong-gvhd";
 import {
   ADMIN_PHAN_CONG_GVHD_PAGE_SIZE,
-  ADMIN_PHAN_CONG_GVHD_TABLE_STUDENTS_MAX_LINES,
   ADMIN_PHAN_CONG_GVHD_STATUS_LABEL
 } from "@/lib/constants/admin-phan-cong-gvhd";
 
@@ -49,20 +48,7 @@ export default function AdminPhanCongGVHDTable(props: Props) {
                   {(page - 1) * ADMIN_PHAN_CONG_GVHD_PAGE_SIZE + idx + 1}
                 </td>
                 <td data-label="MSV-Họ tên-Bậc">
-                  {it.students.length ? (
-                    <div style={{ display: "grid", gap: 4 }}>
-                      {it.students.slice(0, ADMIN_PHAN_CONG_GVHD_TABLE_STUDENTS_MAX_LINES).map((s) => (
-                        <div key={s.id ?? `${s.msv}-${s.fullName}`}>{studentDisplay(s as any)}</div>
-                      ))}
-                      {it.students.length > ADMIN_PHAN_CONG_GVHD_TABLE_STUDENTS_MAX_LINES ? (
-                        <div style={{ color: "#6b7280" }}>
-                          +{it.students.length - ADMIN_PHAN_CONG_GVHD_TABLE_STUDENTS_MAX_LINES} SV
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : (
-                    "—"
-                  )}
+                  {it.student?.msv ? studentDisplay(it.student as any) : "—"}
                 </td>
                 <td data-label="Bậc-Họ tên GVHD">{supervisorDisplay(it.supervisor as any)}</td>
                 <td data-label="Khoa">{it.faculty}</td>

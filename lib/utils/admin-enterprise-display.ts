@@ -16,3 +16,12 @@ export function formatAdminEnterpriseStatusLine(status: EnterpriseStatus | null 
   }
   return formatEnterpriseStatusVi(st);
 }
+
+export function formatAdminEnterpriseStatusWithLock(args: {
+  enterpriseStatus: EnterpriseStatus | null | undefined;
+  isLocked: boolean | null | undefined;
+}): string {
+  const st = normalizeEnterpriseStatus(args.enterpriseStatus);
+  if (st !== EnterpriseStatus.APPROVED) return formatEnterpriseStatusVi(st);
+  return `${formatEnterpriseStatusVi(st)} — ${args.isLocked ? "Dừng hoạt động" : "Đang hoạt động"}`;
+}

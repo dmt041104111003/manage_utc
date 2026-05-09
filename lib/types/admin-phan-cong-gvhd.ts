@@ -13,6 +13,7 @@ export type OpenBatch = {
 
 export type AssignmentItem = {
   id: string;
+  supervisorAssignmentId: string;
   faculty: string;
   status: AssignmentStatus;
   batch: {
@@ -23,7 +24,7 @@ export type AssignmentItem = {
     status: string | null;
   };
   supervisor: { id: string | null; fullName: string; degree: SupervisorDegree | null };
-  students: { id: string | null; msv: string; fullName: string; degree: StudentDegree | null }[];
+  student: { id: string | null; msv: string; fullName: string; degree: StudentDegree | null };
 };
 
 export type SupervisorOption = { id: string; fullName: string; degree: SupervisorDegree; faculty: string };

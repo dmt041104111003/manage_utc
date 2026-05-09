@@ -51,15 +51,7 @@ export default function AdminPhanCongGVHDViewPopup(props: Props) {
           <tr>
             <th scope="row">SV hướng dẫn</th>
             <td>
-              {viewTarget.students.length ? (
-                <div style={{ display: "grid", gap: 4 }}>
-                  {viewTarget.students.map((s) => (
-                    <div key={s.id ?? `${s.msv}-${s.fullName}`}>{studentDisplay(s as any)}</div>
-                  ))}
-                </div>
-              ) : (
-                "—"
-              )}
+              {viewTarget.student?.msv ? studentDisplay(viewTarget.student as any) : "—"}
             </td>
           </tr>
           <tr>

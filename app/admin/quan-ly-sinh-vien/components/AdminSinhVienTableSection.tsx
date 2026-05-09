@@ -18,11 +18,10 @@ type Props = {
   onView: (row: StudentListItem) => void;
   onEdit: (row: StudentListItem) => void;
   onDelete: (row: StudentListItem) => void;
-  onStatus: (row: StudentListItem) => void;
 };
 
 export default function AdminSinhVienTableSection(props: Props) {
-  const { loading, items, page, busyId, onPageChange, onView, onEdit, onDelete, onStatus } = props;
+  const { loading, items, page, busyId, onPageChange, onView, onEdit, onDelete } = props;
 
   if (loading) return <p className={styles.modulePlaceholder}>Đang tải…</p>;
 
@@ -76,9 +75,6 @@ export default function AdminSinhVienTableSection(props: Props) {
                       </button>
                       <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onDelete(row)}>
                         Xóa
-                      </button>
-                      <button type="button" className={styles.textLinkBtn} disabled={busyId !== null} onClick={() => onStatus(row)}>
-                        Theo dõi
                       </button>
                     </div>
                   </td>

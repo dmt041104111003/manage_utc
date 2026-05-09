@@ -22,6 +22,7 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
       taxCode: true,
       representativeTitle: true,
       enterpriseStatus: true,
+      isLocked: true,
       enterpriseMeta: true,
       createdAt: true,
       updatedAt: true,
@@ -37,6 +38,7 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
     item: {
       ...user,
       enterpriseStatus: user.enterpriseStatus ?? EnterpriseStatus.PENDING,
+      isLocked: Boolean((user as any).isLocked),
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString()
     }

@@ -50,6 +50,7 @@ export async function GET(request: Request) {
           companyName: true,
           taxCode: true,
           enterpriseStatus: true,
+          isLocked: true,
           createdAt: true
         }
       }),
@@ -73,6 +74,7 @@ export async function GET(request: Request) {
       items: rows.map((r) => ({
         ...r,
         enterpriseStatus: r.enterpriseStatus ?? EnterpriseStatus.PENDING,
+        isLocked: Boolean((r as any).isLocked),
         createdAt: r.createdAt.toISOString()
       }))
     });
