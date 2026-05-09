@@ -20,7 +20,11 @@ import {
 } from "@/lib/utils/enterprise-admin-display";
 import { metaRecord } from "@/lib/utils/enterprise-meta";
 import { formatAdminEnterpriseStatusLine } from "@/lib/utils/admin-enterprise-display";
-import { buildCloudinaryImageDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
+import {
+  buildCloudinaryImageDeliveryUrl,
+  enterpriseLicensePublicIdFromStored,
+  fromCloudinaryRef
+} from "@/lib/storage/cloudinary";
 import {
   buildEnterpriseAccountPatchPayload,
   mapEnterpriseAccountFormFromMe,
@@ -157,7 +161,9 @@ export default function EnterpriseAccountPage() {
 
   const licName = typeof m.businessLicenseName === "string" && m.businessLicenseName.trim() ? m.businessLicenseName : "—";
   const licB64 = typeof m.businessLicenseBase64 === "string" ? m.businessLicenseBase64 : null;
-  const licPublicId = fromCloudinaryRef(typeof m.businessLicensePublicId === "string" ? m.businessLicensePublicId : null);
+  const licPublicId = enterpriseLicensePublicIdFromStored(
+    typeof m.businessLicensePublicId === "string" ? m.businessLicensePublicId : null
+  );
   const licHref =
     licPublicId || licB64 ? `/api/files/enterprise-business-license/${me.id}` : null;
 

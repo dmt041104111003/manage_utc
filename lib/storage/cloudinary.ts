@@ -13,12 +13,21 @@ function requiredEnv(name: string): string {
   return v;
 }
 
-/** Public delivery URLs; client bundles only inline NEXT_PUBLIC_* — prefer that, else server-only name. */
-function deliveryCloudName(): string | null {
+/**
+ * Raw/authenticated file proxy (API routes): trùng cloud với upload — ưu CLOUDINARY_CLOUD_NAME.
+ * (Trước đây ưu NEXT_PUBLIC_* dễ lệch env Vercel → fetch 404.)
+ */
+function rawDeliveryCloudName(): string | null {
+  const srv = String(process.env.CLOUDINARY_CLOUD_NAME || "").trim();
+  if (srv) return srv;
+  return String(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "").trim() || null;
+}
+
+/** Ảnh delivery trên client: ưu NEXT_PUBLIC_* (thường chỉ biến này lộ ra bundle). */
+function imageDeliveryCloudName(): string | null {
   const pub = String(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "").trim();
   if (pub) return pub;
-  const srv = String(process.env.CLOUDINARY_CLOUD_NAME || "").trim();
-  return srv || null;
+  return String(process.env.CLOUDINARY_CLOUD_NAME || "").trim() || null;
 }
 
 function sanitizeSegment(s: string): string {
@@ -180,7 +189,7 @@ async function uploadBytesToCloudinary(input: {
 }
 
 export function buildCloudinaryRawDeliveryUrl(publicId: string): string | null {
-  const cloudName = deliveryCloudName();
+  const cloudName = rawDeliveryCloudName();
   if (!cloudName) return null;
   const pid = String(publicId || "").replace(/^\/+/, "");
   const encodedPid = pid
@@ -192,7 +201,7 @@ export function buildCloudinaryRawDeliveryUrl(publicId: string): string | null {
 }
 
 export function buildCloudinaryImageDeliveryUrl(publicId: string): string | null {
-  const cloudName = deliveryCloudName();
+  const cloudName = imageDeliveryCloudName();
   if (!cloudName) return null;
   const pid = String(publicId || "").replace(/^\/+/, "");
   const encodedPid = pid
@@ -212,5 +221,15 @@ export function fromCloudinaryRef(value: string | null | undefined): string | nu
   if (!raw.startsWith(CLOUDINARY_REF_PREFIX)) return null;
   const pid = raw.slice(CLOUDINARY_REF_PREFIX.length).trim();
   return pid || null;
+}
+
+/** public_id từ DB: `cloudinary:...` hoặc legacy chỉ path `enterprise_licenses/...`. */
+export function enterpriseLicensePublicIdFromStored(value: string | null | undefined): string | null {
+  const prefixed = fromCloudinaryRef(value);
+  if (prefixed) return prefixed;
+  const t = String(value || "").trim();
+  if (!t || t.includes("..") || t.includes("://") || t.startsWith("{")) return null;
+  if (t.startsWith("enterprise_licenses/") && t.length <= 500) return t;
+  return null;
 }
 

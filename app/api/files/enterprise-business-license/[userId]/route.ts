@@ -5,7 +5,7 @@ import { getAdminSession } from "@/lib/auth/admin-session";
 import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
-import { buildCloudinaryRawDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
+import { buildCloudinaryRawDeliveryUrl, enterpriseLicensePublicIdFromStored } from "@/lib/storage/cloudinary";
 
 function safeFilename(name: string): string {
   return String(name || "giay-phep.pdf").replace(/["\r\n]/g, "").trim() || "giay-phep.pdf";
@@ -59,7 +59,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ userId: str
   }
 
   const { publicIdRef, mime: metaMime, fileName, base64 } = readLicenseMeta(user.enterpriseMeta);
-  const cloudPublicId = fromCloudinaryRef(publicIdRef);
+  const cloudPublicId = enterpriseLicensePublicIdFromStored(publicIdRef);
 
   let bytes: Buffer;
   let mime = metaMime || "application/pdf";
@@ -73,8 +73,15 @@ export async function GET(request: Request, ctx: { params: Promise<{ userId: str
           { status: 503 }
         );
       }
-      const upstream = await fetch(deliveryUrl);
+      const upstream = await fetch(deliveryUrl, {
+        cache: "no-store",
+        headers: {
+          Accept: "*/*",
+          "User-Agent": "UTC-Manage-FileProxy/1.0"
+        }
+      });
       if (!upstream.ok) {
+        console.error("enterprise-business-license cloudinary fetch", deliveryUrl, upstream.status);
         return NextResponse.json({ success: false, message: "Không thể tải file giấy phép." }, { status: 502 });
       }
       const ab = await upstream.arrayBuffer();

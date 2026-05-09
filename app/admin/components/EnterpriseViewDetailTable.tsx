@@ -9,7 +9,11 @@ import {
 } from "@/lib/utils/enterprise-admin-display";
 import { formatAdminEnterpriseStatusLine } from "@/lib/utils/admin-enterprise-display";
 import { resolveRepresentativeTitle } from "@/lib/utils/enterprise-representative";
-import { buildCloudinaryImageDeliveryUrl, fromCloudinaryRef } from "@/lib/storage/cloudinary";
+import {
+  buildCloudinaryImageDeliveryUrl,
+  enterpriseLicensePublicIdFromStored,
+  fromCloudinaryRef
+} from "@/lib/storage/cloudinary";
 import { openFilePreviewInNewTab } from "@/lib/utils/open-file-preview";
 import styles from "../styles/dashboard.module.css";
 
@@ -27,7 +31,9 @@ export function EnterpriseViewDetailTable({ item }: Props) {
   const logoB64 = typeof m.companyLogoBase64 === "string" ? m.companyLogoBase64 : null;
   const website = typeof m.website === "string" && m.website ? m.website : null;
 
-  const licPublicId = fromCloudinaryRef(typeof m.businessLicensePublicId === "string" ? m.businessLicensePublicId : null);
+  const licPublicId = enterpriseLicensePublicIdFromStored(
+    typeof m.businessLicensePublicId === "string" ? m.businessLicensePublicId : null
+  );
   const logoPublicId = fromCloudinaryRef(typeof m.companyLogoPublicId === "string" ? m.companyLogoPublicId : null);
   const licHref =
     licPublicId || licB64 ? `/api/files/enterprise-business-license/${item.id}` : null;
