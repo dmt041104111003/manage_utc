@@ -18,7 +18,8 @@ export async function GET(request: Request) {
     const q = searchParams.get("q")?.trim() || "";
     const batchId = searchParams.get("batchId")?.trim() || "";
     const status = searchParams.get("status")?.trim() || "all";
-    const expertise = searchParams.get("expertise")?.trim() || "";
+    // Faculty filter (Ngành/Khoa) — dùng tên param cũ `expertise` để không phá UI hiện tại.
+    const faculty = searchParams.get("expertise")?.trim() || "";
 
     const now = new Date();
     // Auto-stop khi quá hạn.
@@ -43,7 +44,13 @@ export async function GET(request: Request) {
     }
     if (batchId && batchId !== "all") where.internshipBatchId = batchId;
     if (status && status !== "all") where.status = status;
-    if (expertise && expertise !== "all") where.expertise = { contains: expertise, mode: "insensitive" };
+    if (faculty && faculty !== "all") {
+      // Tin cho phép tất cả khoa: allowedFaculties = []
+      where.AND = [
+        ...(Array.isArray(where.AND) ? where.AND : []),
+        { OR: [{ allowedFaculties: { equals: [] } }, { allowedFaculties: { has: faculty } }] }
+      ];
+    }
 
     // Status stats for cards (apply same filters)
     let statusStats: { pending: number; rejected: number; active: number; stopped: number } = {
@@ -79,18 +86,15 @@ export async function GET(request: Request) {
       }
     });
 
-    // Distinct expertise values for the filter dropdown – tách riêng try/catch để không chặn list
+    // Distinct faculty values for the filter dropdown
     let expertises: string[] = [];
     try {
-      const expertiseRows = await (prisma as any).jobPost.findMany({
-        distinct: ["expertise"],
-        select: { expertise: true },
-        orderBy: { expertise: "asc" },
-        where: { expertise: { not: null } }
+      const fRows = await (prisma as any).studentProfile.findMany({
+        distinct: ["faculty"],
+        select: { faculty: true },
+        orderBy: { faculty: "asc" }
       });
-      expertises = expertiseRows
-        .map((r: any) => r.expertise as string)
-        .filter(Boolean);
+      expertises = fRows.map((r: any) => String(r.faculty || "").trim()).filter(Boolean);
     } catch {
       // Không để lỗi distinct chặn tải danh sách
     }

@@ -22,7 +22,40 @@ import {
   DOANHNGHIEP_TUYEN_DUNG_ERROR_TITLE
 } from "@/lib/constants/doanhnghiep-tuyen-dung";
 
-export type JobEnterpriseDefaults = { intro: string; website: string };
+export type JobEnterpriseDefaults = {
+  intro: string;
+  website: string;
+  address?: {
+    provinceCode?: string;
+    wardCode?: string;
+    provinceName?: string;
+    wardName?: string;
+    addressDetail?: string;
+  };
+};
+
+function joinAddressParts(parts: Array<string | null | undefined>): string {
+  const cleaned = parts.map((x) => String(x || "").trim()).filter(Boolean);
+  return cleaned.length ? cleaned.join(", ") : "";
+}
+
+function guessAddressFromWorkLocation(workLocation: string): {
+  addressDetail: string;
+  wardName: string;
+  provinceName: string;
+} {
+  const raw = String(workLocation || "").trim();
+  if (!raw) return { addressDetail: "", wardName: "", provinceName: "" };
+  const parts = raw.split(",").map((x) => x.trim()).filter(Boolean);
+  if (parts.length >= 3) {
+    const provinceName = parts[parts.length - 1] || "";
+    const wardName = parts[parts.length - 2] || "";
+    const addressDetail = parts.slice(0, parts.length - 2).join(", ");
+    return { addressDetail, wardName, provinceName };
+  }
+  if (parts.length === 2) return { addressDetail: parts[0] || "", wardName: "", provinceName: parts[1] || "" };
+  return { addressDetail: parts[0] || "", wardName: "", provinceName: "" };
+}
 
 export function todayDateInputValue(): string {
   const d = new Date();
@@ -64,6 +97,11 @@ export function buildEmptyJobFormState(): JobFormState {
     candidateRequirements: "",
     benefits: "",
     workLocation: "",
+    provinceCode: "",
+    wardCode: "",
+    provinceName: "",
+    wardName: "",
+    addressDetail: "",
     workTime: "",
     applicationMethod: "Ứng viên nộp hồ sơ trực tuyến bằng cách bấm \"Ứng tuyển ngay\" dưới đây."
   };
@@ -76,10 +114,18 @@ function isWorkType(value: string): value is WorkType {
 export function buildJobFormForAdd(args: {
   enterpriseDefaults: JobEnterpriseDefaults;
 }): JobFormState {
+  const addr = args.enterpriseDefaults.address || {};
+  const workLocation = joinAddressParts([addr.addressDetail, addr.wardName, addr.provinceName]);
   return {
     ...buildEmptyJobFormState(),
     companyIntro: "",
     companyWebsite: args.enterpriseDefaults.website || "",
+    provinceCode: String(addr.provinceCode || ""),
+    wardCode: String(addr.wardCode || ""),
+    provinceName: String(addr.provinceName || ""),
+    wardName: String(addr.wardName || ""),
+    addressDetail: String(addr.addressDetail || ""),
+    workLocation,
     deadlineAt: tomorrowDateInputValue()
   };
 }
@@ -90,6 +136,8 @@ export function buildJobFormForEdit(args: {
 }): JobFormState {
   const job = args.detail.job;
   const workTypeRaw = (job.workType as string) || "";
+  const fromWorkLocation = guessAddressFromWorkLocation(job.workLocation || "");
+  const addr = args.enterpriseDefaults.address || {};
 
   return {
     title: job.title || "",
@@ -106,6 +154,11 @@ export function buildJobFormForEdit(args: {
     candidateRequirements: job.candidateRequirements || "",
     benefits: job.benefits || "",
     workLocation: job.workLocation || "",
+    provinceCode: String(addr.provinceCode || ""),
+    wardCode: String(addr.wardCode || ""),
+    provinceName: fromWorkLocation.provinceName || String(addr.provinceName || ""),
+    wardName: fromWorkLocation.wardName || String(addr.wardName || ""),
+    addressDetail: fromWorkLocation.addressDetail || String(addr.addressDetail || ""),
     workTime: job.workTime || "",
     applicationMethod: job.applicationMethod || ""
   };
@@ -160,6 +213,7 @@ export function validateJobForm(
 }
 
 export function buildJobCreatePayload(form: JobFormState) {
+  const computedWorkLocation = joinAddressParts([form.addressDetail, form.wardName, form.provinceName]);
   return {
     title: form.title.trim(),
     companyIntro: form.companyIntro.trim() || null,
@@ -174,7 +228,7 @@ export function buildJobCreatePayload(form: JobFormState) {
     jobDescription: form.jobDescription.trim(),
     candidateRequirements: form.candidateRequirements.trim(),
     benefits: form.benefits.trim(),
-    workLocation: form.workLocation.trim(),
+    workLocation: computedWorkLocation || form.workLocation.trim(),
     workTime: form.workTime.trim(),
     applicationMethod: form.applicationMethod.trim() || null
   };

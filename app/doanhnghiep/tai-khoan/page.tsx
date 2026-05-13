@@ -33,6 +33,8 @@ import {
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
 import EnterpriseProfileInfo from "./components/EnterpriseProfileInfo";
 import EnterpriseAccountEditSection from "./components/EnterpriseAccountEditSection";
+import type { Province, Ward } from "@/lib/types/admin-quan-ly-sinh-vien";
+import { readFileAsBase64Payload } from "@/lib/utils/file-payload";
 
 type FormState = EnterpriseAccountFormState;
 
@@ -50,6 +52,13 @@ export default function EnterpriseAccountPage() {
   const [me, setMe] = useState<AdminEnterpriseDetail | null>(() => getCachedValue<ApiResponse<AdminEnterpriseDetail>>(DN_TAI_KHOAN_CACHE_KEY)?.item ?? null);
   const [form, setForm] = useState<FormState>(ENTERPRISE_ACCOUNT_EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoError, setLogoError] = useState("");
+
+  // address dropdowns
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
+  const [addrLoading, setAddrLoading] = useState({ provinces: true, wards: false });
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +92,49 @@ export default function EnterpriseAccountPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        setAddrLoading({ provinces: true, wards: false });
+        const res = await fetch("/api/vn-address/provinces");
+        const data = await res.json();
+        if (!cancelled) setProvinces((data.provinces || []) as Province[]);
+      } catch {
+        if (!cancelled) setProvinces([]);
+      } finally {
+        if (!cancelled) setAddrLoading((s) => ({ ...s, provinces: false }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const code = form.provinceCode?.trim();
+      if (!code) {
+        setWards([]);
+        return;
+      }
+      setAddrLoading((s) => ({ ...s, wards: true }));
+      try {
+        const res = await fetch(`/api/vn-address/provinces/${encodeURIComponent(code)}/wards`);
+        const data = await res.json();
+        if (!cancelled) setWards((data.wards || []) as Ward[]);
+      } catch {
+        if (!cancelled) setWards([]);
+      } finally {
+        if (!cancelled) setAddrLoading((s) => ({ ...s, wards: false }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [form.provinceCode]);
+
+  useEffect(() => {
     const timer = setInterval(() => {
       if (isEditing || saving) return;
       void reloadMe();
@@ -108,11 +160,23 @@ export default function EnterpriseAccountPage() {
     if (!validate()) return;
     try {
       setSaving(true);
+      setLogoError("");
+      let logoPayload: { base64: string; mime: string } | null = null;
+      if (logoFile) {
+        logoPayload = await readFileAsBase64Payload(logoFile);
+      }
       const res = await fetch("/api/doanhnghiep/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...buildEnterpriseAccountPatchPayload(form)
+          ...buildEnterpriseAccountPatchPayload(form),
+          ...(logoPayload
+            ? {
+                companyLogoName: logoFile?.name || "",
+                companyLogoMime: logoPayload.mime,
+                companyLogoBase64: logoPayload.base64
+              }
+            : {})
         })
       });
       const data = (await res.json()) as ApiResponse<unknown> & { field?: string };
@@ -125,8 +189,13 @@ export default function EnterpriseAccountPage() {
       setToast(data.message || ENTERPRISE_ACCOUNT_SUBMIT_SUCCESS_DEFAULT);
       await reloadMe();
       setIsEditing(false);
+      setLogoFile(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : ENTERPRISE_ACCOUNT_SUBMIT_ERROR_DEFAULT);
+      if (e instanceof Error && e.message === "invalid data URL") {
+        setLogoError("Không đọc được file logo. Vui lòng chọn file khác.");
+      } else {
+        setError(e instanceof Error ? e.message : ENTERPRISE_ACCOUNT_SUBMIT_ERROR_DEFAULT);
+      }
     } finally {
       setSaving(false);
     }
@@ -186,12 +255,16 @@ export default function EnterpriseAccountPage() {
 
   const startEdit = () => {
     setFieldErrors({});
+    setLogoError("");
+    setLogoFile(null);
     setIsEditing(true);
   };
 
   const cancelEdit = () => {
     setForm(mapEnterpriseAccountFormFromMe(me));
     setFieldErrors({});
+    setLogoError("");
+    setLogoFile(null);
     setIsEditing(false);
   };
 
@@ -228,6 +301,11 @@ export default function EnterpriseAccountPage() {
               onSetField={setField}
               onStartEdit={startEdit}
               onCancelEdit={cancelEdit}
+              provinces={provinces}
+              wards={wards}
+              addrLoading={addrLoading}
+              logoError={logoError}
+              onSetLogoFile={setLogoFile}
             />
           </div>
         </section>

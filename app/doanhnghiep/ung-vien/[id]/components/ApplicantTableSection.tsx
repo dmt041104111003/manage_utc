@@ -45,14 +45,23 @@ export default function ApplicantTableSection({
         Danh sách ứng viên ứng tuyển
       </div>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          flexWrap: "nowrap",
+          alignItems: "center",
+          marginBottom: 10,
+          overflowX: "auto"
+        }}
+      >
         <input
           className={adminStyles.textInputSearch}
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Tìm theo tên / SĐT / email"
           disabled={busy}
-          style={{ minWidth: 260, flex: "1 1 260px" }}
+          style={{ minWidth: 260, flex: "1 1 auto" }}
         />
         <select
           className={adminStyles.selectInput}

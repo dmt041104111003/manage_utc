@@ -1,6 +1,7 @@
 import type { JobFormState } from "@/lib/types/doanhnghiep-tuyen-dung";
 import formStyles from "../../../auth/styles/register.module.css";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { Province, Ward } from "@/lib/types/admin-quan-ly-sinh-vien";
 
 type Props = {
   form: JobFormState;
@@ -44,6 +45,54 @@ export default function TuyenDungJobFormFields({
   const facultyRootRef = useRef<HTMLDivElement | null>(null);
   const facultySearchRef = useRef<HTMLInputElement | null>(null);
 
+  // address dropdowns (same UX as SV/Enterprise forms)
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
+  const [addrLoading, setAddrLoading] = useState({ provinces: true, wards: false });
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        setAddrLoading({ provinces: true, wards: false });
+        const res = await fetch("/api/vn-address/provinces");
+        const data = await res.json();
+        if (!cancelled) setProvinces((data.provinces || []) as Province[]);
+      } catch {
+        if (!cancelled) setProvinces([]);
+      } finally {
+        if (!cancelled) setAddrLoading((s) => ({ ...s, provinces: false }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const code = String(form.provinceCode || "").trim();
+      if (!code) {
+        setWards([]);
+        return;
+      }
+      setAddrLoading((s) => ({ ...s, wards: true }));
+      try {
+        const res = await fetch(`/api/vn-address/provinces/${encodeURIComponent(code)}/wards`);
+        const data = await res.json();
+        if (!cancelled) setWards((data.wards || []) as Ward[]);
+      } catch {
+        if (!cancelled) setWards([]);
+      } finally {
+        if (!cancelled) setAddrLoading((s) => ({ ...s, wards: false }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [form.provinceCode]);
+
   useEffect(() => {
     if (!facultyOpen) return;
     const onDocMouseDown = (e: MouseEvent) => {
@@ -54,6 +103,15 @@ export default function TuyenDungJobFormFields({
     document.addEventListener("mousedown", onDocMouseDown);
     return () => document.removeEventListener("mousedown", onDocMouseDown);
   }, [facultyOpen]);
+
+  // keep computed workLocation in sync with structured address fields
+  useEffect(() => {
+    const next = [form.addressDetail, form.wardName, form.provinceName].map((x) => String(x || "").trim()).filter(Boolean).join(", ");
+    if (!next) return;
+    if (String(form.workLocation || "").trim() === next) return;
+    onChange({ workLocation: next });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.addressDetail, form.wardName, form.provinceName]);
 
   useEffect(() => {
     if (!facultyOpen) {
@@ -312,11 +370,72 @@ export default function TuyenDungJobFormFields({
           <label className={formStyles.label}>
             Địa điểm làm việc <span className={formStyles.required}>*</span>
           </label>
+          <div className={formStyles.grid2}>
+            <div className={formStyles.field}>
+              <label className={formStyles.label}>Tỉnh thành</label>
+              <select
+                className={formStyles.select}
+                disabled={disabled || addrLoading.provinces}
+                value={form.provinceCode}
+                onChange={(e) => {
+                  const code = e.target.value;
+                  const opt = e.target.selectedOptions[0];
+                  const name = opt?.text || "";
+                  onChange({
+                    provinceCode: code,
+                    provinceName: code ? name : "",
+                    wardCode: "",
+                    wardName: ""
+                  });
+                }}
+              >
+                <option value="">{addrLoading.provinces ? "Đang tải…" : "Chọn tỉnh thành"}</option>
+                {provinces.map((p) => (
+                  <option key={p.code} value={String(p.code)}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.provinceCode ? <p className={formStyles.error}>{fieldErrors.provinceCode}</p> : null}
+            </div>
+            <div className={formStyles.field}>
+              <label className={formStyles.label}>Phường/xã</label>
+              <select
+                className={formStyles.select}
+                disabled={disabled || addrLoading.wards || !String(form.provinceCode || "").trim()}
+                value={form.wardCode}
+                onChange={(e) => {
+                  const code = e.target.value;
+                  const opt = e.target.selectedOptions[0];
+                  const name = opt?.text || "";
+                  onChange({ wardCode: code, wardName: code ? name : "" });
+                }}
+              >
+                <option value="">{addrLoading.wards ? "Đang tải…" : "Chọn phường/xã"}</option>
+                {wards.map((w) => (
+                  <option key={w.code} value={String(w.code)}>
+                    {w.name}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.wardCode ? <p className={formStyles.error}>{fieldErrors.wardCode}</p> : null}
+            </div>
+          </div>
+          <input
+            className={formStyles.input}
+            value={form.addressDetail}
+            onChange={(e) => onChange({ addressDetail: e.target.value })}
+            placeholder="Địa chỉ chi tiết (số nhà, đường...)"
+          />
+          {fieldErrors.addressDetail ? <p className={formStyles.error}>{fieldErrors.addressDetail}</p> : null}
+
           <input
             className={formStyles.input}
             value={form.workLocation}
             onChange={(e) => onChange({ workLocation: e.target.value })}
-            placeholder="Nhập địa điểm làm việc"
+            placeholder="(Tự động) Địa điểm làm việc"
+            readOnly
+            style={{ opacity: 0.75 }}
           />
           {fieldErrors.workLocation ? <p className={formStyles.error}>{fieldErrors.workLocation}</p> : null}
         </div>

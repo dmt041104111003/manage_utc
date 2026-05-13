@@ -49,6 +49,12 @@ export type JobFormState = {
   candidateRequirements: string;
   benefits: string;
   workLocation: string;
+  /** Địa chỉ làm việc dạng cấu trúc (UI) — map sang workLocation string khi submit. */
+  provinceCode: string;
+  wardCode: string;
+  provinceName: string;
+  wardName: string;
+  addressDetail: string;
   workTime: string;
   applicationMethod: string;
 };
