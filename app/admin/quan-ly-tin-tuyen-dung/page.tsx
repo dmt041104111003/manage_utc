@@ -20,13 +20,13 @@ const AdminTinTuyenDungDeletePopup = dynamic(() => import("./components/AdminTin
 function jobPostsListCacheKey(
   q: string,
   batchId: string,
-  expertise: string,
+  faculty: string,
   status: string
 ) {
   const params = new URLSearchParams();
   if (q.trim()) params.set("q", q.trim());
   if (batchId !== "all") params.set("batchId", batchId);
-  if (expertise !== "all") params.set("expertise", expertise);
+  if (faculty !== "all") params.set("expertise", faculty);
   if (status !== "all") params.set("status", status);
   return `admin:job-posts:list:/api/admin/job-posts?${params.toString()}`;
 }
@@ -57,12 +57,12 @@ export default function AdminQuanLyTinTuyenDungPage() {
   const [statusStats, setStatusStats] = useState<{ pending: number; rejected: number; active: number; stopped: number } | null>(seeded.statusStats);
 
   const [batches, setBatches] = useState<InternshipBatchRow[]>([]);
-  const [expertises, setExpertises] = useState<string[]>(seeded.expertises);
+  const [faculties, setFaculties] = useState<string[]>(seeded.expertises);
   const [loadingBatches, setLoadingBatches] = useState(false);
 
   const [searchQ, setSearchQ] = useState("");
   const [searchBatchId, setSearchBatchId] = useState<string>("all");
-  const [searchExpertise, setSearchExpertise] = useState<string>("all");
+  const [searchFaculty, setSearchFaculty] = useState<string>("all");
   const [searchStatus, setSearchStatus] = useState<string>("all");
 
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -120,10 +120,10 @@ export default function AdminQuanLyTinTuyenDungPage() {
       const params = new URLSearchParams();
       if (searchQ.trim()) params.set("q", searchQ.trim());
       if (searchBatchId !== "all") params.set("batchId", searchBatchId);
-      if (searchExpertise !== "all") params.set("expertise", searchExpertise);
+      if (searchFaculty !== "all") params.set("expertise", searchFaculty);
       if (searchStatus !== "all") params.set("status", searchStatus);
       const url = `/api/admin/job-posts?${params.toString()}`;
-      const cacheKey = jobPostsListCacheKey(searchQ, searchBatchId, searchExpertise, searchStatus);
+      const cacheKey = jobPostsListCacheKey(searchQ, searchBatchId, searchFaculty, searchStatus);
       if (!silent && !hasCachedValue(cacheKey)) setLoading(true);
       setError("");
       setPage(1);
@@ -138,7 +138,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
         { force }
       );
       setItems((data.items || []) as any);
-      if (Array.isArray(data.expertises)) setExpertises(data.expertises);
+      if (Array.isArray(data.expertises)) setFaculties(data.expertises);
       setStatusStats((data as any).statusStats ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Lỗi.");
@@ -161,7 +161,7 @@ export default function AdminQuanLyTinTuyenDungPage() {
     }, 30000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQ, searchBatchId, searchExpertise, searchStatus]);
+  }, [searchQ, searchBatchId, searchFaculty, searchStatus]);
 
   useEffect(() => {
     if (!items.length) return;
@@ -304,14 +304,14 @@ export default function AdminQuanLyTinTuyenDungPage() {
       <AdminTinTuyenDungToolbar
         searchQ={searchQ}
         searchBatchId={searchBatchId}
-        searchExpertise={searchExpertise}
+        searchExpertise={searchFaculty}
         searchStatus={searchStatus}
         batches={batches}
-        expertises={expertises}
+        expertises={faculties}
         loadingBatches={loadingBatches}
         onChangeSearchQ={setSearchQ}
         onChangeSearchBatchId={setSearchBatchId}
-        onChangeSearchExpertise={setSearchExpertise}
+        onChangeSearchExpertise={setSearchFaculty}
         onChangeSearchStatus={setSearchStatus}
         onSearch={() => void search()}
       />

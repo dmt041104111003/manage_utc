@@ -54,7 +54,15 @@ export default function DoanhNghiepTuyenDungPage() {
   const [editDetail, setEditDetail] = useState<JobDetailResponse | null>(null);
   const [editLoading, setEditLoading] = useState(false);
 
-  const [enterpriseDefaults, setEnterpriseDefaults] = useState<{ intro: string; website: string }>({ intro: "", website: "" });
+  const [enterpriseDefaults, setEnterpriseDefaults] = useState<{
+    intro: string;
+    website: string;
+    address: { provinceCode: string; wardCode: string; provinceName: string; wardName: string; addressDetail: string };
+  }>({
+    intro: "",
+    website: "",
+    address: { provinceCode: "", wardCode: "", provinceName: "", wardName: "", addressDetail: "" }
+  });
 
   const [form, setForm] = useState<JobFormState>(() => buildEmptyJobFormState());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -81,7 +89,17 @@ export default function DoanhNghiepTuyenDungPage() {
     if (!res.ok || !data.success || !data.item) return;
     const m = metaRecord(data.item.enterpriseMeta);
     const website = typeof m.website === "string" ? m.website : "";
-    setEnterpriseDefaults({ intro: "", website });
+    setEnterpriseDefaults({
+      intro: "",
+      website,
+      address: {
+        provinceCode: typeof m.provinceCode === "string" ? m.provinceCode : "",
+        wardCode: typeof m.wardCode === "string" ? m.wardCode : "",
+        provinceName: typeof m.province === "string" ? m.province : "",
+        wardName: typeof m.ward === "string" ? m.ward : "",
+        addressDetail: typeof m.addressDetail === "string" ? m.addressDetail : ""
+      }
+    });
   };
 
   const load = async (params?: { q?: string; date?: string; status?: "all" | JobStatus; page?: number }, opts?: { force?: boolean; silent?: boolean }) => {

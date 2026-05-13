@@ -1,6 +1,7 @@
 import type { EnterpriseAccountFormState } from "@/lib/types/doanhnghiep-tai-khoan";
 import adminStyles from "../../../admin/styles/dashboard.module.css";
 import formStyles from "../../../auth/styles/register.module.css";
+import type { Province, Ward } from "@/lib/types/admin-quan-ly-sinh-vien";
 
 type FormState = EnterpriseAccountFormState;
 
@@ -12,6 +13,11 @@ type Props = {
   onSetField: (key: keyof FormState, value: string | string[]) => void;
   onStartEdit: () => void;
   onCancelEdit: () => void;
+  provinces: Province[];
+  wards: Ward[];
+  addrLoading: { provinces: boolean; wards: boolean };
+  logoError: string;
+  onSetLogoFile: (f: File | null) => void;
 };
 
 export default function EnterpriseAccountEditSection({
@@ -21,7 +27,12 @@ export default function EnterpriseAccountEditSection({
   fieldErrors,
   onSetField,
   onStartEdit,
-  onCancelEdit
+  onCancelEdit,
+  provinces,
+  wards,
+  addrLoading,
+  logoError,
+  onSetLogoFile
 }: Props) {
   if (isEditing) {
     return (
@@ -102,6 +113,84 @@ export default function EnterpriseAccountEditSection({
           {fieldErrors.website ? <p className={formStyles.error}>{fieldErrors.website}</p> : null}
         </div>
 
+        <h3 className={formStyles.sectionTitle} style={{ marginTop: 18 }}>Địa chỉ trụ sở chính</h3>
+        <div className={formStyles.grid2}>
+          <div className={formStyles.field}>
+            <label className={formStyles.label}>Tỉnh thành</label>
+            <select
+              className={formStyles.select}
+              disabled={saving || addrLoading.provinces}
+              value={form.provinceCode}
+              onChange={(e) => {
+                const code = e.target.value;
+                const opt = e.target.selectedOptions[0];
+                const name = opt?.text || "";
+                onSetField("provinceCode", code);
+                onSetField("provinceName", code ? name : "");
+                onSetField("wardCode", "");
+                onSetField("wardName", "");
+              }}
+            >
+              <option value="">{addrLoading.provinces ? "Đang tải…" : "Chọn tỉnh thành"}</option>
+              {provinces.map((p) => (
+                <option key={p.code} value={String(p.code)}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.provinceCode ? <p className={formStyles.error}>{fieldErrors.provinceCode}</p> : null}
+          </div>
+          <div className={formStyles.field}>
+            <label className={formStyles.label}>Phường/xã</label>
+            <select
+              className={formStyles.select}
+              disabled={saving || addrLoading.wards || !form.provinceCode}
+              value={form.wardCode}
+              onChange={(e) => {
+                const code = e.target.value;
+                const opt = e.target.selectedOptions[0];
+                const name = opt?.text || "";
+                onSetField("wardCode", code);
+                onSetField("wardName", code ? name : "");
+              }}
+            >
+              <option value="">{addrLoading.wards ? "Đang tải…" : "Chọn phường/xã"}</option>
+              {wards.map((w) => (
+                <option key={w.code} value={String(w.code)}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.wardCode ? <p className={formStyles.error}>{fieldErrors.wardCode}</p> : null}
+          </div>
+        </div>
+
+        <div className={formStyles.field}>
+          <label className={formStyles.label}>Địa chỉ chi tiết</label>
+          <input
+            className={formStyles.input}
+            disabled={saving}
+            value={form.addressDetail}
+            onChange={(e) => onSetField("addressDetail", e.target.value)}
+            placeholder="Số nhà, đường..."
+          />
+          {fieldErrors.addressDetail ? <p className={formStyles.error}>{fieldErrors.addressDetail}</p> : null}
+        </div>
+
+        <div className={formStyles.field}>
+          <label className={formStyles.label}>Logo công ty (mới)</label>
+          <input
+            type="file"
+            disabled={saving}
+            accept=".png,.jpg,.jpeg,.webp,.gif"
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              onSetLogoFile(f);
+            }}
+          />
+          {logoError ? <p className={formStyles.error}>{logoError}</p> : null}
+        </div>
+
         <div className={formStyles.section} style={{ marginTop: 18, display: "flex", gap: 10, alignItems: "center" }}>
           <button type="button" className={adminStyles.btn} onClick={onCancelEdit} disabled={saving}>
             Hủy
@@ -133,6 +222,12 @@ export default function EnterpriseAccountEditSection({
           <tr>
             <th scope="row">Website công ty</th>
             <td>{form.website || "—"}</td>
+          </tr>
+          <tr>
+            <th scope="row">Địa chỉ trụ sở chính</th>
+            <td>
+              {[form.addressDetail, form.wardName, form.provinceName].filter((x) => String(x || "").trim()).join(", ") || "—"}
+            </td>
           </tr>
         </tbody>
       </table>

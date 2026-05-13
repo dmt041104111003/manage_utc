@@ -11,5 +11,10 @@ export type EnterpriseAccountFormState = {
   representativeTitle: string;
   companyIntro: string;
   website: string;
+  provinceCode: string;
+  wardCode: string;
+  provinceName: string;
+  wardName: string;
+  addressDetail: string;
 };
 

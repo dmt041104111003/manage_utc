@@ -8,7 +8,12 @@ export const ENTERPRISE_ACCOUNT_EMPTY_FORM: EnterpriseAccountFormState = {
   representativeName: "",
   representativeTitle: "",
   companyIntro: "",
-  website: ""
+  website: "",
+  provinceCode: "",
+  wardCode: "",
+  provinceName: "",
+  wardName: "",
+  addressDetail: ""
 };
 
 export const ENTERPRISE_ACCOUNT_ERROR_REPRESENTATIVE_NAME =
@@ -17,6 +22,9 @@ export const ENTERPRISE_ACCOUNT_ERROR_REPRESENTATIVE_TITLE =
   "Chuc vu chi gom ky tu chu, dai 1-255.";
 export const ENTERPRISE_ACCOUNT_ERROR_WEBSITE = "Website khong dung dinh dang.";
 export const ENTERPRISE_ACCOUNT_ERROR_EMAIL = "Email khong dung dinh dang.";
+export const ENTERPRISE_ACCOUNT_ERROR_ADDRESS = "Dia chi chi tiet chi gom chu, so va khoang trang (1-255).";
+export const ENTERPRISE_ACCOUNT_ERROR_PROVINCE = "Vui long chon tinh/thanh.";
+export const ENTERPRISE_ACCOUNT_ERROR_WARD = "Vui long chon phuong/xa.";
 
 export const ENTERPRISE_ACCOUNT_LOAD_ERROR_DEFAULT = "Loi tai thong tin.";
 export const ENTERPRISE_ACCOUNT_NOT_FOUND_ERROR_DEFAULT = "Khong tim thay tai khoan.";

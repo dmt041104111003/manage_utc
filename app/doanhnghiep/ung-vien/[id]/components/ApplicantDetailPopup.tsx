@@ -11,6 +11,7 @@ import {
 } from "@/lib/constants/doanhnghiep-ung-vien-detail";
 import { formatDateTimeVi } from "@/lib/utils/doanhnghiep-ung-vien-detail";
 import adminStyles from "../../../../admin/styles/dashboard.module.css";
+import type { Province, Ward } from "@/lib/types/admin-quan-ly-sinh-vien";
 
 async function openCvPreview(applicationId: string) {
   const w = window.open("about:blank", "_blank", "noopener,noreferrer");
@@ -32,10 +33,21 @@ export type Props = {
   nextStatus: JobApplicationStatus;
   interviewAt: string;
   interviewLocation: string;
+  interviewProvinceCode: string;
+  interviewWardCode: string;
+  interviewProvinceName: string;
+  interviewWardName: string;
+  interviewAddressDetail: string;
+  provinces: Province[];
+  wards: Ward[];
+  addrLoading: { provinces: boolean; wards: boolean };
   responseDeadline: string;
   onNextStatusChange: (s: JobApplicationStatus) => void;
   onInterviewAtChange: (v: string) => void;
   onInterviewLocationChange: (v: string) => void;
+  onInterviewProvinceChange: (code: string, name: string) => void;
+  onInterviewWardChange: (code: string, name: string) => void;
+  onInterviewAddressDetailChange: (v: string) => void;
   onResponseDeadlineChange: (v: string) => void;
   onClose: () => void;
   onSave: () => void;
@@ -65,24 +77,50 @@ function maxDateTimeLocal(a: string, b: string): string {
   return a >= b ? a : b;
 }
 
+function addHoursToLocalDateTime(input: string, hours: number): string {
+  if (!input) return "";
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return "";
+  d.setHours(d.getHours() + hours);
+  // back to YYYY-MM-DDTHH:mm for datetime-local
+  return d.toISOString().slice(0, 16);
+}
+
 export default function ApplicantDetailPopup({
   viewTarget,
   busy,
   nextStatus,
   interviewAt,
   interviewLocation,
+  interviewProvinceCode,
+  interviewWardCode,
+  interviewProvinceName,
+  interviewWardName,
+  interviewAddressDetail,
+  provinces,
+  wards,
+  addrLoading,
   responseDeadline,
   onNextStatusChange,
   onInterviewAtChange,
   onInterviewLocationChange,
+  onInterviewProvinceChange,
+  onInterviewWardChange,
+  onInterviewAddressDetailChange,
   onResponseDeadlineChange,
   onClose,
   onSave
 }: Props) {
   if (!viewTarget) return null;
 
+  // keep unused props referenced to avoid lint/no-unused-vars in some configs
+  void interviewProvinceName;
+  void interviewWardName;
+
   const minDateTime = tomorrowDateTimeLocalMin();
-  const minResponseDeadline = interviewAt ? maxDateTimeLocal(minDateTime, interviewAt) : minDateTime;
+  const minResponseDeadline = interviewAt
+    ? maxDateTimeLocal(minDateTime, addHoursToLocalDateTime(interviewAt, 1) || interviewAt)
+    : minDateTime;
   const availableStatuses = getAvailableNextStatuses(viewTarget.status, viewTarget.response);
   const canUpdate = availableStatuses.length > 0;
   const canSave = canUpdate && viewTarget.internshipStatus === "NOT_STARTED";
@@ -348,14 +386,84 @@ export default function ApplicantDetailPopup({
                 <label style={{ fontSize: 13, color: "#374151", fontWeight: 600, display: "block", marginBottom: 4 }}>
                   Địa điểm phỏng vấn <span style={{ color: "#dc2626" }}>*</span>
                 </label>
-                <input
-                  className={adminStyles.textInputSearch}
-                  type="text"
-                  value={interviewLocation}
-                  onChange={(e) => onInterviewLocationChange(e.target.value)}
-                  placeholder="Nhập địa điểm phỏng vấn"
-                  disabled={busy}
-                />
+                <div style={{ display: "grid", gap: 8 }}>
+                  <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+                    <div>
+                      <label style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, display: "block", marginBottom: 4 }}>
+                        Tỉnh thành
+                      </label>
+                      <select
+                        className={adminStyles.selectInput}
+                        disabled={busy || addrLoading.provinces}
+                        value={interviewProvinceCode}
+                        onChange={(e) => {
+                          const code = e.target.value;
+                          const opt = e.target.selectedOptions[0];
+                          const name = opt?.text || "";
+                          onInterviewProvinceChange(code, name);
+                        }}
+                      >
+                        <option value="">{addrLoading.provinces ? "Đang tải…" : "Chọn tỉnh thành"}</option>
+                        {provinces.map((p) => (
+                          <option key={p.code} value={String(p.code)}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, display: "block", marginBottom: 4 }}>
+                        Phường/xã
+                      </label>
+                      <select
+                        className={adminStyles.selectInput}
+                        disabled={busy || addrLoading.wards || !interviewProvinceCode}
+                        value={interviewWardCode}
+                        onChange={(e) => {
+                          const code = e.target.value;
+                          const opt = e.target.selectedOptions[0];
+                          const name = opt?.text || "";
+                          onInterviewWardChange(code, name);
+                        }}
+                      >
+                        <option value="">{addrLoading.wards ? "Đang tải…" : "Chọn phường/xã"}</option>
+                        {wards.map((w) => (
+                          <option key={w.code} value={String(w.code)}>
+                            {w.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: "#6b7280", fontWeight: 600, display: "block", marginBottom: 4 }}>
+                      Địa chỉ chi tiết
+                    </label>
+                    <input
+                      className={adminStyles.textInputSearch}
+                      type="text"
+                      value={interviewAddressDetail}
+                      onChange={(e) => onInterviewAddressDetailChange(e.target.value)}
+                      placeholder="Số nhà, đường..."
+                      disabled={busy}
+                    />
+                  </div>
+                  <input
+                    className={adminStyles.textInputSearch}
+                    type="text"
+                    value={interviewLocation}
+                    onChange={(e) => onInterviewLocationChange(e.target.value)}
+                    placeholder="(Tự động) Địa điểm phỏng vấn"
+                    disabled={busy}
+                    readOnly
+                    style={{ opacity: 0.75 }}
+                  />
+                  {(!interviewProvinceName.trim() && !interviewWardName.trim() && !interviewAddressDetail.trim()) ? (
+                    <div style={{ fontSize: 12, color: "#6b7280" }}>
+                      Mặc định lấy theo địa điểm làm việc của tin tuyển dụng. Bạn có thể chỉnh sửa.
+                    </div>
+                  ) : null}
+                </div>
               </div>
               <div>
                 <label style={{ fontSize: 13, color: "#374151", fontWeight: 600, display: "block", marginBottom: 4 }}>

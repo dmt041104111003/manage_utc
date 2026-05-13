@@ -18,6 +18,7 @@ import { getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache
 import TraCuuUngTuyenToolbar from "./components/TraCuuUngTuyenToolbar";
 import TraCuuUngTuyenJobGrid from "./components/TraCuuUngTuyenJobGrid";
 import { ChartStyleLoading } from "@/app/components/ChartStyleLoading";
+import type { VnProvince } from "@/lib/types/enterprise-register";
 
 export default function SinhVienTraCuuUngTuyenPage() {
   const [loading, setLoading] = useState(true);
@@ -30,6 +31,26 @@ export default function SinhVienTraCuuUngTuyenPage() {
   const [workType, setWorkType] = useState<WorkTypeFilter>("all");
   const [province, setProvince] = useState("all");
   const [provinceOptions, setProvinceOptions] = useState<string[]>([]);
+
+  // Load full province list once for dropdown (not derived from result set)
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/vn-address/provinces");
+        const data = await res.json();
+        const items = Array.isArray(data?.provinces) ? (data.provinces as VnProvince[]) : [];
+        const names = items.map((x) => String(x?.name || "").trim()).filter(Boolean);
+        const dedup = Array.from(new Set(names)).sort((a, b) => a.localeCompare(b, "vi"));
+        if (!cancelled) setProvinceOptions(dedup);
+      } catch {
+        if (!cancelled) setProvinceOptions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function load(opts?: { force?: boolean; silent?: boolean }) {
     const force = Boolean(opts?.force);
@@ -46,7 +67,6 @@ export default function SinhVienTraCuuUngTuyenPage() {
       setItems(result.items);
       setCanApply(result.canApply);
       setInternshipStatus(result.internshipStatus);
-      setProvinceOptions(result.provinceOptions);
     } catch (e: any) {
       setError(e?.message || SINHVIEN_TRA_CUU_UNG_TUYEN_LOAD_ERROR_DEFAULT);
     } finally {

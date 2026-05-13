@@ -13,7 +13,35 @@ import JobDetailInfo from "./components/JobDetailInfo";
 import ApplicantTableSection from "./components/ApplicantTableSection";
 import { DOANHNGHIEP_UNG_VIEN_DETAIL_PAGE_SIZE } from "@/lib/constants/doanhnghiep-ung-vien-detail";
 import { getCachedValue, getOrFetchCached, hasCachedValue } from "@/lib/utils/client-query-cache";
-const ApplicantDetailPopup = dynamic(() => import("./components/ApplicantDetailPopup"), { ssr: false });
+import type { Province, Ward } from "@/lib/types/admin-quan-ly-sinh-vien";
+import type { Props as ApplicantDetailPopupProps } from "./components/ApplicantDetailPopup";
+const ApplicantDetailPopup = dynamic<ApplicantDetailPopupProps>(() => import("./components/ApplicantDetailPopup"), { ssr: false });
+
+function parseAddress3Parts(input: string): { addressDetail: string; wardName: string; provinceName: string } {
+  const raw = String(input || "").trim();
+  if (!raw) return { addressDetail: "", wardName: "", provinceName: "" };
+  const parts = raw.split(",").map((x) => x.trim()).filter(Boolean);
+  if (parts.length >= 3) {
+    const provinceName = parts[parts.length - 1] || "";
+    const wardName = parts[parts.length - 2] || "";
+    const addressDetail = parts.slice(0, parts.length - 2).join(", ");
+    return { addressDetail, wardName, provinceName };
+  }
+  if (parts.length === 2) return { addressDetail: parts[0] || "", wardName: "", provinceName: parts[1] || "" };
+  return { addressDetail: parts[0] || "", wardName: "", provinceName: "" };
+}
+
+function joinAddressParts(parts: Array<string | null | undefined>): string {
+  return parts.map((x) => String(x || "").trim()).filter(Boolean).join(", ");
+}
+
+function isAtLeastOneHourAfter(a: string, b: string): boolean {
+  // Expect datetime-local strings: YYYY-MM-DDTHH:mm
+  const da = new Date(a);
+  const db = new Date(b);
+  if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return false;
+  return da.getTime() - db.getTime() >= 60 * 60 * 1000;
+}
 
 export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: jobId } = use(params);
@@ -36,6 +64,68 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
   const [interviewAt, setInterviewAt] = useState("");
   const [interviewLocation, setInterviewLocation] = useState("");
   const [responseDeadline, setResponseDeadline] = useState("");
+
+  // interview location structured (province/ward/detail)
+  const [interviewProvinceCode, setInterviewProvinceCode] = useState("");
+  const [interviewWardCode, setInterviewWardCode] = useState("");
+  const [interviewProvinceName, setInterviewProvinceName] = useState("");
+  const [interviewWardName, setInterviewWardName] = useState("");
+  const [interviewAddressDetail, setInterviewAddressDetail] = useState("");
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
+  const [addrLoading, setAddrLoading] = useState({ provinces: true, wards: false });
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        setAddrLoading({ provinces: true, wards: false });
+        const res = await fetch("/api/vn-address/provinces");
+        const data = await res.json();
+        if (!cancelled) setProvinces((data.provinces || []) as Province[]);
+      } catch {
+        if (!cancelled) setProvinces([]);
+      } finally {
+        if (!cancelled) setAddrLoading((s) => ({ ...s, provinces: false }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const code = interviewProvinceCode.trim();
+      if (!code) {
+        setWards([]);
+        return;
+      }
+      setAddrLoading((s) => ({ ...s, wards: true }));
+      try {
+        const res = await fetch(`/api/vn-address/provinces/${encodeURIComponent(code)}/wards`);
+        const data = await res.json();
+        if (!cancelled) setWards((data.wards || []) as Ward[]);
+      } catch {
+        if (!cancelled) setWards([]);
+      } finally {
+        if (!cancelled) setAddrLoading((s) => ({ ...s, wards: false }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [interviewProvinceCode]);
+
+  // sync composed interviewLocation string
+  useEffect(() => {
+    const next = joinAddressParts([interviewAddressDetail, interviewWardName, interviewProvinceName]);
+    if (!next) return;
+    if (interviewLocation.trim() === next) return;
+    setInterviewLocation(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interviewAddressDetail, interviewWardName, interviewProvinceName]);
 
   async function load(nextPage = 1, opts?: { force?: boolean; silent?: boolean }) {
     const force = Boolean(opts?.force);
@@ -97,9 +187,27 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
     const available = getAvailableNextStatuses(app.status, app.response);
     setNextStatus(available.length ? available[0] : app.status);
     setInterviewAt(app.interviewAt ? new Date(app.interviewAt).toISOString().slice(0, 16) : "");
-    setInterviewLocation(app.interviewLocation ?? "");
+    const defaultLocation = (app.interviewLocation && app.interviewLocation.trim()) ? app.interviewLocation : (job?.workLocation || "");
+    const parsed = parseAddress3Parts(defaultLocation);
+    setInterviewProvinceName(parsed.provinceName);
+    setInterviewWardName(parsed.wardName);
+    setInterviewAddressDetail(parsed.addressDetail);
+    setInterviewProvinceCode("");
+    setInterviewWardCode("");
+    setInterviewLocation(joinAddressParts([parsed.addressDetail, parsed.wardName, parsed.provinceName]));
     setResponseDeadline(app.responseDeadline ? new Date(app.responseDeadline).toISOString().slice(0, 16) : "");
   }
+
+  // best-effort: map provinceName -> provinceCode when province list is ready
+  useEffect(() => {
+    if (interviewProvinceCode.trim()) return;
+    const name = interviewProvinceName.trim();
+    if (!name || !provinces.length) return;
+    const hit = provinces.find((p) => String(p.name).trim().toLowerCase() === name.toLowerCase());
+    if (!hit) return;
+    setInterviewProvinceCode(String(hit.code));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interviewProvinceName, provinces]);
 
   const closeApplicant = () => {
     setViewTarget(null);
@@ -118,6 +226,10 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
       if (!interviewAt) { setToast("Vui lòng nhập thời gian phỏng vấn."); return; }
       if (!interviewLocation.trim()) { setToast("Vui lòng nhập địa điểm phỏng vấn."); return; }
       if (!responseDeadline) { setToast("Vui lòng nhập thời hạn phản hồi."); return; }
+      if (!isAtLeastOneHourAfter(responseDeadline, interviewAt)) {
+        setToast("Thời hạn phản hồi phải lớn hơn thời gian phỏng vấn ít nhất 1 tiếng.");
+        return;
+      }
     }
     if (nextStatus === "OFFERED") {
       if (!responseDeadline) { setToast("Vui lòng nhập thời hạn phản hồi."); return; }
@@ -190,10 +302,29 @@ export default function DoanhNghiepUngVienDetailPage({ params }: { params: Promi
         nextStatus={nextStatus}
         interviewAt={interviewAt}
         interviewLocation={interviewLocation}
+        interviewProvinceCode={interviewProvinceCode}
+        interviewWardCode={interviewWardCode}
+        interviewProvinceName={interviewProvinceName}
+        interviewWardName={interviewWardName}
+        interviewAddressDetail={interviewAddressDetail}
+        provinces={provinces}
+        wards={wards}
+        addrLoading={addrLoading}
         responseDeadline={responseDeadline}
         onNextStatusChange={setNextStatus}
         onInterviewAtChange={setInterviewAt}
         onInterviewLocationChange={setInterviewLocation}
+        onInterviewProvinceChange={(code: string, name: string) => {
+          setInterviewProvinceCode(code);
+          setInterviewProvinceName(code ? name : "");
+          setInterviewWardCode("");
+          setInterviewWardName("");
+        }}
+        onInterviewWardChange={(code: string, name: string) => {
+          setInterviewWardCode(code);
+          setInterviewWardName(code ? name : "");
+        }}
+        onInterviewAddressDetailChange={setInterviewAddressDetail}
         onResponseDeadlineChange={setResponseDeadline}
         onClose={closeApplicant}
         onSave={() => void submitUpdateStatus()}

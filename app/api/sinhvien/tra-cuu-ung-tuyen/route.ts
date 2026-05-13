@@ -4,6 +4,7 @@ import { verifySession } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/lib/constants/auth/patterns";
 import { prisma } from "@/lib/prisma";
 import { buildEnterpriseHeadquartersAddress, formatBusinessFields } from "@/lib/utils/enterprise-admin-display";
+import { fetchProvinceList } from "@/lib/vn-open-api";
 
 async function getStudentUserId() {
   const cookieStore = await cookies();
@@ -44,6 +45,11 @@ export async function GET(request: Request) {
   }
   if (workType !== "all") where.workType = workType;
 
+  // Dropdown tỉnh/thành: filter theo workLocation (không dùng enterpriseMeta)
+  if (province !== "all") {
+    where.workLocation = { contains: province, mode: "insensitive" };
+  }
+
   const profile = await prismaAny.studentProfile.findFirst({
     where: { userId },
     select: { internshipStatus: true, faculty: true }
@@ -54,7 +60,14 @@ export async function GET(request: Request) {
     where: { studentUserId: userId },
     select: { jobPostId: true }
   });
-  const appliedSet = new Set(applied.map((x: any) => x.jobPostId));
+  const appliedIds = applied.map((x: any) => String(x.jobPostId)).filter(Boolean);
+  const appliedSet = new Set(appliedIds);
+
+  // Tra cứu ứng tuyển: chỉ hiển thị tin CHƯA ứng tuyển.
+  // Các tin đã ứng tuyển được hiển thị ở màn "việc làm đã ứng tuyển".
+  if (appliedIds.length) {
+    where.id = { notIn: appliedIds };
+  }
 
   const faculty = String(profile.faculty || "").trim();
   if (faculty) {
@@ -80,37 +93,31 @@ export async function GET(request: Request) {
     }
   });
 
-  function provinceFromEnterpriseMeta(meta: any): string {
-    const p = String(meta?.province || "").trim();
-    return p || "—";
-  }
-
   const mapped = rows.map((r: any) => ({
       id: r.id,
       title: r.title,
       companyName: r.enterpriseUser?.companyName ?? "—",
       address: buildEnterpriseHeadquartersAddress(r.enterpriseUser?.enterpriseMeta),
       businessField: formatBusinessFields(r.enterpriseUser?.enterpriseMeta),
-      province: provinceFromEnterpriseMeta(r.enterpriseUser?.enterpriseMeta),
+      province: "",
       expertise: r.expertise,
       salary: r.salary,
       experienceRequirement: r.experienceRequirement,
       workType: r.workType,
       deadlineAt: r.deadlineAt?.toISOString?.() ?? null,
+      // Luôn false vì đã loại tin đã ứng tuyển ở query; giữ field để không đổi contract FE.
       hasApplied: appliedSet.has(r.id)
     }));
 
-  const provinceSet = new Set<string>();
-  mapped
-    .map((x: any) => String(x.province || "").trim())
-    .filter((x: string) => x && x !== "—")
-    .forEach((x: string) => provinceSet.add(x));
+  let provinceOptions: string[] = [];
+  try {
+    const provinces = await fetchProvinceList();
+    provinceOptions = provinces.map((p) => p.name).filter(Boolean).sort((a, b) => a.localeCompare(b, "vi"));
+  } catch {
+    provinceOptions = [];
+  }
 
-  const provinceOptions = Array.from(provinceSet).sort((a, b) => a.localeCompare(b, "vi"));
-
-  const items = mapped
-    .filter((r: any) => (province === "all" ? true : String(r.province || "").trim() === province))
-    .map(({ province: _p, ...rest }: any) => rest);
+  const items = mapped.map(({ province: _p, ...rest }: any) => rest);
 
   return NextResponse.json({
     success: true,

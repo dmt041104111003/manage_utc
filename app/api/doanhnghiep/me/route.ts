@@ -6,18 +6,24 @@ import { prisma } from "@/lib/prisma";
 import { EnterpriseStatus } from "@prisma/client";
 import {
   DOANHNGHIEP_BUSINESS_FIELD_OPTIONS,
+  DOANHNGHIEP_REGISTER_ADDRESS_PATTERN,
   DOANHNGHIEP_REGISTER_LETTER_ONLY_PATTERN,
   DOANHNGHIEP_REGISTER_WEBSITE_PATTERN
 } from "@/lib/constants/doanhnghiep";
 import { AUTH_EMAIL_REGISTER_PATTERN } from "@/lib/constants/auth/patterns";
 import {
   ENTERPRISE_ACCOUNT_EMAIL_TAKEN,
+  ENTERPRISE_ACCOUNT_ERROR_ADDRESS,
   ENTERPRISE_ACCOUNT_ERROR_EMAIL,
+  ENTERPRISE_ACCOUNT_ERROR_PROVINCE,
+  ENTERPRISE_ACCOUNT_ERROR_WARD,
   ENTERPRISE_ACCOUNT_PHONE_TAKEN,
   ENTERPRISE_ACCOUNT_UNIQUE_CONSTRAINT
 } from "@/lib/constants/doanhnghiep-tai-khoan";
 import { PHONE_ERROR, PHONE_PATTERN } from "@/lib/constants/sinhvien-ho-so";
 import type { AdminEnterpriseDetail } from "@/lib/types/admin";
+import { decodeEnterpriseFilePayload, ENTERPRISE_LOGO_MIMES } from "@/lib/enterprise-register-files";
+import { toCloudinaryRef, uploadEnterpriseLogoBytesToCloudinary } from "@/lib/storage/cloudinary";
 type GetEnterpriseMeResponse = AdminEnterpriseDetail;
 
 function enterpriseMetaAsRecord(meta: unknown): Record<string, unknown> {
@@ -90,6 +96,14 @@ type PatchEnterpriseMeBody = {
   businessFields?: string[];
   companyIntro?: string | null;
   website?: string | null;
+  province?: string;
+  ward?: string;
+  provinceCode?: string | number;
+  wardCode?: string | number;
+  addressDetail?: string;
+  companyLogoName?: string;
+  companyLogoMime?: string;
+  companyLogoBase64?: string;
 };
 
 export async function PATCH(request: Request) {
@@ -122,6 +136,16 @@ export async function PATCH(request: Request) {
   const website = typeof body.website === "string" ? body.website.trim() : body.website ?? null;
   const websiteOrNull = website && website.trim() ? website.trim() : null;
 
+  const province = typeof body.province === "string" ? body.province.trim() : "";
+  const ward = typeof body.ward === "string" ? body.ward.trim() : "";
+  const provinceCodeRaw = body.provinceCode != null ? String(body.provinceCode).trim() : "";
+  const wardCodeRaw = body.wardCode != null ? String(body.wardCode).trim() : "";
+  const addressDetail = typeof body.addressDetail === "string" ? body.addressDetail.trim() : "";
+
+  const companyLogoName = typeof body.companyLogoName === "string" ? body.companyLogoName.trim() : "";
+  const companyLogoMime = typeof body.companyLogoMime === "string" ? body.companyLogoMime.trim() : "";
+  const companyLogoBase64 = typeof body.companyLogoBase64 === "string" ? body.companyLogoBase64.trim() : "";
+
   if (!emailNorm || !AUTH_EMAIL_REGISTER_PATTERN.test(emailNorm)) {
     return NextResponse.json({ success: false, field: "email", message: ENTERPRISE_ACCOUNT_ERROR_EMAIL }, { status: 400 });
   }
@@ -144,9 +168,19 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ success: false, field: "website", message: "Website không đúng định dạng." }, { status: 400 });
   }
 
+  if (!province || !provinceCodeRaw || !/^\d+$/.test(provinceCodeRaw)) {
+    return NextResponse.json({ success: false, field: "provinceCode", message: ENTERPRISE_ACCOUNT_ERROR_PROVINCE }, { status: 400 });
+  }
+  if (!ward || !wardCodeRaw || !/^\d+$/.test(wardCodeRaw)) {
+    return NextResponse.json({ success: false, field: "wardCode", message: ENTERPRISE_ACCOUNT_ERROR_WARD }, { status: 400 });
+  }
+  if (!DOANHNGHIEP_REGISTER_ADDRESS_PATTERN.test(addressDetail)) {
+    return NextResponse.json({ success: false, field: "addressDetail", message: ENTERPRISE_ACCOUNT_ERROR_ADDRESS }, { status: 400 });
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: sub },
-    select: { id: true, email: true, phone: true, enterpriseMeta: true, representativeTitle: true, fullName: true }
+    select: { id: true, email: true, phone: true, enterpriseMeta: true, representativeTitle: true, fullName: true, taxCode: true }
   });
 
   if (!user) return NextResponse.json({ success: false, message: "Không tìm thấy tài khoản." }, { status: 404 });
@@ -186,8 +220,31 @@ export async function PATCH(request: Request) {
     representativeTitle,
     businessFields: nextBusinessFields,
     companyIntro: companyIntroOrNull,
-    website: websiteOrNull
+    website: websiteOrNull,
+    province,
+    ward,
+    provinceCode: provinceCodeRaw,
+    wardCode: wardCodeRaw,
+    addressDetail
   };
+
+  if (companyLogoBase64 && companyLogoMime && companyLogoName) {
+    const decoded = decodeEnterpriseFilePayload(companyLogoBase64, companyLogoMime, ENTERPRISE_LOGO_MIMES);
+    if (!decoded.ok) {
+      return NextResponse.json({ success: false, field: "companyLogo", message: decoded.message }, { status: 400 });
+    }
+    const uploaded = await uploadEnterpriseLogoBytesToCloudinary({
+      bytes: Buffer.from(decoded.base64, "base64"),
+      mimeType: decoded.mime,
+      ownerKey: String(user.taxCode || emailNorm || sub),
+      originalName: companyLogoName
+    });
+    (nextMeta as any).companyLogoName = companyLogoName;
+    (nextMeta as any).companyLogoMime = decoded.mime;
+    (nextMeta as any).companyLogoPublicId = toCloudinaryRef(uploaded.publicId);
+    delete (nextMeta as any).companyLogoBase64;
+    delete (nextMeta as any).companyLogoByteLength;
+  }
 
   try {
     await prisma.user.update({
